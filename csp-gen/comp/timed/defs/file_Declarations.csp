@@ -1,0 +1,1604 @@
+
+
+
+
+-- compileSelfContainedOperation
+module OP_disableHV
+exports
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+
+	-- flow channels
+	channel internal__ : TIDS
+	
+	-- The following are now declared per state (using modules)
+	--channel enter, entered: NIDS
+	channel exit
+	channel exited
+	channel terminate
+	
+	-- variable channels
+	channel get_setPoint, set_setPoint, setL_setPoint, setR_setPoint: core_real
+	channel get_res, set_res, setL_res, setR_res: core_boolean
+	channel get_errorFlag, set_errorFlag, setL_errorFlag, setR_errorFlag: core_boolean
+	channel get_lim, set_lim, setL_lim, setR_lim: core_boolean
+	channel get_supplyLim, set_supplyLim, setL_supplyLim, setR_supplyLim: core_boolean
+	channel get_ActualHV, set_ActualHV, setL_ActualHV, setR_ActualHV: core_real
+	channel get_errorAck, set_errorAck, setL_errorAck, setR_errorAck: core_boolean
+	channel get_overLimit, set_overLimit, setL_overLimit, setR_overLimit: core_real
+	channel get_underLimit, set_underLimit, setL_underLimit, setR_underLimit: core_real
+	
+	-- shared variable channels
+	channel set_EXT_setPoint: core_real
+	channel set_EXT_res: core_boolean
+	channel set_EXT_errorFlag: core_boolean
+	channel set_EXT_lim: core_boolean
+	channel set_EXT_supplyLim: core_boolean
+	channel set_EXT_ActualHV: core_real
+	channel set_EXT_errorAck: core_boolean
+	channel set_EXT_overLimit: core_real
+	channel set_EXT_underLimit: core_real
+	
+	-- local variable channels for defined operations that are required by the state machine
+	
+	-- declaring state machine events
+	channel int_pwmSignal__: TIDS.InOut.Power
+	channel int_pwmSignal: InOut.Power
+	
+	-- declaring call and ret events for undefined operations
+	
+	enterCSet = {|
+	i0::enter,
+	s1::enter,
+	f0::enter,
+	s0::enter
+	|}
+	
+	enteredCSet = 	{|
+	s1::entered,
+	f0::entered,
+	s0::entered
+	|}
+	
+	internal_events = union(enteredCSet,union(enterCSet,{|exit,exited|}))
+	
+	shared_variable_events = {|
+		set_EXT_setPoint,
+		set_EXT_res,
+		set_EXT_errorFlag,
+		set_EXT_lim,
+		set_EXT_supplyLim,
+		set_EXT_ActualHV,
+		set_EXT_errorAck,
+		set_EXT_overLimit,
+		set_EXT_underLimit
+	|}
+	
+	
+	channel clockReset, clockResetL, clockResetR 
+	
+	localClockResets = {||}
+	
+	
+	channel get_CLID_f0 : CLID_f0_clock_type
+	channel get_CLID_s1 : CLID_s1_clock_type
+	channel get_CLID_s0 : CLID_s0_clock_type
+	
+	channel increment__
+	
+	CLID_f0_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	CLID_s1_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	CLID_s0_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	
+	
+	Timed(OneStep) {
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_disableHV_t0
+		              | TID_disableHV_t1
+		              | TID_disableHV_t2
+		              | TID_disableHV_t3
+		
+		}
+		-- declaring all nodes
+		
+		----------------------------------------------------------------------
+		-- Initial: i0
+		module i0
+		exports
+		
+			channel enter, exit
+			
+			Timed(OneStep) {
+				D__(id__,
+							arg) = dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; (MStop /\ exit -> Inactive)
+						within
+							Inactive)
+							
+				VS_O__(id__,
+							arg) = D__(id__,
+							arg)
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- State: s1
+		module s1
+		
+		enterCSet = {}
+		
+		enteredCSet = {}
+		
+		exports
+		
+			--  Declarations
+			-- declaring identifiers of transitions
+			datatype TIDS = NULLTRANSITION__
+			
+			channel internal__ : TIDS
+			channel enter, entered, exit, exited
+			channel enteredL, enteredR
+			channel end__
+			
+							
+			
+			
+			channel increment__
+			
+			
+			--	Nodes
+			-- declaring all nodes
+			
+			TransitionSync = {||}
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				--  Note that FDR has problems with efficiently compiling the process below
+				-- 	if using a different recursion pattern.
+				D__(id__,
+							arg) = 
+				dbisim(let
+					Inactive = (MStop /\ enter -> SKIP) ; true & (set_setPoint!0 -> SKIP)
+					 ; 
+								Behaviour ; 
+								SKIP ; 
+								exited -> SKIP ; Inactive
+				
+					Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+				within
+					Inactive)
+					
+				VS_O__(id__,
+							arg) = 
+					dbisim(let
+						Inactive = (MStop /\ enter -> SKIP) ; true & (set_setPoint!0 -> SKIP)
+						 ; 
+									Behaviour ; 
+									SKIP ; 
+									exited -> SKIP ; Inactive
+				
+						Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+					within
+						Inactive)
+				
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- Final state: f0
+		module f0
+		
+		exports
+		
+			channel enter, entered, exit, exited
+			channel enteredL, enteredR
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				D__(id__,
+							arg) = 
+				dbisim(let
+					Inactive = (MStop /\ enter -> SKIP) ; Behaviour ; exited -> Inactive
+					Behaviour = entered -> (MStop /\ exit -> SKIP)
+				within
+					Inactive)
+					
+				VS_O__(id__,
+							arg) = D__(id__,
+							arg)
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- State: s0
+		module s0
+		
+		enterCSet = {}
+		
+		enteredCSet = {}
+		
+		exports
+		
+			--  Declarations
+			-- declaring identifiers of transitions
+			datatype TIDS = NULLTRANSITION__
+			
+			channel internal__ : TIDS
+			channel enter, entered, exit, exited
+			channel enteredL, enteredR
+			channel end__
+			
+							
+			
+			
+			channel increment__
+			
+			
+			--	Nodes
+			-- declaring all nodes
+			
+			TransitionSync = {||}
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				--  Note that FDR has problems with efficiently compiling the process below
+				-- 	if using a different recursion pattern.
+				D__(id__,
+							arg) = 
+				dbisim(let
+					Inactive = (MStop /\ enter -> SKIP) ; Deadline(true&(int_pwmSignal.out!Power_Off -> SKIP),0)
+					 ; 
+								Behaviour ; 
+								SKIP ; 
+								exited -> SKIP ; Inactive
+				
+					Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+				within
+					Inactive)
+					
+				VS_O__(id__,
+							arg) = 
+					dbisim(let
+						Inactive = (MStop /\ enter -> SKIP) ; Deadline(true&(int_pwmSignal.out!Power_Off -> SKIP),0)
+						 ; 
+									Behaviour ; 
+									SKIP ; 
+									exited -> SKIP ; Inactive
+				
+						Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+					within
+						Inactive)
+				
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		Timed(OneStep) {
+		
+		TransitionSync = {|internal__.TID_disableHV_t0,
+		internal__.TID_disableHV_t1,
+		internal__.TID_disableHV_t2,
+		internal__.TID_disableHV_t3|}
+		
+		-- The following is obviously not efficient for FDR to compile.
+		-- For efficiency reasons a stepwise composition should be implemented instead.
+		ComposeNodes_aux(id__,
+					arg) = [| { up__ } |] proc__ : {i0::D__(id__,
+					arg),s1::D__(id__,
+					arg),f0::D__(id__,
+					arg),s0::D__(id__,
+					arg)} @ proc__
+		
+		ComposeNodes_VS_O_aux(id__,
+					arg) = [| { up__ } |] proc__ : {i0::VS_O__(id__,
+					arg),s1::VS_O__(id__,
+					arg),f0::VS_O__(id__,
+					arg),s0::VS_O__(id__,
+					arg)} @ proc__
+		
+		ComposeNodes(id__,
+					arg) = ComposeNodes_aux(id__,
+					arg) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__,
+					arg)
+		
+		ComposeNodes_VS_O(id__,
+					arg) = ComposeNodes_VS_O_aux(id__,
+					arg) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__,
+					arg)
+		
+		-- transition deadlines
+		
+		
+		TDeadlines(id__,
+					arg) = MStop
+		
+		TDeadlinesSync = {||}
+		
+		Transitions_aux(id__,
+					arg) = ((up__ -> SKIP
+		[] dbisim(((arg==false))&(internal__!TID_disableHV_t0 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true & (set_res!false -> SKIP)
+		 ; f0::enter -> SKIP)))
+		[] dbisim(((arg==true))&(internal__!TID_disableHV_t1 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true & (set_res!true -> SKIP)
+		 ; f0::enter -> SKIP)))
+		[] dbisim((true)&(internal__!TID_disableHV_t2 -> SKIP ;  ((SKIP
+		 ; s0::enter -> SKIP))))
+		[] dbisim((true)&(internal__!TID_disableHV_t3 -> SKIP ;  ((MStop /\ exited -> SKIP) ; SKIP
+		 ; s1::enter -> SKIP)))
+		)
+		) ; Transitions_aux(id__,
+					arg)
+		
+		Transitions(id__,
+					arg) = dbisim((dbisim(Transitions_aux(id__,
+					arg))[[up__ <- up__, up__ <- timed_up__]]
+							  [| union(TransitionSync,{|timed_up__|}) |] 
+							  Transitons_Time_Sync)\{|timed_up__|})
+		
+		Transitons_Time_Sync = TimedInterrupt(RUN(union(TransitionSync,{tock})),1);
+								timed_up__ -> Transitons_Time_Sync
+		
+		Behaviours(id__,
+					arg) = dbisim((
+		 ((ComposeNodes(id__,
+		 			arg)[[s1::exit <- x__ | x__ <- {|exit,internal__.TID_disableHV_t0,internal__.TID_disableHV_t1|}]]
+		 [[f0::exit <- x__ | x__ <- {|exit,terminate|}]]
+		 [[s0::exit <- x__ | x__ <- {|exit,internal__.TID_disableHV_t3|}]]
+		 [[i0::exit <- x__ | x__ <- {|internal__.TID_disableHV_t2|}]]
+		 [[  
+		 s1::exited <- exited,
+		 f0::exited <- exited,
+		 s0::exited <- exited
+		 ]]
+		 )
+		  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+		 )
+		 [| union(union(union(enterCSet,TransitionSync),{| exited |}),{|up__
+		|}) |]
+		 ((i0::enter -> Transitions(id__,
+		 			arg))
+		  [[ up__ <- x__ | x__ <- {| up__ |} ]]
+		 )
+		)
+		\ union(enterCSet,{| exited, internal__ |})
+		 [| {exit} |] STOP)
+		
+		Behaviours_VS_O(id__,
+					arg) = dbisim((
+		 ((ComposeNodes_VS_O(id__,
+		 			arg)[[s1::exit <- x__ | x__ <- {|exit,internal__.TID_disableHV_t0,internal__.TID_disableHV_t1|}]]
+		 [[f0::exit <- x__ | x__ <- {|exit,terminate|}]]
+		 [[s0::exit <- x__ | x__ <- {|exit,internal__.TID_disableHV_t3|}]]
+		 [[i0::exit <- x__ | x__ <- {|internal__.TID_disableHV_t2|}]]
+		 [[  
+		 s1::exited <- exited,
+		 f0::exited <- exited,
+		 s0::exited <- exited
+		 ]]
+		 )
+		  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+		 )
+		 [| union(union(union(enterCSet,TransitionSync),{| exited |}),{|up__
+		|}) |]
+		 ((i0::enter -> Transitions(id__,
+		 			arg))
+		  [[ up__ <- x__ | x__ <- {| up__ |} ]]
+		 )
+		)
+		\ union(enterCSet,{| exited, internal__ |})
+		 [| {exit} |] STOP)
+		
+		-- memory process
+		
+		Memory_CLID_f0(x__) =
+			f0::entered -> Memory_CLID_f0(0)
+			[]
+			increment__ -> Memory_CLID_f0(Plus(x__,1,CLID_f0_clock_type))
+			[]
+			get_CLID_f0!x__ -> Memory_CLID_f0(x__)
+			
+		Clock_CLID_f0 = 
+			(Memory_CLID_f0(0)
+			 [| {| get_CLID_f0,f0::entered, increment__ |} |] 
+			 Clock_Control_CLID_f0) \{| increment__ |}
+			 
+		Clock_Control_CLID_f0 = TimedInterrupt(RUN({|get_CLID_f0,f0::entered,tock|}),1); increment__ -> Clock_Control_CLID_f0 
+		Memory_CLID_s1(x__) =
+			s1::entered -> Memory_CLID_s1(0)
+			[]
+			increment__ -> Memory_CLID_s1(Plus(x__,1,CLID_s1_clock_type))
+			[]
+			get_CLID_s1!x__ -> Memory_CLID_s1(x__)
+			
+		Clock_CLID_s1 = 
+			(Memory_CLID_s1(0)
+			 [| {| get_CLID_s1,s1::entered, increment__ |} |] 
+			 Clock_Control_CLID_s1) \{| increment__ |}
+			 
+		Clock_Control_CLID_s1 = TimedInterrupt(RUN({|get_CLID_s1,s1::entered,tock|}),1); increment__ -> Clock_Control_CLID_s1 
+		Memory_CLID_s0(x__) =
+			s0::entered -> Memory_CLID_s0(0)
+			[]
+			increment__ -> Memory_CLID_s0(Plus(x__,1,CLID_s0_clock_type))
+			[]
+			get_CLID_s0!x__ -> Memory_CLID_s0(x__)
+			
+		Clock_CLID_s0 = 
+			(Memory_CLID_s0(0)
+			 [| {| get_CLID_s0,s0::entered, increment__ |} |] 
+			 Clock_Control_CLID_s0) \{| increment__ |}
+			 
+		Clock_Control_CLID_s0 = TimedInterrupt(RUN({|get_CLID_s0,s0::entered,tock|}),1); increment__ -> Clock_Control_CLID_s0 
+		
+		
+		Memory(id__,
+					arg) =
+			STOP
+		
+		Clocks = 
+		dbisim(Clock_CLID_f0)
+		|||
+		dbisim(Clock_CLID_s1)
+		|||
+		dbisim(Clock_CLID_s0)
+		Memory_setPoint(setPoint) =
+			get_setPoint!setPoint -> Memory_setPoint(setPoint)
+			[]
+			set_setPoint?x__ -> Memory_setPoint(x__)
+			[]
+			set_EXT_setPoint?x__ -> Memory_setPoint(x__)
+		Memory_res(res) =
+			get_res!res -> Memory_res(res)
+			[]
+			set_res?x__ -> Memory_res(x__)
+			[]
+			set_EXT_res?x__ -> Memory_res(x__)
+		Memory_errorFlag(errorFlag) =
+			get_errorFlag!errorFlag -> Memory_errorFlag(errorFlag)
+			[]
+			set_errorFlag?x__ -> Memory_errorFlag(x__)
+			[]
+			set_EXT_errorFlag?x__ -> Memory_errorFlag(x__)
+		Memory_lim(lim) =
+			get_lim!lim -> Memory_lim(lim)
+			[]
+			set_lim?x__ -> Memory_lim(x__)
+			[]
+			set_EXT_lim?x__ -> Memory_lim(x__)
+		Memory_supplyLim(supplyLim) =
+			get_supplyLim!supplyLim -> Memory_supplyLim(supplyLim)
+			[]
+			set_supplyLim?x__ -> Memory_supplyLim(x__)
+			[]
+			set_EXT_supplyLim?x__ -> Memory_supplyLim(x__)
+		Memory_ActualHV(ActualHV) =
+			get_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
+			[]
+			set_ActualHV?x__ -> Memory_ActualHV(x__)
+			[]
+			set_EXT_ActualHV?x__ -> Memory_ActualHV(x__)
+		Memory_errorAck(errorAck) =
+			get_errorAck!errorAck -> Memory_errorAck(errorAck)
+			[]
+			set_errorAck?x__ -> Memory_errorAck(x__)
+			[]
+			set_EXT_errorAck?x__ -> Memory_errorAck(x__)
+		Memory_overLimit(overLimit) =
+			get_overLimit!overLimit -> Memory_overLimit(overLimit)
+			[]
+			set_overLimit?x__ -> Memory_overLimit(x__)
+			[]
+			set_EXT_overLimit?x__ -> Memory_overLimit(x__)
+		Memory_underLimit(underLimit) =
+			get_underLimit!underLimit -> Memory_underLimit(underLimit)
+			[]
+			set_underLimit?x__ -> Memory_underLimit(x__)
+			[]
+			set_EXT_underLimit?x__ -> Memory_underLimit(x__)
+		
+		SharedVariableMemory(id__,
+					arg) =
+			Memory_setPoint(0)
+			|||
+			Memory_res(false)
+			|||
+			Memory_errorFlag(true)
+			|||
+			Memory_lim(false)
+			|||
+			Memory_supplyLim(false)
+			|||
+			Memory_ActualHV(0)
+			|||
+			Memory_errorAck(false)
+			|||
+			Memory_overLimit(0)
+			|||
+			Memory_underLimit(0)
+		
+		SharedVariablesSyncSet = {|get_setPoint,set_setPoint,set_EXT_setPoint,get_res,set_res,set_EXT_res,get_errorFlag,set_errorFlag,set_EXT_errorFlag,get_lim,set_lim,set_EXT_lim,get_supplyLim,set_supplyLim,set_EXT_supplyLim,get_ActualHV,set_ActualHV,set_EXT_ActualHV,get_errorAck,set_errorAck,set_EXT_errorAck,get_overLimit,set_overLimit,set_EXT_overLimit,get_underLimit,set_underLimit,set_EXT_underLimit|}
+		
+		SharedVariableHidingSet = {|get_setPoint,get_res,get_errorFlag,get_lim,get_supplyLim,get_ActualHV,get_errorAck,get_overLimit,get_underLimit|}
+		
+		MachineMemorySyncSet = 
+			union({||}
+			,
+				  {|
+				  get_CLID_f0,f0::entered,
+				  get_CLID_s1,s1::entered,
+				  get_CLID_s0,s0::entered
+				  |}
+				  )
+		
+		MachineMemoryHidingSet = 
+			union({||}
+			,
+				  {|
+				  get_CLID_f0,
+				  get_CLID_s1,
+				  get_CLID_s0
+				  |}
+				  )
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+						
+		-- main process
+				
+		STM(id__, arg) = (AUX(id__, arg))\{terminate} 
+		
+		AUX(id__, arg) = (
+			(
+				(Behaviours(id__,
+							arg)
+				 [|MachineMemorySyncSet|]
+				 (Memory(id__,
+				 			arg) ||| Clocks))
+			)[[
+				int_pwmSignal__.x____ <- int_pwmSignal
+				| x____ <- TIDS
+			]]
+			\MachineMemoryHidingSet
+		)
+		[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		STM_VS_O(id__, arg) = (AUX(id__, arg))\{terminate} 
+		
+		AUX_VS_O(id__, arg) = (
+			(
+				(Behaviours_VS_O(id__,
+							arg)
+				 [|MachineMemorySyncSet|]
+				 (Memory(id__,
+				 			arg) ||| Clocks))
+			)[[
+				int_pwmSignal__.x____ <- int_pwmSignal
+				| x____ <- TIDS
+			]]
+			\MachineMemoryHidingSet
+		)
+		[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+		
+		FVS__(id__, arg) = STM_VS_O(id__, arg)
+		
+		
+		D__(id__, arg) = timed_priority(STM(id__, arg) \ union(internal_events,localClockResets))
+		O__(id__, arg) = dbisim(D__(id__, arg))
+		VS__(id__, arg) = FVS__(id__, arg)
+		VS_O__(id__, arg) = dbisim(FVS__(id__, arg))
+		HEXT__(id__, arg) = O__(id__, arg) [|shared_variable_events|] SKIP
+		FVS_C__(id__, arg) = dbisim(timed_priority(STM(id__, arg) \ internal_events))
+		HUP__(id__, arg) = timed_priority(O__(id__, arg) [|{up__}|] SKIP)
+	}
+endmodule
+-- compileSelfContainedOperation
+module OP_checkLimits
+exports
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+
+	-- flow channels
+	channel internal__ : TIDS
+	
+	-- The following are now declared per state (using modules)
+	--channel enter, entered: NIDS
+	channel exit
+	channel exited
+	channel terminate
+	
+	-- variable channels
+	channel get_setPoint, set_setPoint, setL_setPoint, setR_setPoint: core_real
+	channel get_res, set_res, setL_res, setR_res: core_boolean
+	channel get_errorFlag, set_errorFlag, setL_errorFlag, setR_errorFlag: core_boolean
+	channel get_lim, set_lim, setL_lim, setR_lim: core_boolean
+	channel get_supplyLim, set_supplyLim, setL_supplyLim, setR_supplyLim: core_boolean
+	channel get_ActualHV, set_ActualHV, setL_ActualHV, setR_ActualHV: core_real
+	channel get_errorAck, set_errorAck, setL_errorAck, setR_errorAck: core_boolean
+	channel get_overLimit, set_overLimit, setL_overLimit, setR_overLimit: core_real
+	channel get_underLimit, set_underLimit, setL_underLimit, setR_underLimit: core_real
+	
+	-- shared variable channels
+	channel set_EXT_setPoint: core_real
+	channel set_EXT_res: core_boolean
+	channel set_EXT_errorFlag: core_boolean
+	channel set_EXT_lim: core_boolean
+	channel set_EXT_supplyLim: core_boolean
+	channel set_EXT_ActualHV: core_real
+	channel set_EXT_errorAck: core_boolean
+	channel set_EXT_overLimit: core_real
+	channel set_EXT_underLimit: core_real
+	
+	-- local variable channels for defined operations that are required by the state machine
+	
+	-- declaring state machine events
+	channel ext_setPoint__: TIDS.InOut.core_real
+	channel ext_setPoint: InOut.core_real
+	channel ext_pow24VStatus__: TIDS.InOut.Power
+	channel ext_pow24VStatus: InOut.Power
+	
+	-- declaring call and ret events for undefined operations
+	
+	enterCSet = {|
+	i0::enter,
+	s0::enter,
+	f0::enter
+	|}
+	
+	enteredCSet = 	{|
+	s0::entered,
+	f0::entered
+	|}
+	
+	internal_events = union(enteredCSet,union(enterCSet,{|exit,exited|}))
+	
+	shared_variable_events = {|
+		set_EXT_setPoint,
+		set_EXT_res,
+		set_EXT_errorFlag,
+		set_EXT_lim,
+		set_EXT_supplyLim,
+		set_EXT_ActualHV,
+		set_EXT_errorAck,
+		set_EXT_overLimit,
+		set_EXT_underLimit
+	|}
+	
+	
+	channel clockReset, clockResetL, clockResetR 
+	
+	localClockResets = {||}
+	
+	
+	channel get_CLID_s0 : CLID_s0_clock_type
+	channel get_CLID_f0 : CLID_f0_clock_type
+	
+	channel increment__
+	
+	CLID_s0_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	CLID_f0_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	
+	
+	Timed(OneStep) {
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_checkLimits_t0
+		              | TID_checkLimits_t1
+		              | TID_checkLimits_t2
+		
+		}
+		-- declaring all nodes
+		
+		----------------------------------------------------------------------
+		-- Initial: i0
+		module i0
+		exports
+		
+			channel enter, exit
+			
+			Timed(OneStep) {
+				D__(id__) = dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; (MStop /\ exit -> Inactive)
+						within
+							Inactive)
+							
+				VS_O__(id__) = D__(id__)
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- State: s0
+		module s0
+		
+		enterCSet = {}
+		
+		enteredCSet = {}
+		
+		exports
+		
+			--  Declarations
+			-- declaring identifiers of transitions
+			datatype TIDS = NULLTRANSITION__
+			
+			channel internal__ : TIDS
+			channel enter, entered, exit, exited
+			channel enteredL, enteredR
+			channel end__
+			
+							
+			
+			
+			channel increment__
+			
+			
+			--	Nodes
+			-- declaring all nodes
+			
+			TransitionSync = {||}
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				--  Note that FDR has problems with efficiently compiling the process below
+				-- 	if using a different recursion pattern.
+				D__(id__) = 
+				dbisim(let
+					Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+								Behaviour ; 
+								SKIP ; 
+								exited -> SKIP ; Inactive
+				
+					Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+				within
+					Inactive)
+					
+				VS_O__(id__) = 
+					dbisim(let
+						Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+									Behaviour ; 
+									SKIP ; 
+									exited -> SKIP ; Inactive
+				
+						Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+					within
+						Inactive)
+				
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- Final state: f0
+		module f0
+		
+		exports
+		
+			channel enter, entered, exit, exited
+			channel enteredL, enteredR
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				D__(id__) = 
+				dbisim(let
+					Inactive = (MStop /\ enter -> SKIP) ; Behaviour ; exited -> Inactive
+					Behaviour = entered -> (MStop /\ exit -> SKIP)
+				within
+					Inactive)
+					
+				VS_O__(id__) = D__(id__)
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		Timed(OneStep) {
+		
+		TransitionSync = {|internal__.TID_checkLimits_t0,
+		internal__.TID_checkLimits_t1,
+		internal__.TID_checkLimits_t2|}
+		
+		-- The following is obviously not efficient for FDR to compile.
+		-- For efficiency reasons a stepwise composition should be implemented instead.
+		ComposeNodes_aux(id__) = [| { up__ } |] proc__ : {i0::D__(id__),s0::D__(id__),f0::D__(id__)} @ proc__
+		
+		ComposeNodes_VS_O_aux(id__) = [| { up__ } |] proc__ : {i0::VS_O__(id__),s0::VS_O__(id__),f0::VS_O__(id__)} @ proc__
+		
+		ComposeNodes(id__) = ComposeNodes_aux(id__) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__)
+		
+		ComposeNodes_VS_O(id__) = ComposeNodes_VS_O_aux(id__) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__)
+		
+		-- transition deadlines
+		
+		
+		TDeadlines(id__) = MStop
+		
+		TDeadlinesSync = {||}
+		
+		Transitions_aux(id__) = (get_overLimit?overLimit -> get_ActualHV?ActualHV -> get_underLimit?underLimit -> (up__ -> SKIP
+		[] dbisim((true)&(internal__!TID_checkLimits_t0 -> SKIP ;  ((SKIP
+		 ; s0::enter -> SKIP))))
+		[] dbisim((((ActualHV<=overLimit) and (ActualHV>=underLimit)))&(internal__!TID_checkLimits_t1 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true & (set_lim!false -> SKIP)
+		 ; f0::enter -> SKIP)))
+		[] dbisim((((ActualHV<underLimit) or (ActualHV>overLimit)))&(internal__!TID_checkLimits_t2 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true & (set_lim!true -> SKIP)
+		 ; f0::enter -> SKIP)))
+		)
+		) ; Transitions_aux(id__)
+		
+		Transitions(id__) = dbisim((dbisim(Transitions_aux(id__))[[up__ <- up__, up__ <- timed_up__]]
+							  [| union(TransitionSync,{|timed_up__|}) |] 
+							  Transitons_Time_Sync)\{|timed_up__|})
+		
+		Transitons_Time_Sync = TimedInterrupt(RUN(union(TransitionSync,{tock})),1);
+								timed_up__ -> Transitons_Time_Sync
+		
+		Behaviours(id__) = dbisim((
+		 ((ComposeNodes(id__)[[s0::exit <- x__ | x__ <- {|exit,internal__.TID_checkLimits_t1,internal__.TID_checkLimits_t2|}]]
+		 [[f0::exit <- x__ | x__ <- {|exit,terminate|}]]
+		 [[i0::exit <- x__ | x__ <- {|internal__.TID_checkLimits_t0|}]]
+		 [[  
+		 s0::exited <- exited,
+		 f0::exited <- exited
+		 ]]
+		 )
+		  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+		  [[set_overLimit <- setL_overLimit,set_ActualHV <- setL_ActualHV,set_underLimit <- setL_underLimit]]
+		 )
+		 [| union(union(union(enterCSet,TransitionSync),{| exited |}),{|up__
+		 			,setL_overLimit
+		 			,setL_ActualHV
+		 			,setL_underLimit
+		|}) |]
+		 ((i0::enter -> Transitions(id__))
+		  [[ up__ <- x__ | x__ <- {| up__,setL_overLimit,setL_ActualHV,setL_underLimit |} ]]
+		 )
+		)[[setL_overLimit <- set_overLimit,setL_ActualHV <- set_ActualHV,setL_underLimit <- set_underLimit]]
+		\ union(enterCSet,{| exited, internal__ |})
+		 [| {exit} |] STOP)
+		
+		Behaviours_VS_O(id__) = dbisim((
+		 ((ComposeNodes_VS_O(id__)[[s0::exit <- x__ | x__ <- {|exit,internal__.TID_checkLimits_t1,internal__.TID_checkLimits_t2|}]]
+		 [[f0::exit <- x__ | x__ <- {|exit,terminate|}]]
+		 [[i0::exit <- x__ | x__ <- {|internal__.TID_checkLimits_t0|}]]
+		 [[  
+		 s0::exited <- exited,
+		 f0::exited <- exited
+		 ]]
+		 )
+		  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+		  [[set_overLimit <- setL_overLimit,set_ActualHV <- setL_ActualHV,set_underLimit <- setL_underLimit]]
+		 )
+		 [| union(union(union(enterCSet,TransitionSync),{| exited |}),{|up__
+		 			,setL_overLimit
+		 			,setL_ActualHV
+		 			,setL_underLimit
+		|}) |]
+		 ((i0::enter -> Transitions(id__))
+		  [[ up__ <- x__ | x__ <- {| up__,setL_overLimit,setL_ActualHV,setL_underLimit |} ]]
+		 )
+		)[[setL_overLimit <- set_overLimit,setL_ActualHV <- set_ActualHV,setL_underLimit <- set_underLimit]]
+		\ union(enterCSet,{| exited, internal__ |})
+		 [| {exit} |] STOP)
+		
+		-- memory process
+		
+		Memory_CLID_s0(x__) =
+			s0::entered -> Memory_CLID_s0(0)
+			[]
+			increment__ -> Memory_CLID_s0(Plus(x__,1,CLID_s0_clock_type))
+			[]
+			get_CLID_s0!x__ -> Memory_CLID_s0(x__)
+			
+		Clock_CLID_s0 = 
+			(Memory_CLID_s0(0)
+			 [| {| get_CLID_s0,s0::entered, increment__ |} |] 
+			 Clock_Control_CLID_s0) \{| increment__ |}
+			 
+		Clock_Control_CLID_s0 = TimedInterrupt(RUN({|get_CLID_s0,s0::entered,tock|}),1); increment__ -> Clock_Control_CLID_s0 
+		Memory_CLID_f0(x__) =
+			f0::entered -> Memory_CLID_f0(0)
+			[]
+			increment__ -> Memory_CLID_f0(Plus(x__,1,CLID_f0_clock_type))
+			[]
+			get_CLID_f0!x__ -> Memory_CLID_f0(x__)
+			
+		Clock_CLID_f0 = 
+			(Memory_CLID_f0(0)
+			 [| {| get_CLID_f0,f0::entered, increment__ |} |] 
+			 Clock_Control_CLID_f0) \{| increment__ |}
+			 
+		Clock_Control_CLID_f0 = TimedInterrupt(RUN({|get_CLID_f0,f0::entered,tock|}),1); increment__ -> Clock_Control_CLID_f0 
+		
+		
+		Memory(id__) =
+			STOP
+		
+		Clocks = 
+		dbisim(Clock_CLID_s0)
+		|||
+		dbisim(Clock_CLID_f0)
+		Memory_setPoint(setPoint) =
+			get_setPoint!setPoint -> Memory_setPoint(setPoint)
+			[]
+			set_setPoint?x__ -> Memory_setPoint(x__)
+			[]
+			set_EXT_setPoint?x__ -> Memory_setPoint(x__)
+		Memory_res(res) =
+			get_res!res -> Memory_res(res)
+			[]
+			set_res?x__ -> Memory_res(x__)
+			[]
+			set_EXT_res?x__ -> Memory_res(x__)
+		Memory_errorFlag(errorFlag) =
+			get_errorFlag!errorFlag -> Memory_errorFlag(errorFlag)
+			[]
+			set_errorFlag?x__ -> Memory_errorFlag(x__)
+			[]
+			set_EXT_errorFlag?x__ -> Memory_errorFlag(x__)
+		Memory_lim(lim) =
+			get_lim!lim -> Memory_lim(lim)
+			[]
+			set_lim?x__ -> Memory_lim(x__)
+			[]
+			set_EXT_lim?x__ -> Memory_lim(x__)
+		Memory_supplyLim(supplyLim) =
+			get_supplyLim!supplyLim -> Memory_supplyLim(supplyLim)
+			[]
+			set_supplyLim?x__ -> Memory_supplyLim(x__)
+			[]
+			set_EXT_supplyLim?x__ -> Memory_supplyLim(x__)
+		Memory_ActualHV(ActualHV) =
+			get_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
+			[]
+			set_ActualHV?x__ -> Memory_ActualHV(x__)
+			[]
+			set_EXT_ActualHV?x__ -> Memory_ActualHV(x__)
+		Memory_errorAck(errorAck) =
+			get_errorAck!errorAck -> Memory_errorAck(errorAck)
+			[]
+			set_errorAck?x__ -> Memory_errorAck(x__)
+			[]
+			set_EXT_errorAck?x__ -> Memory_errorAck(x__)
+		Memory_overLimit(overLimit) =
+			get_overLimit!overLimit -> Memory_overLimit(overLimit)
+			[]
+			set_overLimit?x__ -> Memory_overLimit(x__)
+			[]
+			set_EXT_overLimit?x__ -> Memory_overLimit(x__)
+		Memory_underLimit(underLimit) =
+			get_underLimit!underLimit -> Memory_underLimit(underLimit)
+			[]
+			set_underLimit?x__ -> Memory_underLimit(x__)
+			[]
+			set_EXT_underLimit?x__ -> Memory_underLimit(x__)
+		
+		SharedVariableMemory(id__) =
+			Memory_setPoint(0)
+			|||
+			Memory_res(false)
+			|||
+			Memory_errorFlag(true)
+			|||
+			Memory_lim(false)
+			|||
+			Memory_supplyLim(false)
+			|||
+			Memory_ActualHV(0)
+			|||
+			Memory_errorAck(false)
+			|||
+			Memory_overLimit(0)
+			|||
+			Memory_underLimit(0)
+		
+		SharedVariablesSyncSet = {|get_setPoint,set_setPoint,set_EXT_setPoint,get_res,set_res,set_EXT_res,get_errorFlag,set_errorFlag,set_EXT_errorFlag,get_lim,set_lim,set_EXT_lim,get_supplyLim,set_supplyLim,set_EXT_supplyLim,get_ActualHV,set_ActualHV,set_EXT_ActualHV,get_errorAck,set_errorAck,set_EXT_errorAck,get_overLimit,set_overLimit,set_EXT_overLimit,get_underLimit,set_underLimit,set_EXT_underLimit|}
+		
+		SharedVariableHidingSet = {|get_setPoint,get_res,get_errorFlag,get_lim,get_supplyLim,get_ActualHV,get_errorAck,get_overLimit,get_underLimit|}
+		
+		MachineMemorySyncSet = 
+			union({||}
+			,
+				  {|
+				  get_CLID_s0,s0::entered,
+				  get_CLID_f0,f0::entered
+				  |}
+				  )
+		
+		MachineMemoryHidingSet = 
+			union({||}
+			,
+				  {|
+				  get_CLID_s0,
+				  get_CLID_f0
+				  |}
+				  )
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+						
+		-- main process
+				
+		STM(id__) = (AUX(id__))\{terminate} 
+		
+		AUX(id__) = (
+			(
+				(Behaviours(id__)
+				 [|MachineMemorySyncSet|]
+				 (Memory(id__) ||| Clocks))
+			)[[
+				ext_setPoint__.x____ <- ext_setPoint,
+				ext_pow24VStatus__.x____ <- ext_pow24VStatus
+				| x____ <- TIDS
+			]]
+			\MachineMemoryHidingSet
+		)
+		[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		STM_VS_O(id__) = (AUX(id__))\{terminate} 
+		
+		AUX_VS_O(id__) = (
+			(
+				(Behaviours_VS_O(id__)
+				 [|MachineMemorySyncSet|]
+				 (Memory(id__) ||| Clocks))
+			)[[
+				ext_setPoint__.x____ <- ext_setPoint,
+				ext_pow24VStatus__.x____ <- ext_pow24VStatus
+				| x____ <- TIDS
+			]]
+			\MachineMemoryHidingSet
+		)
+		[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+		
+		FVS__(id__) = STM_VS_O(id__)
+		
+		
+		D__(id__) = timed_priority(STM(id__) \ union(internal_events,localClockResets))
+		O__(id__) = dbisim(D__(id__))
+		VS__(id__) = FVS__(id__)
+		VS_O__(id__) = dbisim(FVS__(id__))
+		HEXT__(id__) = O__(id__) [|shared_variable_events|] SKIP
+		FVS_C__(id__) = dbisim(timed_priority(STM(id__) \ internal_events))
+		HUP__(id__) = timed_priority(O__(id__) [|{up__}|] SKIP)
+	}
+endmodule
+-- compileSelfContainedOperation
+module OP_supplyVoltCheck
+exports
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+
+	-- flow channels
+	channel internal__ : TIDS
+	
+	-- The following are now declared per state (using modules)
+	--channel enter, entered: NIDS
+	channel exit
+	channel exited
+	channel terminate
+	
+	-- variable channels
+	channel get_power, set_power, setL_power, setR_power: Power
+	channel get_setPoint, set_setPoint, setL_setPoint, setR_setPoint: core_real
+	channel get_res, set_res, setL_res, setR_res: core_boolean
+	channel get_errorFlag, set_errorFlag, setL_errorFlag, setR_errorFlag: core_boolean
+	channel get_lim, set_lim, setL_lim, setR_lim: core_boolean
+	channel get_supplyLim, set_supplyLim, setL_supplyLim, setR_supplyLim: core_boolean
+	channel get_ActualHV, set_ActualHV, setL_ActualHV, setR_ActualHV: core_real
+	channel get_errorAck, set_errorAck, setL_errorAck, setR_errorAck: core_boolean
+	channel get_overLimit, set_overLimit, setL_overLimit, setR_overLimit: core_real
+	channel get_underLimit, set_underLimit, setL_underLimit, setR_underLimit: core_real
+	
+	-- shared variable channels
+	channel set_EXT_setPoint: core_real
+	channel set_EXT_res: core_boolean
+	channel set_EXT_errorFlag: core_boolean
+	channel set_EXT_lim: core_boolean
+	channel set_EXT_supplyLim: core_boolean
+	channel set_EXT_ActualHV: core_real
+	channel set_EXT_errorAck: core_boolean
+	channel set_EXT_overLimit: core_real
+	channel set_EXT_underLimit: core_real
+	
+	-- local variable channels for defined operations that are required by the state machine
+	
+	-- declaring state machine events
+	channel ext_setPoint__: TIDS.InOut.core_real
+	channel ext_setPoint: InOut.core_real
+	channel ext_pow24VStatus__: TIDS.InOut.Power
+	channel ext_pow24VStatus: InOut.Power
+	
+	-- declaring call and ret events for undefined operations
+	
+	enterCSet = {|
+	i0::enter,
+	s0::enter,
+	f0::enter
+	|}
+	
+	enteredCSet = 	{|
+	s0::entered,
+	f0::entered
+	|}
+	
+	internal_events = union(enteredCSet,union(enterCSet,{|exit,exited|}))
+	
+	shared_variable_events = {|
+		set_EXT_setPoint,
+		set_EXT_res,
+		set_EXT_errorFlag,
+		set_EXT_lim,
+		set_EXT_supplyLim,
+		set_EXT_ActualHV,
+		set_EXT_errorAck,
+		set_EXT_overLimit,
+		set_EXT_underLimit
+	|}
+	
+	
+	channel clockReset, clockResetL, clockResetR 
+	
+	localClockResets = {||}
+	
+	
+	channel get_CLID_f0 : CLID_f0_clock_type
+	channel get_CLID_s0 : CLID_s0_clock_type
+	
+	channel increment__
+	
+	CLID_f0_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	CLID_s0_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	
+	
+	Timed(OneStep) {
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_supplyVoltCheck_t0
+		              | TID_supplyVoltCheck_t1
+		              | TID_supplyVoltCheck_t2
+		
+		}
+		-- declaring all nodes
+		
+		----------------------------------------------------------------------
+		-- Initial: i0
+		module i0
+		exports
+		
+			channel enter, exit
+			
+			Timed(OneStep) {
+				D__(id__) = dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; (MStop /\ exit -> Inactive)
+						within
+							Inactive)
+							
+				VS_O__(id__) = D__(id__)
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- State: s0
+		module s0
+		
+		enterCSet = {}
+		
+		enteredCSet = {}
+		
+		exports
+		
+			--  Declarations
+			-- declaring identifiers of transitions
+			datatype TIDS = NULLTRANSITION__
+			
+			channel internal__ : TIDS
+			channel enter, entered, exit, exited
+			channel enteredL, enteredR
+			channel end__
+			
+							
+			
+			
+			channel increment__
+			
+			
+			--	Nodes
+			-- declaring all nodes
+			
+			TransitionSync = {||}
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				--  Note that FDR has problems with efficiently compiling the process below
+				-- 	if using a different recursion pattern.
+				D__(id__) = 
+				dbisim(let
+					Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+								Behaviour ; 
+								SKIP ; 
+								exited -> SKIP ; Inactive
+				
+					Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+				within
+					Inactive)
+					
+				VS_O__(id__) = 
+					dbisim(let
+						Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+									Behaviour ; 
+									SKIP ; 
+									exited -> SKIP ; Inactive
+				
+						Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+					within
+						Inactive)
+				
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- Final state: f0
+		module f0
+		
+		exports
+		
+			channel enter, entered, exit, exited
+			channel enteredL, enteredR
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				D__(id__) = 
+				dbisim(let
+					Inactive = (MStop /\ enter -> SKIP) ; Behaviour ; exited -> Inactive
+					Behaviour = entered -> (MStop /\ exit -> SKIP)
+				within
+					Inactive)
+					
+				VS_O__(id__) = D__(id__)
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		Timed(OneStep) {
+		
+		TransitionSync = {|internal__.TID_supplyVoltCheck_t0,
+		ext_pow24VStatus__.TID_supplyVoltCheck_t1,
+		ext_pow24VStatus__.TID_supplyVoltCheck_t2|}
+		
+		-- The following is obviously not efficient for FDR to compile.
+		-- For efficiency reasons a stepwise composition should be implemented instead.
+		ComposeNodes_aux(id__) = [| { up__ } |] proc__ : {i0::D__(id__),s0::D__(id__),f0::D__(id__)} @ proc__
+		
+		ComposeNodes_VS_O_aux(id__) = [| { up__ } |] proc__ : {i0::VS_O__(id__),s0::VS_O__(id__),f0::VS_O__(id__)} @ proc__
+		
+		ComposeNodes(id__) = ComposeNodes_aux(id__) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__)
+		
+		ComposeNodes_VS_O(id__) = ComposeNodes_VS_O_aux(id__) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__)
+		
+		-- transition deadlines
+		
+		
+		TDeadlines(id__) = MStop
+		
+		TDeadlinesSync = {||}
+		
+		Transitions_aux(id__) = (get_power?power -> (up__ -> SKIP
+		[] dbisim((true)&(internal__!TID_supplyVoltCheck_t0 -> SKIP ;  ((SKIP
+		 ; s0::enter -> SKIP))))
+		[] dbisim((ext_pow24VStatus__!TID_supplyVoltCheck_t1.in?power:{power|power <- Power, (power==Power_On)} -> set_power!power -> SKIP ; ((MStop /\ exited -> SKIP) ; true & (set_lim!false -> SKIP)
+		 ; f0::enter -> SKIP)))
+		[] dbisim((ext_pow24VStatus__!TID_supplyVoltCheck_t2.in?power:{power|power <- Power, (power==Power_Off)} -> set_power!power -> SKIP ; ((MStop /\ exited -> SKIP) ; true & (set_lim!true -> SKIP)
+		 ; f0::enter -> SKIP)))
+		)
+		) ; Transitions_aux(id__)
+		
+		Transitions(id__) = dbisim((dbisim(Transitions_aux(id__))[[up__ <- up__, up__ <- timed_up__]]
+							  [| union(TransitionSync,{|timed_up__|}) |] 
+							  Transitons_Time_Sync)\{|timed_up__|})
+		
+		Transitons_Time_Sync = TimedInterrupt(RUN(union(TransitionSync,{tock})),1);
+								timed_up__ -> Transitons_Time_Sync
+		
+		Behaviours(id__) = dbisim((
+		 ((ComposeNodes(id__)[[s0::exit <- x__ | x__ <- {|exit,ext_pow24VStatus__.TID_supplyVoltCheck_t1.in,ext_pow24VStatus__.TID_supplyVoltCheck_t2.in|}]]
+		 [[f0::exit <- x__ | x__ <- {|exit,terminate|}]]
+		 [[i0::exit <- x__ | x__ <- {|internal__.TID_supplyVoltCheck_t0|}]]
+		 [[  
+		 s0::exited <- exited,
+		 f0::exited <- exited
+		 ]]
+		 )
+		  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+		  [[set_power <- setL_power]]
+		 )
+		 [| union(union(union(enterCSet,TransitionSync),{| exited |}),{|up__
+		 			,setL_power
+		|}) |]
+		 ((i0::enter -> Transitions(id__))
+		  [[ up__ <- x__ | x__ <- {| up__,setL_power |} ]]
+		 )
+		)[[setL_power <- set_power]]
+		\ union(enterCSet,{| exited, internal__ |})
+		 [| {exit} |] STOP)
+		
+		Behaviours_VS_O(id__) = dbisim((
+		 ((ComposeNodes_VS_O(id__)[[s0::exit <- x__ | x__ <- {|exit,ext_pow24VStatus__.TID_supplyVoltCheck_t1.in,ext_pow24VStatus__.TID_supplyVoltCheck_t2.in|}]]
+		 [[f0::exit <- x__ | x__ <- {|exit,terminate|}]]
+		 [[i0::exit <- x__ | x__ <- {|internal__.TID_supplyVoltCheck_t0|}]]
+		 [[  
+		 s0::exited <- exited,
+		 f0::exited <- exited
+		 ]]
+		 )
+		  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+		  [[set_power <- setL_power]]
+		 )
+		 [| union(union(union(enterCSet,TransitionSync),{| exited |}),{|up__
+		 			,setL_power
+		|}) |]
+		 ((i0::enter -> Transitions(id__))
+		  [[ up__ <- x__ | x__ <- {| up__,setL_power |} ]]
+		 )
+		)[[setL_power <- set_power]]
+		\ union(enterCSet,{| exited, internal__ |})
+		 [| {exit} |] STOP)
+		
+		-- memory process
+		Memory_power(x__) =
+			get_power!x__ -> Memory_power(x__)
+			[]
+			set_power?x__ -> Memory_power(x__)
+		
+		Memory_CLID_f0(x__) =
+			f0::entered -> Memory_CLID_f0(0)
+			[]
+			increment__ -> Memory_CLID_f0(Plus(x__,1,CLID_f0_clock_type))
+			[]
+			get_CLID_f0!x__ -> Memory_CLID_f0(x__)
+			
+		Clock_CLID_f0 = 
+			(Memory_CLID_f0(0)
+			 [| {| get_CLID_f0,f0::entered, increment__ |} |] 
+			 Clock_Control_CLID_f0) \{| increment__ |}
+			 
+		Clock_Control_CLID_f0 = TimedInterrupt(RUN({|get_CLID_f0,f0::entered,tock|}),1); increment__ -> Clock_Control_CLID_f0 
+		Memory_CLID_s0(x__) =
+			s0::entered -> Memory_CLID_s0(0)
+			[]
+			increment__ -> Memory_CLID_s0(Plus(x__,1,CLID_s0_clock_type))
+			[]
+			get_CLID_s0!x__ -> Memory_CLID_s0(x__)
+			
+		Clock_CLID_s0 = 
+			(Memory_CLID_s0(0)
+			 [| {| get_CLID_s0,s0::entered, increment__ |} |] 
+			 Clock_Control_CLID_s0) \{| increment__ |}
+			 
+		Clock_Control_CLID_s0 = TimedInterrupt(RUN({|get_CLID_s0,s0::entered,tock|}),1); increment__ -> Clock_Control_CLID_s0 
+		
+		
+		Memory(id__) =
+			dbisim(Memory_power(Power_On))
+		
+		Clocks = 
+		dbisim(Clock_CLID_f0)
+		|||
+		dbisim(Clock_CLID_s0)
+		Memory_setPoint(setPoint) =
+			get_setPoint!setPoint -> Memory_setPoint(setPoint)
+			[]
+			set_setPoint?x__ -> Memory_setPoint(x__)
+			[]
+			set_EXT_setPoint?x__ -> Memory_setPoint(x__)
+		Memory_res(res) =
+			get_res!res -> Memory_res(res)
+			[]
+			set_res?x__ -> Memory_res(x__)
+			[]
+			set_EXT_res?x__ -> Memory_res(x__)
+		Memory_errorFlag(errorFlag) =
+			get_errorFlag!errorFlag -> Memory_errorFlag(errorFlag)
+			[]
+			set_errorFlag?x__ -> Memory_errorFlag(x__)
+			[]
+			set_EXT_errorFlag?x__ -> Memory_errorFlag(x__)
+		Memory_lim(lim) =
+			get_lim!lim -> Memory_lim(lim)
+			[]
+			set_lim?x__ -> Memory_lim(x__)
+			[]
+			set_EXT_lim?x__ -> Memory_lim(x__)
+		Memory_supplyLim(supplyLim) =
+			get_supplyLim!supplyLim -> Memory_supplyLim(supplyLim)
+			[]
+			set_supplyLim?x__ -> Memory_supplyLim(x__)
+			[]
+			set_EXT_supplyLim?x__ -> Memory_supplyLim(x__)
+		Memory_ActualHV(ActualHV) =
+			get_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
+			[]
+			set_ActualHV?x__ -> Memory_ActualHV(x__)
+			[]
+			set_EXT_ActualHV?x__ -> Memory_ActualHV(x__)
+		Memory_errorAck(errorAck) =
+			get_errorAck!errorAck -> Memory_errorAck(errorAck)
+			[]
+			set_errorAck?x__ -> Memory_errorAck(x__)
+			[]
+			set_EXT_errorAck?x__ -> Memory_errorAck(x__)
+		Memory_overLimit(overLimit) =
+			get_overLimit!overLimit -> Memory_overLimit(overLimit)
+			[]
+			set_overLimit?x__ -> Memory_overLimit(x__)
+			[]
+			set_EXT_overLimit?x__ -> Memory_overLimit(x__)
+		Memory_underLimit(underLimit) =
+			get_underLimit!underLimit -> Memory_underLimit(underLimit)
+			[]
+			set_underLimit?x__ -> Memory_underLimit(x__)
+			[]
+			set_EXT_underLimit?x__ -> Memory_underLimit(x__)
+		
+		SharedVariableMemory(id__) =
+			Memory_setPoint(0)
+			|||
+			Memory_res(false)
+			|||
+			Memory_errorFlag(true)
+			|||
+			Memory_lim(false)
+			|||
+			Memory_supplyLim(false)
+			|||
+			Memory_ActualHV(0)
+			|||
+			Memory_errorAck(false)
+			|||
+			Memory_overLimit(0)
+			|||
+			Memory_underLimit(0)
+		
+		SharedVariablesSyncSet = {|get_setPoint,set_setPoint,set_EXT_setPoint,get_res,set_res,set_EXT_res,get_errorFlag,set_errorFlag,set_EXT_errorFlag,get_lim,set_lim,set_EXT_lim,get_supplyLim,set_supplyLim,set_EXT_supplyLim,get_ActualHV,set_ActualHV,set_EXT_ActualHV,get_errorAck,set_errorAck,set_EXT_errorAck,get_overLimit,set_overLimit,set_EXT_overLimit,get_underLimit,set_underLimit,set_EXT_underLimit|}
+		
+		SharedVariableHidingSet = {|get_setPoint,get_res,get_errorFlag,get_lim,get_supplyLim,get_ActualHV,get_errorAck,get_overLimit,get_underLimit|}
+		
+		MachineMemorySyncSet = 
+			union({|get_power,set_power|}
+			,
+				  {|
+				  get_CLID_f0,f0::entered,
+				  get_CLID_s0,s0::entered
+				  |}
+				  )
+		
+		MachineMemoryHidingSet = 
+			union({|get_power,set_power|}
+			,
+				  {|
+				  get_CLID_f0,
+				  get_CLID_s0
+				  |}
+				  )
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+						
+		-- main process
+				
+		STM(id__) = (AUX(id__))\{terminate} 
+		
+		AUX(id__) = (
+			(
+				(Behaviours(id__)
+				 [|MachineMemorySyncSet|]
+				 (Memory(id__) ||| Clocks))
+			)[[
+				ext_setPoint__.x____ <- ext_setPoint,
+				ext_pow24VStatus__.x____ <- ext_pow24VStatus
+				| x____ <- TIDS
+			]]
+			\MachineMemoryHidingSet
+		)
+		[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		STM_VS_O(id__) = (AUX(id__))\{terminate} 
+		
+		AUX_VS_O(id__) = (
+			(
+				(Behaviours_VS_O(id__)
+				 [|MachineMemorySyncSet|]
+				 (Memory(id__) ||| Clocks))
+			)[[
+				ext_setPoint__.x____ <- ext_setPoint,
+				ext_pow24VStatus__.x____ <- ext_pow24VStatus
+				| x____ <- TIDS
+			]]
+			\MachineMemoryHidingSet
+		)
+		[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+		
+		FVS__(id__) = STM_VS_O(id__)
+		
+		
+		D__(id__) = timed_priority(STM(id__) \ union(internal_events,localClockResets))
+		O__(id__) = dbisim(D__(id__))
+		VS__(id__) = FVS__(id__)
+		VS_O__(id__) = dbisim(FVS__(id__))
+		HEXT__(id__) = O__(id__) [|shared_variable_events|] SKIP
+		FVS_C__(id__) = dbisim(timed_priority(STM(id__) \ internal_events))
+		HUP__(id__) = timed_priority(O__(id__) [|{up__}|] SKIP)
+	}
+endmodule
+

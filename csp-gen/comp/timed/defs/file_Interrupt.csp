@@ -1,0 +1,1125 @@
+
+
+
+module Watchdog
+exports
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+
+	-- flow channels
+	channel internal__ : TIDS
+	
+	-- The following are now declared per state (using modules)
+	--channel enter, entered: NIDS
+	channel exit
+	channel exited
+	channel terminate
+	
+	-- variable channels
+	channel get_overLimit, set_overLimit, setL_overLimit, setR_overLimit: core_real
+	channel get_underLimit, set_underLimit, setL_underLimit, setR_underLimit: core_real
+	channel get_ActualHV, set_ActualHV, setL_ActualHV, setR_ActualHV: core_real
+	channel get_power, set_power, setL_power, setR_power: Power
+	
+	-- shared variable channels
+	
+	-- local variable channels for defined operations that are required by the state machine
+	
+	-- declaring state machine events
+	channel int_overLimit__: TIDS.InOut.core_real
+	channel int_overLimit: InOut.core_real
+	channel int_underLimit__: TIDS.InOut.core_real
+	channel int_underLimit: InOut.core_real
+	channel int_DisableHV__: TIDS.InOut
+	channel int_DisableHV: InOut
+	channel int_ActualHV__: TIDS.InOut.core_real
+	channel int_ActualHV: InOut.core_real
+	channel ext_pow24VStatus__: TIDS.InOut.Power
+	channel ext_pow24VStatus: InOut.Power
+	
+	-- declaring call and ret events for undefined operations
+	
+	enterCSet = {|
+	i0::enter,
+	s0::enter
+	|}
+	
+	enteredCSet = 	{|
+	s0::entered
+	|}
+	
+	internal_events = union(enteredCSet,union(enterCSet,{|exit,exited|}))
+	
+	shared_variable_events = {|
+	|}
+	
+	
+	channel clockReset, clockResetL, clockResetR 
+	
+	localClockResets = {||}
+	
+	
+	channel get_CLID_s0 : CLID_s0_clock_type
+	
+	channel increment__
+	
+	CLID_s0_clock_type = {0..(clock_type_max(Union({
+	{},
+	({10})
+	}))+1)}
+	
+
+		Timed(OneStep) {
+			-- Only the undefined operations are declared here.
+			-- If the state machine is in isolation, all required operations will be undefined.
+			-- If it is in the context of a controller, the required operations not provided by the
+			-- controller will be declared here, and the defined operations will be defined in the
+			-- context of the Controller module, and therefore within scope of the state machien module.
+			
+			
+			-- declaring identifiers of transitions
+			datatype TIDS = NULLTRANSITION__
+			              | TID_Watchdog_t0
+			              | TID_Watchdog_t1
+			
+			}
+			-- declaring all nodes
+			
+			----------------------------------------------------------------------
+			-- Initial: i0
+			module i0
+			exports
+			
+				channel enter, exit
+				
+				Timed(OneStep) {
+					D__(id__) = dbisim(let
+								Inactive = (MStop /\ enter -> SKIP) ; (MStop /\ exit -> Inactive)
+							within
+								Inactive)
+								
+					VS_O__(id__) = D__(id__)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- State: s0
+			module s0
+			
+			enterCSet = 
+					{|			i0::enter,
+						f0::enter,
+						Waiting::enter,
+						PowerStatusRead::enter,
+						ActualHVRead::enter,
+						PowerAndActualHVRead::enter
+					|}
+			enteredCSet = 
+					{|			f0::entered,
+						Waiting::entered,
+						PowerStatusRead::entered,
+						ActualHVRead::entered,
+						PowerAndActualHVRead::entered
+					|}
+			exports
+			
+				--  Declarations
+				-- declaring identifiers of transitions
+				datatype TIDS = NULLTRANSITION__
+				              | TID_Watchdog_s0_t0
+				              | TID_Watchdog_s0_t1
+				              | TID_Watchdog_s0_t3
+				              | TID_Watchdog_s0_t2
+				              | TID_Watchdog_s0_t4
+				              | TID_Watchdog_s0_t5
+				              | TID_Watchdog_s0_t6
+				              | TID_Watchdog_s0_t7
+				              | TID_Watchdog_s0_t8
+				              | TID_Watchdog_s0_t9
+				              | TID_Watchdog_s0_t10
+				
+				channel internal__ : TIDS
+				channel enter, entered, exit, exited
+				channel enteredL, enteredR
+				channel end__
+				
+								
+				channel int_overLimit__: TIDS.InOut.core_real
+				channel int_underLimit__: TIDS.InOut.core_real
+				channel int_DisableHV__: TIDS.InOut
+				channel int_ActualHV__: TIDS.InOut.core_real
+				channel ext_pow24VStatus__: TIDS.InOut.Power
+				
+				channel get_CLID_f0 : CLID_f0_clock_type
+				channel get_CLID_PowerStatusRead : CLID_PowerStatusRead_clock_type
+				channel get_CLID_ActualHVRead : CLID_ActualHVRead_clock_type
+				channel get_CLID_Waiting : CLID_Waiting_clock_type
+				channel get_CLID_PowerAndActualHVRead : CLID_PowerAndActualHVRead_clock_type
+				
+				channel increment__
+				
+				CLID_f0_clock_type = {0..(clock_type_max(Union({
+				{}
+				}))+1)}
+				CLID_PowerStatusRead_clock_type = {0..(clock_type_max(Union({
+				{}
+				}))+1)}
+				CLID_ActualHVRead_clock_type = {0..(clock_type_max(Union({
+				{}
+				}))+1)}
+				CLID_Waiting_clock_type = {0..(clock_type_max(Union({
+				{}
+				}))+1)}
+				CLID_PowerAndActualHVRead_clock_type = {0..(clock_type_max(Union({
+				{}
+				}))+1)}
+				
+				--	Nodes
+				-- declaring all nodes
+				
+				----------------------------------------------------------------------
+				-- Initial: i0
+				module i0
+				exports
+				
+					channel enter, exit
+					
+					Timed(OneStep) {
+						D__(id__) = dbisim(let
+									Inactive = (MStop /\ enter -> SKIP) ; (MStop /\ exit -> Inactive)
+								within
+									Inactive)
+									
+						VS_O__(id__) = D__(id__)
+					}
+				
+				endmodule
+				----------------------------------------------------------------------
+				
+				
+				----------------------------------------------------------------------
+				-- Final state: f0
+				module f0
+				
+				exports
+				
+					channel enter, entered, exit, exited
+					channel enteredL, enteredR
+					
+					Timed(OneStep) {
+						--	Rule: behaviours(Node)
+						D__(id__) = 
+						dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; Behaviour ; exited -> Inactive
+							Behaviour = entered -> (MStop /\ exit -> SKIP)
+						within
+							Inactive)
+							
+						VS_O__(id__) = D__(id__)
+					}
+				
+				endmodule
+				----------------------------------------------------------------------
+				
+				
+				----------------------------------------------------------------------
+				-- State: Waiting
+				module Waiting
+				
+				enterCSet = {}
+				
+				enteredCSet = {}
+				
+				exports
+				
+					--  Declarations
+					-- declaring identifiers of transitions
+					datatype TIDS = NULLTRANSITION__
+					
+					channel internal__ : TIDS
+					channel enter, entered, exit, exited
+					channel enteredL, enteredR
+					channel end__
+					
+									
+					
+					
+					channel increment__
+					
+					
+					--	Nodes
+					-- declaring all nodes
+					
+					TransitionSync = {||}
+					
+					Timed(OneStep) {
+						--	Rule: behaviours(Node)
+						--  Note that FDR has problems with efficiently compiling the process below
+						-- 	if using a different recursion pattern.
+						D__(id__) = 
+						dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+										Behaviour ; 
+										SKIP ; 
+										exited -> SKIP ; Inactive
+						
+							Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+						within
+							Inactive)
+							
+						VS_O__(id__) = 
+							dbisim(let
+								Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+											Behaviour ; 
+											SKIP ; 
+											exited -> SKIP ; Inactive
+						
+								Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+							within
+								Inactive)
+						
+					}
+				
+				endmodule
+				----------------------------------------------------------------------
+				
+				
+				----------------------------------------------------------------------
+				-- State: PowerStatusRead
+				module PowerStatusRead
+				
+				enterCSet = {}
+				
+				enteredCSet = {}
+				
+				exports
+				
+					--  Declarations
+					-- declaring identifiers of transitions
+					datatype TIDS = NULLTRANSITION__
+					
+					channel internal__ : TIDS
+					channel enter, entered, exit, exited
+					channel enteredL, enteredR
+					channel end__
+					
+									
+					
+					
+					channel increment__
+					
+					
+					--	Nodes
+					-- declaring all nodes
+					
+					TransitionSync = {||}
+					
+					Timed(OneStep) {
+						--	Rule: behaviours(Node)
+						--  Note that FDR has problems with efficiently compiling the process below
+						-- 	if using a different recursion pattern.
+						D__(id__) = 
+						dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+										Behaviour ; 
+										SKIP ; 
+										exited -> SKIP ; Inactive
+						
+							Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+						within
+							Inactive)
+							
+						VS_O__(id__) = 
+							dbisim(let
+								Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+											Behaviour ; 
+											SKIP ; 
+											exited -> SKIP ; Inactive
+						
+								Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+							within
+								Inactive)
+						
+					}
+				
+				endmodule
+				----------------------------------------------------------------------
+				
+				
+				----------------------------------------------------------------------
+				-- State: ActualHVRead
+				module ActualHVRead
+				
+				enterCSet = {}
+				
+				enteredCSet = {}
+				
+				exports
+				
+					--  Declarations
+					-- declaring identifiers of transitions
+					datatype TIDS = NULLTRANSITION__
+					
+					channel internal__ : TIDS
+					channel enter, entered, exit, exited
+					channel enteredL, enteredR
+					channel end__
+					
+									
+					
+					
+					channel increment__
+					
+					
+					--	Nodes
+					-- declaring all nodes
+					
+					TransitionSync = {||}
+					
+					Timed(OneStep) {
+						--	Rule: behaviours(Node)
+						--  Note that FDR has problems with efficiently compiling the process below
+						-- 	if using a different recursion pattern.
+						D__(id__) = 
+						dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+										Behaviour ; 
+										SKIP ; 
+										exited -> SKIP ; Inactive
+						
+							Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+						within
+							Inactive)
+							
+						VS_O__(id__) = 
+							dbisim(let
+								Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+											Behaviour ; 
+											SKIP ; 
+											exited -> SKIP ; Inactive
+						
+								Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+							within
+								Inactive)
+						
+					}
+				
+				endmodule
+				----------------------------------------------------------------------
+				
+				
+				----------------------------------------------------------------------
+				-- State: PowerAndActualHVRead
+				module PowerAndActualHVRead
+				
+				enterCSet = {}
+				
+				enteredCSet = {}
+				
+				exports
+				
+					--  Declarations
+					-- declaring identifiers of transitions
+					datatype TIDS = NULLTRANSITION__
+					
+					channel internal__ : TIDS
+					channel enter, entered, exit, exited
+					channel enteredL, enteredR
+					channel end__
+					
+									
+					
+					
+					channel increment__
+					
+					
+					--	Nodes
+					-- declaring all nodes
+					
+					TransitionSync = {||}
+					
+					Timed(OneStep) {
+						--	Rule: behaviours(Node)
+						--  Note that FDR has problems with efficiently compiling the process below
+						-- 	if using a different recursion pattern.
+						D__(id__) = 
+						dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+										Behaviour ; 
+										SKIP ; 
+										exited -> SKIP ; Inactive
+						
+							Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+						within
+							Inactive)
+							
+						VS_O__(id__) = 
+							dbisim(let
+								Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+											Behaviour ; 
+											SKIP ; 
+											exited -> SKIP ; Inactive
+						
+								Behaviour = entered -> ((SKIP ; MStop) /\ exit -> SKIP)
+							within
+								Inactive)
+						
+					}
+				
+				endmodule
+				----------------------------------------------------------------------
+				
+				
+				TransitionSync = {|internal__.TID_Watchdog_s0_t0,
+				internal__.TID_Watchdog_s0_t1,
+				internal__.TID_Watchdog_s0_t3,
+				internal__.TID_Watchdog_s0_t2,
+				ext_pow24VStatus__.TID_Watchdog_s0_t4,
+				int_ActualHV__.TID_Watchdog_s0_t5,
+				int_ActualHV__.TID_Watchdog_s0_t6,
+				ext_pow24VStatus__.TID_Watchdog_s0_t7,
+				internal__.TID_Watchdog_s0_t8,
+				internal__.TID_Watchdog_s0_t9,
+				internal__.TID_Watchdog_s0_t10|}
+				
+				Timed(OneStep) {
+					--	Rule: behaviours(Node)
+					--  Note that FDR has problems with efficiently compiling the process below
+					-- 	if using a different recursion pattern.
+					D__(id__) = 
+					dbisim(let
+						Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+									Behaviour ; 
+									SKIP ; 
+									exited -> SKIP ; Inactive
+					
+					
+						MemorySyncSet = {|
+						get_CLID_f0,f0::entered,
+						get_CLID_PowerStatusRead,PowerStatusRead::entered,
+						get_CLID_ActualHVRead,ActualHVRead::entered,
+						get_CLID_Waiting,Waiting::entered,
+						get_CLID_PowerAndActualHVRead,PowerAndActualHVRead::entered
+						|}
+						
+						MemoryHidingSet = {|
+						get_CLID_f0,
+						get_CLID_PowerStatusRead,
+						get_CLID_ActualHVRead,
+						get_CLID_Waiting,
+						get_CLID_PowerAndActualHVRead
+						|}
+						
+						Behaviour = (
+										(
+											dbisim(
+													(
+														((
+														 ((Body)
+														  [[ up__ <- x__ | x__ <- {| up__,setR_underLimit,setR_power,setR_overLimit,setR_ActualHV |} ]] 
+														  [[set_underLimit <- setL_underLimit,set_power <- setL_power,set_overLimit <- setL_overLimit,set_ActualHV <- setL_ActualHV]]
+														 )
+														 [| union(union(enteredCSet,{| exit, exited |}),{|up__
+														 			,setL_underLimit,setR_underLimit
+														 			 			,setL_power,setR_power
+														 			 			,setL_overLimit,setR_overLimit
+														 			 			,setL_ActualHV,setR_ActualHV
+														 			|}) |]
+														 ((During)
+														  [[ up__ <- x__ | x__ <- {| up__,setL_underLimit,setL_power,setL_overLimit,setL_ActualHV |} ]]
+														  [[set_underLimit <- setR_underLimit,set_power <- setR_power,set_overLimit <- setR_overLimit,set_ActualHV <- setR_ActualHV]]
+														 )
+														)[[setL_underLimit <- set_underLimit,setR_underLimit <- set_underLimit,setL_power <- set_power,setR_power <- set_power,setL_overLimit <- set_overLimit,setR_overLimit <- set_overLimit,setL_ActualHV <- set_ActualHV,setR_ActualHV <- set_ActualHV]]
+														)
+													[| MemorySyncSet |]
+													Clocks)\union(enteredCSet,MemoryHidingSet)
+												  )
+										[| {end__} |> SKIP
+										) \ {end__}
+									)
+						
+						Memory_CLID_f0(x__) =
+							f0::entered -> Memory_CLID_f0(0)
+							[]
+							increment__ -> Memory_CLID_f0(Plus(x__,1,CLID_f0_clock_type))
+							[]
+							get_CLID_f0!x__ -> Memory_CLID_f0(x__)
+							
+						Clock_CLID_f0 = 
+							(Memory_CLID_f0(0)
+							 [| {| get_CLID_f0,f0::entered, increment__ |} |] 
+							 Clock_Control_CLID_f0) \{| increment__ |}
+							 
+						Clock_Control_CLID_f0 = TimedInterrupt(RUN({|get_CLID_f0,f0::entered,tock|}),1); increment__ -> Clock_Control_CLID_f0 
+						Memory_CLID_PowerStatusRead(x__) =
+							PowerStatusRead::entered -> Memory_CLID_PowerStatusRead(0)
+							[]
+							increment__ -> Memory_CLID_PowerStatusRead(Plus(x__,1,CLID_PowerStatusRead_clock_type))
+							[]
+							get_CLID_PowerStatusRead!x__ -> Memory_CLID_PowerStatusRead(x__)
+							
+						Clock_CLID_PowerStatusRead = 
+							(Memory_CLID_PowerStatusRead(0)
+							 [| {| get_CLID_PowerStatusRead,PowerStatusRead::entered, increment__ |} |] 
+							 Clock_Control_CLID_PowerStatusRead) \{| increment__ |}
+							 
+						Clock_Control_CLID_PowerStatusRead = TimedInterrupt(RUN({|get_CLID_PowerStatusRead,PowerStatusRead::entered,tock|}),1); increment__ -> Clock_Control_CLID_PowerStatusRead 
+						Memory_CLID_ActualHVRead(x__) =
+							ActualHVRead::entered -> Memory_CLID_ActualHVRead(0)
+							[]
+							increment__ -> Memory_CLID_ActualHVRead(Plus(x__,1,CLID_ActualHVRead_clock_type))
+							[]
+							get_CLID_ActualHVRead!x__ -> Memory_CLID_ActualHVRead(x__)
+							
+						Clock_CLID_ActualHVRead = 
+							(Memory_CLID_ActualHVRead(0)
+							 [| {| get_CLID_ActualHVRead,ActualHVRead::entered, increment__ |} |] 
+							 Clock_Control_CLID_ActualHVRead) \{| increment__ |}
+							 
+						Clock_Control_CLID_ActualHVRead = TimedInterrupt(RUN({|get_CLID_ActualHVRead,ActualHVRead::entered,tock|}),1); increment__ -> Clock_Control_CLID_ActualHVRead 
+						Memory_CLID_Waiting(x__) =
+							Waiting::entered -> Memory_CLID_Waiting(0)
+							[]
+							increment__ -> Memory_CLID_Waiting(Plus(x__,1,CLID_Waiting_clock_type))
+							[]
+							get_CLID_Waiting!x__ -> Memory_CLID_Waiting(x__)
+							
+						Clock_CLID_Waiting = 
+							(Memory_CLID_Waiting(0)
+							 [| {| get_CLID_Waiting,Waiting::entered, increment__ |} |] 
+							 Clock_Control_CLID_Waiting) \{| increment__ |}
+							 
+						Clock_Control_CLID_Waiting = TimedInterrupt(RUN({|get_CLID_Waiting,Waiting::entered,tock|}),1); increment__ -> Clock_Control_CLID_Waiting 
+						Memory_CLID_PowerAndActualHVRead(x__) =
+							PowerAndActualHVRead::entered -> Memory_CLID_PowerAndActualHVRead(0)
+							[]
+							increment__ -> Memory_CLID_PowerAndActualHVRead(Plus(x__,1,CLID_PowerAndActualHVRead_clock_type))
+							[]
+							get_CLID_PowerAndActualHVRead!x__ -> Memory_CLID_PowerAndActualHVRead(x__)
+							
+						Clock_CLID_PowerAndActualHVRead = 
+							(Memory_CLID_PowerAndActualHVRead(0)
+							 [| {| get_CLID_PowerAndActualHVRead,PowerAndActualHVRead::entered, increment__ |} |] 
+							 Clock_Control_CLID_PowerAndActualHVRead) \{| increment__ |}
+							 
+						Clock_Control_CLID_PowerAndActualHVRead = TimedInterrupt(RUN({|get_CLID_PowerAndActualHVRead,PowerAndActualHVRead::entered,tock|}),1); increment__ -> Clock_Control_CLID_PowerAndActualHVRead 
+						
+						Clocks = 
+						dbisim(Clock_CLID_f0)
+						|||
+						dbisim(Clock_CLID_PowerStatusRead)
+						|||
+						dbisim(Clock_CLID_ActualHVRead)
+						|||
+						dbisim(Clock_CLID_Waiting)
+						|||
+						dbisim(Clock_CLID_PowerAndActualHVRead)
+					
+						Body = dbisim(((
+						 (((ComposeNodes(id__)[[f0::exit <- x__ | x__ <- {|exit|}]]
+						 [[Waiting::exit <- x__ | x__ <- {|exit,ext_pow24VStatus__.TID_Watchdog_s0_t4.in,int_ActualHV__.TID_Watchdog_s0_t5.in|}]]
+						 [[PowerStatusRead::exit <- x__ | x__ <- {|exit,internal__.TID_Watchdog_s0_t2,int_ActualHV__.TID_Watchdog_s0_t6.in|}]]
+						 [[ActualHVRead::exit <- x__ | x__ <- {|exit,internal__.TID_Watchdog_s0_t1,internal__.TID_Watchdog_s0_t3,ext_pow24VStatus__.TID_Watchdog_s0_t7.in|}]]
+						 [[PowerAndActualHVRead::exit <- x__ | x__ <- {|exit,internal__.TID_Watchdog_s0_t8,internal__.TID_Watchdog_s0_t9,internal__.TID_Watchdog_s0_t10|}]]
+						 [[i0::exit <- x__ | x__ <- {|internal__.TID_Watchdog_s0_t0|}]]
+						 [[  
+						 f0::exited <- exited,
+						 Waiting::exited <- exited,
+						 PowerStatusRead::exited <- exited,
+						 ActualHVRead::exited <- exited,
+						 PowerAndActualHVRead::exited <- exited
+						 ]]
+						 ))
+						  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+						  [[set_underLimit <- setL_underLimit,set_power <- setL_power,set_overLimit <- setL_overLimit,set_ActualHV <- setL_ActualHV]]
+						 )
+						 [| union(union(union(enterCSet,TransitionSync),{| exit, exited |}),{|up__
+						 			,setL_underLimit
+						 			,setL_power
+						 			,setL_overLimit
+						 			,setL_ActualHV
+						|}) |]
+						 ((i0::enter -> 
+						 	((dbisim(Transitions(id__)) /\ exit -> SKIP) ; (MStop /\ exited -> end__ -> SKIP)))
+						  [[ up__ <- x__ | x__ <- {| up__,setL_underLimit,setL_power,setL_overLimit,setL_ActualHV |} ]]
+						 )
+						)[[setL_underLimit <- set_underLimit,setL_power <- set_power,setL_overLimit <- set_overLimit,setL_ActualHV <- set_ActualHV]]
+						\ union(enterCSet,{| exited, internal__ |}))
+						[[
+							int_overLimit__.x____ <- int_overLimit,
+							int_underLimit__.x____ <- int_underLimit,
+							int_DisableHV__.x____ <- int_DisableHV,
+							int_ActualHV__.x____ <- int_ActualHV,
+							ext_pow24VStatus__.x____ <- ext_pow24VStatus
+							| x____ <- TIDS
+						]]
+						)
+					
+						During = (MStop /\ ([] e : enteredCSet @ e -> SKIP))
+								 ; entered -> ((CRUN(enteredCSet) ||| SKIP ; MStop) /\ exit -> SKIP)
+					within
+						Inactive)
+						
+					VS_O__(id__) = 
+						dbisim(let
+							Inactive = (MStop /\ enter -> SKIP) ; SKIP ; 
+										Behaviour ; 
+										SKIP ; 
+										exited -> SKIP ; Inactive
+					
+					
+						MemorySyncSet = {|
+						get_CLID_f0,f0::entered,
+						get_CLID_PowerStatusRead,PowerStatusRead::entered,
+						get_CLID_ActualHVRead,ActualHVRead::entered,
+						get_CLID_Waiting,Waiting::entered,
+						get_CLID_PowerAndActualHVRead,PowerAndActualHVRead::entered
+						|}
+						
+						MemoryHidingSet = {|
+						get_CLID_f0,
+						get_CLID_PowerStatusRead,
+						get_CLID_ActualHVRead,
+						get_CLID_Waiting,
+						get_CLID_PowerAndActualHVRead
+						|}
+						
+						Behaviour = (
+										(
+											dbisim(
+													(
+														((
+														 ((Body)
+														  [[ up__ <- x__ | x__ <- {| up__,setR_underLimit,setR_power,setR_overLimit,setR_ActualHV |} ]] 
+														  [[set_underLimit <- setL_underLimit,set_power <- setL_power,set_overLimit <- setL_overLimit,set_ActualHV <- setL_ActualHV]]
+														 )
+														 [| union(union(enteredCSet,{| exit, exited |}),{|up__
+														 			,setL_underLimit,setR_underLimit
+														 			 			,setL_power,setR_power
+														 			 			,setL_overLimit,setR_overLimit
+														 			 			,setL_ActualHV,setR_ActualHV
+														 			|}) |]
+														 ((During)
+														  [[ up__ <- x__ | x__ <- {| up__,setL_underLimit,setL_power,setL_overLimit,setL_ActualHV |} ]]
+														  [[set_underLimit <- setR_underLimit,set_power <- setR_power,set_overLimit <- setR_overLimit,set_ActualHV <- setR_ActualHV]]
+														 )
+														)[[setL_underLimit <- set_underLimit,setR_underLimit <- set_underLimit,setL_power <- set_power,setR_power <- set_power,setL_overLimit <- set_overLimit,setR_overLimit <- set_overLimit,setL_ActualHV <- set_ActualHV,setR_ActualHV <- set_ActualHV]]
+														)
+													[| MemorySyncSet |]
+													Clocks)\MemoryHidingSet
+												  )
+										[| {end__} |> SKIP
+										) \ {end__}
+									)
+						
+						Memory_CLID_f0(x__) =
+							f0::entered -> Memory_CLID_f0(0)
+							[]
+							increment__ -> Memory_CLID_f0(Plus(x__,1,CLID_f0_clock_type))
+							[]
+							get_CLID_f0!x__ -> Memory_CLID_f0(x__)
+							
+						Clock_CLID_f0 = 
+							(Memory_CLID_f0(0)
+							 [| {| get_CLID_f0,f0::entered, increment__ |} |] 
+							 Clock_Control_CLID_f0) \{| increment__ |}
+							 
+						Clock_Control_CLID_f0 = TimedInterrupt(RUN({|get_CLID_f0,f0::entered,tock|}),1); increment__ -> Clock_Control_CLID_f0 
+						Memory_CLID_PowerStatusRead(x__) =
+							PowerStatusRead::entered -> Memory_CLID_PowerStatusRead(0)
+							[]
+							increment__ -> Memory_CLID_PowerStatusRead(Plus(x__,1,CLID_PowerStatusRead_clock_type))
+							[]
+							get_CLID_PowerStatusRead!x__ -> Memory_CLID_PowerStatusRead(x__)
+							
+						Clock_CLID_PowerStatusRead = 
+							(Memory_CLID_PowerStatusRead(0)
+							 [| {| get_CLID_PowerStatusRead,PowerStatusRead::entered, increment__ |} |] 
+							 Clock_Control_CLID_PowerStatusRead) \{| increment__ |}
+							 
+						Clock_Control_CLID_PowerStatusRead = TimedInterrupt(RUN({|get_CLID_PowerStatusRead,PowerStatusRead::entered,tock|}),1); increment__ -> Clock_Control_CLID_PowerStatusRead 
+						Memory_CLID_ActualHVRead(x__) =
+							ActualHVRead::entered -> Memory_CLID_ActualHVRead(0)
+							[]
+							increment__ -> Memory_CLID_ActualHVRead(Plus(x__,1,CLID_ActualHVRead_clock_type))
+							[]
+							get_CLID_ActualHVRead!x__ -> Memory_CLID_ActualHVRead(x__)
+							
+						Clock_CLID_ActualHVRead = 
+							(Memory_CLID_ActualHVRead(0)
+							 [| {| get_CLID_ActualHVRead,ActualHVRead::entered, increment__ |} |] 
+							 Clock_Control_CLID_ActualHVRead) \{| increment__ |}
+							 
+						Clock_Control_CLID_ActualHVRead = TimedInterrupt(RUN({|get_CLID_ActualHVRead,ActualHVRead::entered,tock|}),1); increment__ -> Clock_Control_CLID_ActualHVRead 
+						Memory_CLID_Waiting(x__) =
+							Waiting::entered -> Memory_CLID_Waiting(0)
+							[]
+							increment__ -> Memory_CLID_Waiting(Plus(x__,1,CLID_Waiting_clock_type))
+							[]
+							get_CLID_Waiting!x__ -> Memory_CLID_Waiting(x__)
+							
+						Clock_CLID_Waiting = 
+							(Memory_CLID_Waiting(0)
+							 [| {| get_CLID_Waiting,Waiting::entered, increment__ |} |] 
+							 Clock_Control_CLID_Waiting) \{| increment__ |}
+							 
+						Clock_Control_CLID_Waiting = TimedInterrupt(RUN({|get_CLID_Waiting,Waiting::entered,tock|}),1); increment__ -> Clock_Control_CLID_Waiting 
+						Memory_CLID_PowerAndActualHVRead(x__) =
+							PowerAndActualHVRead::entered -> Memory_CLID_PowerAndActualHVRead(0)
+							[]
+							increment__ -> Memory_CLID_PowerAndActualHVRead(Plus(x__,1,CLID_PowerAndActualHVRead_clock_type))
+							[]
+							get_CLID_PowerAndActualHVRead!x__ -> Memory_CLID_PowerAndActualHVRead(x__)
+							
+						Clock_CLID_PowerAndActualHVRead = 
+							(Memory_CLID_PowerAndActualHVRead(0)
+							 [| {| get_CLID_PowerAndActualHVRead,PowerAndActualHVRead::entered, increment__ |} |] 
+							 Clock_Control_CLID_PowerAndActualHVRead) \{| increment__ |}
+							 
+						Clock_Control_CLID_PowerAndActualHVRead = TimedInterrupt(RUN({|get_CLID_PowerAndActualHVRead,PowerAndActualHVRead::entered,tock|}),1); increment__ -> Clock_Control_CLID_PowerAndActualHVRead 
+						
+						Clocks = 
+						dbisim(Clock_CLID_f0)
+						|||
+						dbisim(Clock_CLID_PowerStatusRead)
+						|||
+						dbisim(Clock_CLID_ActualHVRead)
+						|||
+						dbisim(Clock_CLID_Waiting)
+						|||
+						dbisim(Clock_CLID_PowerAndActualHVRead)
+					
+						Body = dbisim(((
+						 (((ComposeNodes_VS_O(id__)[[f0::exit <- x__ | x__ <- {|exit|}]]
+						 [[Waiting::exit <- x__ | x__ <- {|exit,ext_pow24VStatus__.TID_Watchdog_s0_t4.in,int_ActualHV__.TID_Watchdog_s0_t5.in|}]]
+						 [[PowerStatusRead::exit <- x__ | x__ <- {|exit,internal__.TID_Watchdog_s0_t2,int_ActualHV__.TID_Watchdog_s0_t6.in|}]]
+						 [[ActualHVRead::exit <- x__ | x__ <- {|exit,internal__.TID_Watchdog_s0_t1,internal__.TID_Watchdog_s0_t3,ext_pow24VStatus__.TID_Watchdog_s0_t7.in|}]]
+						 [[PowerAndActualHVRead::exit <- x__ | x__ <- {|exit,internal__.TID_Watchdog_s0_t8,internal__.TID_Watchdog_s0_t9,internal__.TID_Watchdog_s0_t10|}]]
+						 [[i0::exit <- x__ | x__ <- {|internal__.TID_Watchdog_s0_t0|}]]
+						 [[  
+						 f0::exited <- exited,
+						 Waiting::exited <- exited,
+						 PowerStatusRead::exited <- exited,
+						 ActualHVRead::exited <- exited,
+						 PowerAndActualHVRead::exited <- exited
+						 ]]
+						 ))
+						  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+						  [[set_underLimit <- setL_underLimit,set_power <- setL_power,set_overLimit <- setL_overLimit,set_ActualHV <- setL_ActualHV]]
+						 )
+						 [| union(union(union(enterCSet,TransitionSync),{| exit, exited |}),{|up__
+						 			,setL_underLimit
+						 			,setL_power
+						 			,setL_overLimit
+						 			,setL_ActualHV
+						|}) |]
+						 ((i0::enter -> 
+						 	((dbisim(Transitions(id__)) /\ exit -> SKIP) ; (MStop /\ exited -> end__ -> SKIP)))
+						  [[ up__ <- x__ | x__ <- {| up__,setL_underLimit,setL_power,setL_overLimit,setL_ActualHV |} ]]
+						 )
+						)[[setL_underLimit <- set_underLimit,setL_power <- set_power,setL_overLimit <- set_overLimit,setL_ActualHV <- set_ActualHV]]
+						\ union(enterCSet,{| exited, internal__ |}))
+						[[
+							int_overLimit__.x____ <- int_overLimit,
+							int_underLimit__.x____ <- int_underLimit,
+							int_DisableHV__.x____ <- int_DisableHV,
+							int_ActualHV__.x____ <- int_ActualHV,
+							ext_pow24VStatus__.x____ <- ext_pow24VStatus
+							| x____ <- TIDS
+						]]
+						)
+					
+						During = (MStop /\ ([] e : enteredCSet @ e -> SKIP))
+								 ; entered -> ((CRUN(enteredCSet) ||| SKIP ; MStop) /\ exit -> SKIP)
+						within
+							Inactive)
+					
+					Transitions_aux(id__) = (get_underLimit?underLimit -> get_power?power -> get_overLimit?overLimit -> get_ActualHV?ActualHV -> (up__ -> SKIP
+					[] dbisim((true)&(internal__!TID_Watchdog_s0_t0 -> SKIP ;  ((SKIP
+					 ; Waiting::enter -> SKIP))))
+					[] dbisim(((ActualHV>overLimit))&(internal__!TID_Watchdog_s0_t1 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true&(int_DisableHV.out -> SKIP)
+					 ; f0::enter -> SKIP)))
+					[] dbisim(((ActualHV<underLimit))&(internal__!TID_Watchdog_s0_t3 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true&(int_DisableHV.out -> SKIP)
+					 ; f0::enter -> SKIP)))
+					[] dbisim(((power==Power_Off))&(internal__!TID_Watchdog_s0_t2 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true&(int_DisableHV.out -> SKIP)
+					 ; f0::enter -> SKIP)))
+					[] dbisim((true)&(ext_pow24VStatus__!TID_Watchdog_s0_t4.in?power:{power|power <- Power, true} -> set_power!power -> SKIP ;  ((MStop /\ exited -> SKIP) ; SKIP
+					 ; PowerStatusRead::enter -> SKIP)))
+					[] dbisim((true)&(int_ActualHV__!TID_Watchdog_s0_t5.in?ActualHV:{ActualHV|ActualHV <- core_real, true} -> set_ActualHV!ActualHV -> SKIP ;  ((MStop /\ exited -> SKIP) ; SKIP
+					 ; ActualHVRead::enter -> SKIP)))
+					[] dbisim((true)&(int_ActualHV__!TID_Watchdog_s0_t6.in?ActualHV:{ActualHV|ActualHV <- core_real, true} -> set_ActualHV!ActualHV -> SKIP ;  ((MStop /\ exited -> SKIP) ; SKIP
+					 ; PowerAndActualHVRead::enter -> SKIP)))
+					[] dbisim((true)&(ext_pow24VStatus__!TID_Watchdog_s0_t7.in?power:{power|power <- Power, true} -> set_power!power -> SKIP ;  ((MStop /\ exited -> SKIP) ; SKIP
+					 ; PowerAndActualHVRead::enter -> SKIP)))
+					[] dbisim(((ActualHV<underLimit))&(internal__!TID_Watchdog_s0_t8 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true&(int_DisableHV.out -> SKIP)
+					 ; f0::enter -> SKIP)))
+					[] dbisim(((ActualHV>overLimit))&(internal__!TID_Watchdog_s0_t9 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true&(int_DisableHV.out -> SKIP)
+					 ; f0::enter -> SKIP)))
+					[] dbisim(((power==Power_Off))&(internal__!TID_Watchdog_s0_t10 -> SKIP ;  ((MStop /\ exited -> SKIP) ; true&(int_DisableHV.out -> SKIP)
+					 ; f0::enter -> SKIP)))
+					)
+					) ; Transitions_aux(id__)
+					
+					Transitions(id__) = dbisim((dbisim(Transitions_aux(id__))[[up__ <- up__, up__ <- timed_up__]]
+										  [| union(TransitionSync,{|timed_up__|}) |] 
+										  Transitons_Time_Sync) \ {| timed_up__ |})
+					
+					Transitons_Time_Sync = TimedInterrupt(RUN(union(TransitionSync,{tock})),1);
+											timed_up__ -> Transitons_Time_Sync
+					
+					
+					ComposeNodes_aux(id__) = [| { up__ } |] proc__ : {i0::D__(id__),f0::D__(id__),Waiting::D__(id__),PowerStatusRead::D__(id__),ActualHVRead::D__(id__),PowerAndActualHVRead::D__(id__)} @ proc__
+					
+					ComposeNodes_VS_O_aux(id__) = [| { up__ } |] proc__ : {i0::VS_O__(id__),f0::VS_O__(id__),Waiting::VS_O__(id__),PowerStatusRead::VS_O__(id__),ActualHVRead::VS_O__(id__),PowerAndActualHVRead::VS_O__(id__)} @ proc__
+					
+					ComposeNodes(id__) = ComposeNodes_aux(id__) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__)
+					
+					ComposeNodes_VS_O(id__) = ComposeNodes_VS_O_aux(id__) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__)
+					
+					-- transition deadlines
+					
+					
+					TDeadlines(id__) = MStop
+					
+					TDeadlinesSync = {||}
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			Timed(OneStep) {
+			
+			TransitionSync = {|internal__.TID_Watchdog_t0,
+			internal__.TID_Watchdog_t1|}
+			
+			-- The following is obviously not efficient for FDR to compile.
+			-- For efficiency reasons a stepwise composition should be implemented instead.
+			ComposeNodes_aux(id__) = [| { up__ } |] proc__ : {i0::D__(id__),s0::D__(id__)} @ proc__
+			
+			ComposeNodes_VS_O_aux(id__) = [| { up__ } |] proc__ : {i0::VS_O__(id__),s0::VS_O__(id__)} @ proc__
+			
+			ComposeNodes(id__) = ComposeNodes_aux(id__) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__)
+			
+			ComposeNodes_VS_O(id__) = ComposeNodes_VS_O_aux(id__) [| union(TDeadlinesSync,{up__}) |] TDeadlines(id__)
+			
+			-- transition deadlines
+			
+			
+			TDeadlines(id__) = MStop
+			
+			TDeadlinesSync = {||}
+			
+			Transitions_aux(id__) = (get_CLID_s0?s0 -> (up__ -> SKIP
+			[] dbisim((true)&(internal__!TID_Watchdog_t0 -> SKIP ;  ((true&(int_overLimit.in?overLimit -> set_overLimit!overLimit -> SKIP);true&(int_underLimit.in?underLimit -> set_underLimit!underLimit -> SKIP)
+			 ; s0::enter -> SKIP))))
+			[] dbisim(((s0>=10))&(internal__!TID_Watchdog_t1 -> SKIP ;  ((MStop /\ exited -> SKIP) ; SKIP
+			 ; s0::enter -> SKIP)))
+			)
+			) ; Transitions_aux(id__)
+			
+			Transitions(id__) = dbisim((dbisim(Transitions_aux(id__))[[up__ <- up__, up__ <- timed_up__]]
+								  [| union(TransitionSync,{|timed_up__|}) |] 
+								  Transitons_Time_Sync)\{|timed_up__|})
+			
+			Transitons_Time_Sync = TimedInterrupt(RUN(union(TransitionSync,{tock})),1);
+									timed_up__ -> Transitons_Time_Sync
+			
+			Behaviours(id__) = dbisim((
+			 ((ComposeNodes(id__)[[s0::exit <- x__ | x__ <- {|exit,internal__.TID_Watchdog_t1|}]]
+			 [[i0::exit <- x__ | x__ <- {|internal__.TID_Watchdog_t0|}]]
+			 [[  
+			 s0::exited <- exited
+			 ]]
+			 )
+			  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+			  [[s0::entered <- s0::enteredL]]
+			 )
+			 [| union(union(union(enterCSet,TransitionSync),{| exited |}),{|up__
+			 			,s0::enteredL
+			|}) |]
+			 ((i0::enter -> Transitions(id__))
+			  [[ up__ <- x__ | x__ <- {| up__,s0::enteredL |} ]]
+			 )
+			)[[s0::enteredL <- s0::entered]]
+			\ union(enterCSet,{| exited, internal__ |})
+			 [| {exit} |] STOP)
+			
+			Behaviours_VS_O(id__) = dbisim((
+			 ((ComposeNodes_VS_O(id__)[[s0::exit <- x__ | x__ <- {|exit,internal__.TID_Watchdog_t1|}]]
+			 [[i0::exit <- x__ | x__ <- {|internal__.TID_Watchdog_t0|}]]
+			 [[  
+			 s0::exited <- exited
+			 ]]
+			 )
+			  [[ up__ <- x__ | x__ <- {| up__ |} ]] 
+			  [[s0::entered <- s0::enteredL]]
+			 )
+			 [| union(union(union(enterCSet,TransitionSync),{| exited |}),{|up__
+			 			,s0::enteredL
+			|}) |]
+			 ((i0::enter -> Transitions(id__))
+			  [[ up__ <- x__ | x__ <- {| up__,s0::enteredL |} ]]
+			 )
+			)[[s0::enteredL <- s0::entered]]
+			\ union(enterCSet,{| exited, internal__ |})
+			 [| {exit} |] STOP)
+			
+			-- memory process
+			Memory_overLimit(x__) =
+				get_overLimit!x__ -> Memory_overLimit(x__)
+				[]
+				set_overLimit?x__ -> Memory_overLimit(x__)
+			Memory_underLimit(x__) =
+				get_underLimit!x__ -> Memory_underLimit(x__)
+				[]
+				set_underLimit?x__ -> Memory_underLimit(x__)
+			Memory_ActualHV(x__) =
+				get_ActualHV!x__ -> Memory_ActualHV(x__)
+				[]
+				set_ActualHV?x__ -> Memory_ActualHV(x__)
+			Memory_power(x__) =
+				get_power!x__ -> Memory_power(x__)
+				[]
+				set_power?x__ -> Memory_power(x__)
+			
+			Memory_CLID_s0(x__) =
+				s0::entered -> Memory_CLID_s0(0)
+				[]
+				increment__ -> Memory_CLID_s0(Plus(x__,1,CLID_s0_clock_type))
+				[]
+				get_CLID_s0!x__ -> Memory_CLID_s0(x__)
+				
+			Clock_CLID_s0 = 
+				(Memory_CLID_s0(0)
+				 [| {| get_CLID_s0,s0::entered, increment__ |} |] 
+				 Clock_Control_CLID_s0) \{| increment__ |}
+				 
+			Clock_Control_CLID_s0 = TimedInterrupt(RUN({|get_CLID_s0,s0::entered,tock|}),1); increment__ -> Clock_Control_CLID_s0 
+			
+			
+			Memory(id__) =
+				dbisim(Memory_overLimit(0))
+				|||
+				dbisim(Memory_underLimit(0))
+				|||
+				dbisim(Memory_ActualHV(0))
+				|||
+				dbisim(Memory_power(Power_On))
+			
+			Clocks = 
+			dbisim(Clock_CLID_s0)
+			
+			SharedVariableMemory(id__) =
+				STOP
+			
+			SharedVariablesSyncSet = {||}
+			
+			SharedVariableHidingSet = {||}
+			
+			MachineMemorySyncSet = 
+				union({|get_overLimit,set_overLimit,
+				get_underLimit,set_underLimit,
+				get_ActualHV,set_ActualHV,
+				get_power,set_power|}
+				,
+					  {|
+					  get_CLID_s0,s0::entered
+					  |}
+					  )
+			
+			MachineMemoryHidingSet = 
+				union({|get_overLimit,set_overLimit,
+				get_underLimit,set_underLimit,
+				get_ActualHV,set_ActualHV,
+				get_power,set_power|}
+				,
+					  {|
+					  get_CLID_s0
+					  |}
+					  )
+			
+			MachineInternalEvents = {|
+				internal__
+			|}
+			
+							
+			-- main process
+			
+			STM(id__) = timed_priority(
+				(
+					(AUX(id__)[[ up__ <- x__ | x__ <- {||} ]]
+				 	[| { up__ } |]
+				 	SKIP)
+				 /+ SharedVariablesSyncSet +\
+				 SharedVariableMemory(id__))
+				 \SharedVariableHidingSet
+			)
+			
+			AUX(id__) = prioritise(
+				(
+					dbisim(
+							(Behaviours(id__)
+							 [|MachineMemorySyncSet|]
+							 (Memory(id__) ||| Clocks)
+							)[[
+								int_overLimit__.x____ <- int_overLimit,
+								int_underLimit__.x____ <- int_underLimit,
+								int_DisableHV__.x____ <- int_DisableHV,
+								int_ActualHV__.x____ <- int_ActualHV,
+								ext_pow24VStatus__.x____ <- ext_pow24VStatus
+								| x____ <- TIDS
+							]]
+							\MachineMemoryHidingSet
+						)
+				)
+			[|{|terminate|}|>SKIP\MachineInternalEvents,<Union({internal_events, {|clockReset|}, {|terminate|}}),{tock}>)
+			
+			STM_VS_O(id__) = timed_priority(
+				(
+					(AUX_VS_O(id__)[[ up__ <- x__ | x__ <- {||} ]]
+				 	[| { up__ } |]
+				 	SKIP)
+				 /+ SharedVariablesSyncSet +\
+				 SharedVariableMemory(id__))
+				 \SharedVariableHidingSet
+			)
+			
+			AUX_VS_O(id__) = prioritise(
+				(
+					dbisim(
+							(Behaviours_VS_O(id__)
+							 [|MachineMemorySyncSet|]
+							 (Memory(id__) ||| Clocks)
+							)[[
+								int_overLimit__.x____ <- int_overLimit,
+								int_underLimit__.x____ <- int_underLimit,
+								int_DisableHV__.x____ <- int_DisableHV,
+								int_ActualHV__.x____ <- int_ActualHV,
+								ext_pow24VStatus__.x____ <- ext_pow24VStatus
+								| x____ <- TIDS
+							]]
+							\MachineMemoryHidingSet
+						)
+				)
+			[|{|terminate|}|>SKIP\MachineInternalEvents,<Union({internal_events, {|clockReset|}, {|terminate|}}),{tock}>)
+			
+			-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	
+			FVS__(id__) = STM_VS_O(id__) \ localClockResets
+			
+			D__(id__) = timed_priority(STM(id__) \ union(internal_events,localClockResets))
+			O__(id__) = dbisim(D__(id__))
+			VS__(id__) = FVS__(id__)
+			VS_O__(id__) = dbisim(FVS__(id__))
+			HEXT__(id__) = O__(id__) [|shared_variable_events|] SKIP
+			FVS_C__(id__) = dbisim(timed_priority(STM(id__) \ internal_events))
+			HUP__(id__) = timed_priority(O__(id__) [|{up__}|] SKIP)
+		}
+endmodule
+
+

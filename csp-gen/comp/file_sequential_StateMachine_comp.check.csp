@@ -1,0 +1,85 @@
+include "defs/file_Transition_system.csp"
+include "defs/file_sequential_StateMachine.csp"
+include "defs/robochart_defs.csp"
+include "defs/state_defs.csp"
+include "defs/core_defs.csp"
+include "defs/file_Interrupt.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations.csp"
+include "defs/file_Declarations_defs.csp"
+include "../instantiations.csp"
+
+module original
+exports
+	include "../defs/file_Interrupt.csp"
+	include "../defs/file_Transition_system.csp"
+	include "../defs/file_Declarations.csp"
+	include "../defs/file_sequential_StateMachine.csp"
+endmodule
+
+-- Assertions
+
+
+
+-- StateMachineDef: State_machine
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	original::State_machine::O__(id__)
+	   [[ original::State_machine::currentState <- State_machine::currentState ]]
+	   [[ original::State_machine::ext_setPoint <- State_machine::ext_setPoint ]]
+	   [[ original::State_machine::ext_pow24VStatus <- State_machine::ext_pow24VStatus ]]
+	   [[ original::State_machine::int_overLimit <- State_machine::int_overLimit ]]
+	   [[ original::State_machine::int_pwmSignal <- State_machine::int_pwmSignal ]]
+	   [[ original::State_machine::int_underLimit <- State_machine::int_underLimit ]]
+	   [[ original::State_machine::int_DisableHV <- State_machine::int_DisableHV ]]
+	   [[ original::State_machine::int_ActualHV <- State_machine::int_ActualHV ]]
+	   [[ original::State_machine::terminate <- State_machine::terminate ]]
+	   [[ original::State_machine::disableHVCall <- State_machine::disableHVCall ]]
+	   	   [[ original::State_machine::checkLimitsCall <- State_machine::checkLimitsCall ]]
+	   	   [[ original::State_machine::supplyVoltCheckCall <- State_machine::supplyVoltCheckCall ]]
+	   )
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	State_machine::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	State_machine::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	original::State_machine::O__(id__)
+		[[ original::State_machine::currentState <- State_machine::currentState ]]
+		[[ original::State_machine::ext_setPoint <- State_machine::ext_setPoint ]]
+		[[ original::State_machine::ext_pow24VStatus <- State_machine::ext_pow24VStatus ]]
+		[[ original::State_machine::int_overLimit <- State_machine::int_overLimit ]]
+		[[ original::State_machine::int_pwmSignal <- State_machine::int_pwmSignal ]]
+		[[ original::State_machine::int_underLimit <- State_machine::int_underLimit ]]
+		[[ original::State_machine::int_DisableHV <- State_machine::int_DisableHV ]]
+		[[ original::State_machine::int_ActualHV <- State_machine::int_ActualHV ]]
+		[[ original::State_machine::terminate <- State_machine::terminate ]]
+		[[ original::State_machine::disableHVCall <- State_machine::disableHVCall ]]
+				[[ original::State_machine::checkLimitsCall <- State_machine::checkLimitsCall ]]
+				[[ original::State_machine::supplyVoltCheckCall <- State_machine::supplyVoltCheckCall ]]
+		)
+
+

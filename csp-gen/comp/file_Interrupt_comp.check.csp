@@ -1,0 +1,73 @@
+include "defs/file_Transition_system.csp"
+include "defs/file_sequential_StateMachine.csp"
+include "defs/robochart_defs.csp"
+include "defs/state_defs.csp"
+include "defs/core_defs.csp"
+include "defs/file_Interrupt.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations.csp"
+include "defs/file_Declarations_defs.csp"
+include "../instantiations.csp"
+
+module original
+exports
+	include "../defs/file_Interrupt.csp"
+	include "../defs/file_Transition_system.csp"
+	include "../defs/file_Declarations.csp"
+	include "../defs/file_sequential_StateMachine.csp"
+endmodule
+
+-- Assertions
+
+
+
+-- StateMachineDef: Watchdog
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	original::Watchdog::O__(id__)
+	   [[ original::Watchdog::int_overLimit <- Watchdog::int_overLimit ]]
+	   [[ original::Watchdog::int_underLimit <- Watchdog::int_underLimit ]]
+	   [[ original::Watchdog::int_DisableHV <- Watchdog::int_DisableHV ]]
+	   [[ original::Watchdog::int_ActualHV <- Watchdog::int_ActualHV ]]
+	   [[ original::Watchdog::ext_pow24VStatus <- Watchdog::ext_pow24VStatus ]]
+	   [[ original::Watchdog::terminate <- Watchdog::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	Watchdog::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	Watchdog::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	original::Watchdog::O__(id__)
+		[[ original::Watchdog::int_overLimit <- Watchdog::int_overLimit ]]
+		[[ original::Watchdog::int_underLimit <- Watchdog::int_underLimit ]]
+		[[ original::Watchdog::int_DisableHV <- Watchdog::int_DisableHV ]]
+		[[ original::Watchdog::int_ActualHV <- Watchdog::int_ActualHV ]]
+		[[ original::Watchdog::ext_pow24VStatus <- Watchdog::ext_pow24VStatus ]]
+		[[ original::Watchdog::terminate <- Watchdog::terminate ]]
+)
+
+

@@ -1,0 +1,150 @@
+
+
+-- A1 - refinement
+assert Spec12 [T= mod_sys_power_on
+
+-- A1witness - not refinement
+assert not Stop [T= mod_sys_can_loop
+
+-- A2 - refinement
+assert Spec3 [FD= mod_sys_power
+
+-- A3 - refinement
+assert Spec4 [FD= mod_sys_power
+
+-- A4 - timed deadlock free
+assert prioritise(let 
+	id__ = 0
+	
+	
+	
+	
+		
+within
+	mod_sys::D__(id__)[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- A5 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Ramping|}
+
+-- A6 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Init|}
+
+-- A7 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Wait24Vpower|}
+
+-- A8 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_ClosedLoop|}
+
+-- A9 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_ErrorMode|}
+
+include "defs/timed_definitions.csp"
+include "defs/robochart_defs.csp"
+include "defs/core_defs.csp"
+include "defs/mod_sys.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/State_machine.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations_defs.csp"
+
+channel r__
+
+-- generate nat
+nametype core_nat = {0..3}
+
+-- generate string
+nametype core_string = LSeq({'a'},1)
+
+-- generate real
+nametype core_real = { -2..3}
+
+-- BASIC FUNCTIONS
+
+-- generate int
+nametype core_int = { 0..3}
+
+-- generate -- OPERATION BOUNDS
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate Div
+Div(e1,e2,T) = if member(e1/e2,T) then e1/e2 else e1
+
+-- generate Neg
+Neg(e1,T) = if member(-e1,T) then -e1 else e1
+
+-- generate boolean
+nametype core_boolean = Bool
+
+-- generate Mult
+Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1
+
+-- generate Modulus
+Modulus(e1,e2,T) = if member(e1%e2,T) then e1%e2 else e1
+
+-- generate Plus
+Plus(e1,e2,T) = if member(e1+e2,T) then e1+e2 else e1
+
+-- generate Minus
+Minus(e1,e2,T) = if member(e1-e2,T) then e1-e2 else e1
+
+Timed(OneStep){
+TsetPointSpec(n) = CHAOS(Events) [| {|State_machine::set_setPoint.n |} |> State_machine::set_ActualHV.n -> TsetPointSpec(n)
+	}
+
+TErrorSpec1 = TsetPointSpec(0)
+
+TErrorSpec2 = TsetPointSpec(1)
+
+Timed(OneStep){
+TErrorSpec3 = CHAOS(Events) [| {|State_machine::set_pow24VStatus.Power_Off|} |> State_machine::set_pwmSignal.Power_Off -> State_machine::set_setPoint.0 -> TErrorSpec3
+	}
