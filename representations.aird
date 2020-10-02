@@ -10,7 +10,6 @@
     <semanticResources>sequential_StateMachine.rct</semanticResources>
     <semanticResources>Transition_system.rct</semanticResources>
     <semanticResources>Interrupt.rct</semanticResources>
-    <semanticResources>Custom_new.assertions</semanticResources>
     <semanticResources>properties_paper.assertions</semanticResources>
     <ownedViews xmi:type="viewpoint:DView" uid="_fJ4zUJj6EeqXGYTyGQEK7Q">
       <viewpoint xmi:type="description:Viewpoint" href="platform:/plugin/circus.robocalc.robochart.graphical/description/robochart.odesign#//@ownedViewpoints[name='RoboChartID']"/>
