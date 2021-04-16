@@ -84,7 +84,6 @@ controller ctrl2 {
 		transition t1 {
 			from s0
 			to s0
-			trigger
 			action 
 		ext_pow24_1 ! power ; ext_pow24_2 ! power
 		}
@@ -117,7 +116,6 @@ controller ctrl3 {
 		transition t1 {
 			from s0
 			to s0
-			trigger
 			action ActualHV_1 ! ActualHV ; ActualHV_2 ! ActualHV
 		}
 	}

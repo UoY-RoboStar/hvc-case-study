@@ -67,7 +67,6 @@ arg : boolean
 	transition t0 {
 		from s1
 		to f0
-		trigger
 		condition arg == false
 		action res = false
 	}
@@ -75,7 +74,6 @@ arg : boolean
 	transition t1 {
 		from s1
 		to f0
-		trigger
 		condition arg == true
 		action res = true
 	}
@@ -107,14 +105,12 @@ operation checkLimits ( ) {
 	transition t1 {
 		from s0
 		to f0
-		trigger
 		condition ActualHV <= overLimit /\ ActualHV >= underLimit
 		action lim = false
 	}
 	uses IEvents_ext transition t2 {
 		from s0
 		to f0
-		trigger
 		condition ActualHV < underLimit \/ ActualHV > overLimit
 				// ActualHV = underLimit
 				// underLimit <= overLimit

@@ -18,21 +18,18 @@ diagram Interrupt import Declarations::* stm Watchdog {
 		transition t1 {
 			from ActualHVRead
 			to f0
-			trigger
 			condition ActualHV > overLimit
 			action int_DisableHV
 		}
 		transition t3 {
 			from ActualHVRead
 			to f0
-			trigger
 			condition ActualHV < underLimit
 			action int_DisableHV
 		}
 	transition t2 {
 			from PowerStatusRead
 			to f0
-			trigger
 			condition power == Power :: Off
 			action int_DisableHV
 		}
@@ -65,21 +62,18 @@ diagram Interrupt import Declarations::* stm Watchdog {
 		transition t8 {
 			from PowerAndActualHVRead
 			to f0
-			trigger
 			condition ActualHV < underLimit
 			action int_DisableHV
 		}
 		transition t9 {
 			from PowerAndActualHVRead
 			to f0
-			trigger
 			condition ActualHV > overLimit
 			action int_DisableHV
 		}
 		transition t10 {
 			from PowerAndActualHVRead
 			to f0
-			trigger
 			condition power == Power :: Off
 			action int_DisableHV
 		}
@@ -87,13 +81,11 @@ diagram Interrupt import Declarations::* stm Watchdog {
 	transition t0 {
 		from i0
 		to s0
-	trigger
 		action int_overLimit ? overLimit ; int_underLimit ? underLimit
 	}
 	transition t1 {
 		from s0
 		to s0
-		trigger
 		condition sinceEntry ( s0 ) >= 10
 	}
 var overLimit : real

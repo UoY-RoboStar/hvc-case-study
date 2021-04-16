@@ -14,7 +14,6 @@ import Declarations::*
 		transition t0 {
 			from i0
 			to si0
-		trigger
 			action ext_setPoint ? setPoint
 		}
 	}
@@ -30,13 +29,11 @@ import Declarations::*
 		transition t0 {
 			from i0
 			to si0
-		trigger
 			action ext_setPoint ? setPoint //<{0}
 		}
 		transition t1 {
 			from si0
 			to s1
-			trigger
 			condition setPoint != 0 \/ lim == true
 		}
 		entry currentState ! State :: Wait24Vpower ; disableHV ( false ) //<{0} ; disableHV ( false )
@@ -61,7 +58,6 @@ import Declarations::*
 			transition t1 {
 				from s0
 				to s1
-				trigger
 				condition sinceEntry ( ClosedLoop::s2::s0 ) > 0
 			}
 		state s1 {
@@ -71,7 +67,6 @@ import Declarations::*
 			transition t5 {
 				from j0
 				to s0
-				trigger
 				action int_ActualHV ! ActualHV
 			}
 		junction j0
@@ -79,7 +74,6 @@ import Declarations::*
 			transition t2 {
 				from s1
 				to j0
-				trigger
 				action ActualHV = setPoint
 			}
 		}
@@ -87,13 +81,11 @@ import Declarations::*
 		transition t1 {
 			from s4
 			to s1
-			trigger
 			condition lim == true
 		}
 		transition t2 {
 			from s2
 			to s1
-			trigger
 			condition lim == true
 		}
 	state s3 {
@@ -102,20 +94,17 @@ import Declarations::*
 		transition t3 {
 			from s4
 			to s3
-			trigger 
 			condition lim == false
 			action int_pwmSignal ! Power :: On //<{0} //;wait(5)
 		}
 		transition t4 {
 			from s3
 			to s2
-			trigger
 			condition lim == false /\ sinceEntry ( ClosedLoop::s3 ) > 0
 		}
 		transition t5 {
 			from s3
 			to s1
-			trigger
 			condition lim == true
 		}
 		entry currentState ! State :: ClosedLoop
@@ -137,13 +126,11 @@ import Declarations::*
 		transition t0 {
 			from s1
 			to s2
-			trigger
 			action ext_setPoint ! setPoint
 		}
 		transition t2 {
 			from i0
 			to s1
-			trigger
 			action errorAck = false
 		}
 		state s1 {
@@ -153,7 +140,6 @@ import Declarations::*
 		transition t4 {
 			from s2
 			to j0
-			trigger
 			action int_ActualHV ! ActualHV
 		}
 		state s2 {
@@ -163,14 +149,12 @@ import Declarations::*
 		transition t5 {
 			from j0
 			to f0
-			trigger
 			condition setPoint == 0 /\ ActualHV == 0
 			action errorAck = true
 		}
 		transition t1 {
 			from j0
 			to s1
-			trigger
 			condition setPoint != 0 \/ ActualHV != 0
 		}
 	}
@@ -178,18 +162,15 @@ import Declarations::*
 	transition t0 {
 		from Ramping
 		to Init
-		trigger
 		condition sinceEntry ( Ramping ) >= 1
 	}
 	transition t1 {
 		from Init
 		to Wait24Vpower
-		trigger
 	}
 	transition t2 {
 		from Wait24Vpower
 		to ErrorMode
-		trigger
 		condition res == true
 		action res = false
 	}
@@ -197,13 +178,11 @@ import Declarations::*
 		from Wait24Vpower
 		to ClosedLoop
 		//trigger ext_pow24VStatus.Power::On?x
-		trigger
 		condition setPoint == 0 /\ lim == false /\ res == false
 	}
 	transition t4 {
 		from ClosedLoop
 		to ErrorMode
-		trigger
 		condition res == true
 		action res = false
 	}
@@ -214,7 +193,6 @@ import Declarations::*
 	transition t6 {
 		from ErrorMode
 		to Wait24Vpower
-		trigger
 		condition errorAck
 	}
 	clock Cl1
@@ -232,7 +210,6 @@ import Declarations::*
 	transition t7 {
 		from j0
 		to ErrorMode
-		trigger
 		action disableHV ( true ) ; res = false
 	}
 junction j0
