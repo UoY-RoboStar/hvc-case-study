@@ -1,0 +1,29 @@
+package P4
+
+import basics::*
+
+// P4: That the state machine is not able to go into deadlock
+prob property P_deadlock_free:
+	not Exists [Finally deadlock]
+	with definitions D1
+	with cmdoptions "-hybrid -cuddmaxmem 500g -javamaxmem 8g"
+
+/*
+// model checking of bounded CTL properties is not supported
+prob property P_deadlock_free_bound:
+	not Exists [Finally<=10000 deadlock]
+	with definitions D1
+	with cmdoptions "-hybrid -cuddmaxmem 32g -javamaxmem 8g"
+	
+// This results in "Error: Cannot evaluate labels (""deadlock"", line 9, column 36)."
+//prob property P_deadlock_free_sim:
+//	Prob<=0.0 of [Finally deadlock]
+//	using sim with CI at alpha=0.01, n=1000, and pathlen=10000000
+//	with definitions D1
+//	with cmdoptions "-hybrid -cuddmaxmem 32g -javamaxmem 8g"
+
+prob generate path PG_Deadlock:
+    using simulation for deadlock with 1000 repeats up to 10000000 steps
+    with definitions D1
+    with cmdoptions "-hybrid -cuddmaxmem 32g -javamaxmem 8g"
+*/	

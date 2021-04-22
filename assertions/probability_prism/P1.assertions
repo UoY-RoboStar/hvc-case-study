@@ -1,0 +1,89 @@
+package P1
+
+import basics::*
+
+// P1: That the actual system voltage always follows the set-point
+pmodules M1:
+	pmodule P1 {
+		P1_scpc : [-1 to 5] init 0;
+		P1_updating: bool init false;
+		
+		//////////////////////////////////// Idle state 0 (free events) ////////////////////////////////////////////
+		//[mod_sys::rp_ref0::ext_setPoint.in]  (P1_updating==false)/\(P1_scpc==0)	-> (0.5:P1_updating=false) & (0.5:P1_updating=true); 
+		[mod_sys::rp_ref0::ext_setPoint.out]  (@P1_updating==false)/\(@P1_scpc==0)	-> skip; 
+		[mod_sys::rp_ref0::int_ActualHV.in] (@P1_updating==false)/\(@P1_scpc==0) -> skip;
+
+	    [mod_sys::rp_ref0::currentState.in] (@P1_updating==false)/\(@P1_scpc==0)           
+	    	-> (@P1_scpc=0)&(@P1_updating=true);		
+	    // if current state is ClosedLoop, then scpc stays the same as 1
+	    // (0, busy) --> (1, idle)
+	    [] (@P1_scpc==0)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val==State::ClosedLoop) 
+	    	-> (@P1_scpc=1)&(@P1_updating=false);
+	    // otherwise, return to idle by setting scpc to 0
+	    [] (@P1_scpc==0)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val!=State::ClosedLoop) 
+	    	-> (@P1_scpc=0)&(@P1_updating=false);
+	    
+	    /////////////////////////////////////////////// State 1  //////////////////////////////////////////////////
+	    // (1, idle) --> (1, busy)
+	    [mod_sys::rp_ref0::ext_setPoint.out]   (@P1_updating==false)/\(@P1_scpc==1)                      
+	    	-> (@P1_scpc=1)&(@P1_updating=true);
+	    // (1, busy) --> (2, idle)
+	    [] (@P1_scpc==1)/\(@P1_updating==true)/\(mod_sys::rp_ref0::ext_setPoint.out.val==0)             
+	    	-> (@P1_scpc=4)&(@P1_updating=false);
+	    // (1, busy) --> (1, idle)
+	    [] (@P1_scpc==1)/\(@P1_updating==true)/\(mod_sys::rp_ref0::ext_setPoint.out.val!=0)             
+	    	-> (@P1_scpc=3)&(@P1_updating=false);
+	    
+	    /////////////////////////////////////////////// State 2  //////////////////////////////////////////////////
+	    // (1/2, idle) --> (2, busy)
+	    [mod_sys::rp_ref0::currentState.in]  (@P1_updating==false)/\((@P1_scpc==1)\/(@P1_scpc==2))       
+	    	-> (@P1_scpc=2)&(@P1_updating=true);
+	    // (2, busy) --> (0, idle)
+	    [] (@P1_scpc==2)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val==State::ClosedLoop)      
+	    	-> (@P1_scpc=1)&(@P1_updating=false);
+	    // (2, busy) --> (1, idle)
+	    [] (@P1_scpc==2)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val!=State::ClosedLoop)     
+	    	-> (@P1_scpc=0)&(@P1_updating=false);
+	    
+	    /////////////////////////////////////////////// State 3  //////////////////////////////////////////////////
+	    // even mod_sys::rp_ref0::ext_setPoint.in.val is not 0, we still need to synchronise it and clear the buffer
+	    [mod_sys::rp_ref0::int_ActualHV.in]  (@P1_updating==false)/\(@P1_scpc==3)                    
+	    	-> (@P1_scpc=1)&(@P1_updating=false);
+	    
+	    /////////////////////////////////////////////// State 4  //////////////////////////////////////////////////
+	    // // (4, idle) --> (4, busy)
+	    [mod_sys::rp_ref0::int_ActualHV.in]  (@P1_updating==false)/\(@P1_scpc==4)                    
+	    	-> (@P1_scpc=4)&(@P1_updating=true);
+	    // (4, busy) --> (1, idle)
+	    [] (@P1_scpc==4)/\(@P1_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val==0)          
+	    	-> (@P1_scpc=1)&(@P1_updating=false);
+	    // (4, busy) --> (-1, idle)
+	    [] (@P1_scpc==4)/\(@P1_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val!=0)          
+	    	-> (@P1_scpc=-1)&(@P1_updating=false);
+	    
+	    /////////////////////////////////////////////// State 5  //////////////////////////////////////////////////
+	    // (4/5, idle) --> (5, busy)
+	    [mod_sys::rp_ref0::currentState.in]  (@P1_updating==false)/\((@P1_scpc==4)\/(@P1_scpc==5))           
+	    	-> (@P1_scpc=5)&(@P1_updating=true);
+	    // (5, busy) --> (1, idle)
+	    [] (@P1_scpc==5)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val==State::ClosedLoop)  
+	    	-> (@P1_scpc=1)&(@P1_updating=false);
+	    // (5, busy) --> (0, idle)
+	    [] (@P1_scpc==5)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val!=State::ClosedLoop)  
+	    	-> (@P1_scpc=0)&(@P1_updating=false);
+	}
+	
+//prob property P1_sim:
+//	Prob>=1.0 of [Globally @M1::P1::P1_scpc != -1]
+//	using sim with CI at alpha=0.01, n=1000, and pathlen=10000000
+//	with definitions D1
+//	with modules M1
+//	with cmdoptions "-hybrid -cuddmaxmem 256g -javamaxmem 8g"
+
+label l1 = @M1::P1::P1_scpc != -1
+
+prob property P1:
+	Forall [Globally #l1]
+	with definitions D1
+	with modules M1
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
