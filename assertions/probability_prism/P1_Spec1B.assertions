@@ -1,0 +1,68 @@
+package P1_Spec1A
+
+import basics::*
+
+// P1: That the actual system voltage always follows the set-point
+pmodules M1B:
+	pmodule P1B {
+		// -1 - failure
+		// 0 - idle
+		// 1 - enter errorMode
+		// 2 - 
+		// 3 - 
+		P1B_scpc : [-1 to 3] init 0;
+		P1B_updating: bool init false;
+		
+		//////////////////////////////////// Idle state 0 (free events) ////////////////////////////////////////////
+		[mod_sys::rp_ref0::ext_setPoint.in]  (@P1B_updating==false)/\(@P1B_scpc==0) -> skip; 
+		[mod_sys::rp_ref0::int_ActualHV.in]  (@P1B_updating==false)/\(@P1B_scpc==0) -> skip;
+
+	    [mod_sys::rp_ref0::currentState.in] (@P1B_updating==false)/\ (@P1B_scpc >= 0) /\ (@P1B_scpc <= 3)            
+	    	-> (@P1B_scpc=0)&(@P1B_updating=true);		
+	    // if current state is ClosedLoop, then scpc stays the same as 1
+	    // (0, busy) --> (1, idle)
+	    [] (@P1B_scpc==0)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::currentState.in.val==State::ErrorMode) 
+	    	-> (@P1B_scpc=1)&(@P1B_updating=false);
+	    // otherwise, return to idle by setting scpc to 0
+	    [] (@P1B_scpc==0)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::currentState.in.val!=State::ErrorMode) 
+	    	-> (@P1B_scpc=0)&(@P1B_updating=false);
+	    
+	    /////////////////////////////////////////////// State 1  //////////////////////////////////////////////////
+	    [mod_sys::rp_ref0::ext_setPoint.in]   (@P1B_updating==false)/\(@P1B_scpc==1)                      
+	    	-> (@P1B_scpc=1)&(@P1B_updating=true);
+
+	    [] (@P1B_scpc==1)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::ext_setPoint.in.val==0)             
+	    	-> (@P1B_scpc=2)&(@P1B_updating=false);
+	    	
+	    [] (@P1B_scpc==1)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::ext_setPoint.in.val!=0)             
+	    	-> (@P1B_scpc=-1)&(@P1B_updating=false);
+	    	
+	    /////////////////////////////////////////////// State 2  //////////////////////////////////////////////////
+	    [mod_sys::rp_ref0::int_ActualHV.in]  (@P1B_updating==false)/\(@P1B_scpc==2)                    
+	    	-> (@P1B_scpc=2)&(@P1B_updating=true);
+	    
+	    [] (@P1B_scpc==2)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val==0)             
+	    	-> (@P1B_scpc=0)&(@P1B_updating=false);
+	    	
+	    [] (@P1B_scpc==2)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val!=0)             
+	    	-> (@P1B_scpc=3)&(@P1B_updating=false);
+	    	
+	    /////////////////////////////////////////////// State 3  //////////////////////////////////////////////////
+	    [mod_sys::rp_ref0::int_ActualHV.in]  (@P1B_updating==false)/\(@P1B_scpc==3)                    
+	    	-> (@P1B_scpc=3)&(@P1B_updating=true);
+	    
+	    [] (@P1B_scpc==3)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val==0)             
+	    	-> (@P1B_scpc=0)&(@P1B_updating=false);
+	    	
+	    [] (@P1B_scpc==3)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val!=0)             
+	    	-> (@P1B_scpc=-1)&(@P1B_updating=false);
+	    
+	}
+	
+label l1b = @M1B::P1B::P1B_scpc != -1
+
+prob property P1B:
+	Forall [Globally #l1b]
+	with definitions D1
+	with modules M1B
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"

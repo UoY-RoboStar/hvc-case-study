@@ -8,7 +8,11 @@ pmodules M1:
 		// -1 - failure
 		// 0 - idle
 		// 1 - enter ClosedLoop (setpoint is -1)
-		// 2 - 
+		// 2 - get a ext_setPoint and setpoint is not set
+		// 3 - output int_ActualHV after an ext_setPoint, and setpoint is set to the value on ext_setPoint. 
+		// 4 - get the second ext_setPoint
+		// 5 - a delay identified or check the value on int_ActualHV
+		// 6 - no delay or ready to accept ext_setPoint
 		P1_scpc : [-1 to 6] init 0;
 		P1_updating: bool init false;
 		// buffered set point, -1 means an initial state (no valid data buffered), 
