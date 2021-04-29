@@ -10,7 +10,7 @@ pmodules M1B:
 		// 1 - enter errorMode
 		// 2 - 
 		// 3 - 
-		P1B_scpc : [-1 to 3] init 0;
+		P1B_scpc : [-1 to 4] init 0;
 		P1B_updating: bool init false;
 		
 		//////////////////////////////////// Idle state 0 (free events) ////////////////////////////////////////////
@@ -55,6 +55,16 @@ pmodules M1B:
 	    	-> (@P1B_scpc=0)&(@P1B_updating=false);
 	    	
 	    [] (@P1B_scpc==3)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val!=0)             
+	    	-> (@P1B_scpc=4)&(@P1B_updating=false);
+	    	
+	    /////////////////////////////////////////////// State 4  //////////////////////////////////////////////////
+	    [mod_sys::rp_ref0::int_ActualHV.in]  (@P1B_updating==false)/\(@P1B_scpc==4)                    
+	    	-> (@P1B_scpc=4)&(@P1B_updating=true);
+	    
+	    [] (@P1B_scpc==4)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val==0)             
+	    	-> (@P1B_scpc=0)&(@P1B_updating=false);
+	    	
+	    [] (@P1B_scpc==4)/\(@P1B_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val!=0)             
 	    	-> (@P1B_scpc=-1)&(@P1B_updating=false);
 	    
 	}
@@ -63,6 +73,12 @@ label l1b = @M1B::P1B::P1B_scpc != -1
 
 prob property P1B:
 	Forall [Globally #l1b]
+	with definitions D1
+	with modules M1B
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
+	
+prob property P1Bb_deadlock_free:
+	not Exists [Finally deadlock]
 	with definitions D1
 	with modules M1B
 	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
