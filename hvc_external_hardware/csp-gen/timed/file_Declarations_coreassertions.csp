@@ -1,0 +1,71 @@
+include "file_Declarations.csp"
+
+
+-- generate OP_disableHV
+P_OP_disableHV = let
+	id = 0 
+	const_disableHV_arg = true
+within
+	OP_disableHV::O__(id, const_disableHV_arg)
+assert P_OP_disableHV :[deadlock-free]	
+assert P_OP_disableHV;RUN({r__}) :[deadlock-free]
+assert P_OP_disableHV :[deterministic]
+assert P_OP_disableHV :[divergence-free]
+-- generate OP_checkLimits
+P_OP_checkLimits = let
+	id = 0 
+within
+	OP_checkLimits::O__(id)
+assert P_OP_checkLimits :[deadlock-free]	
+assert P_OP_checkLimits;RUN({r__}) :[deadlock-free]
+assert P_OP_checkLimits :[deterministic]
+assert P_OP_checkLimits :[divergence-free]
+-- generate OP_supplyVoltCheck
+P_OP_supplyVoltCheck = let
+	id = 0 
+within
+	OP_supplyVoltCheck::O__(id)
+assert P_OP_supplyVoltCheck :[deadlock-free]	
+assert P_OP_supplyVoltCheck;RUN({r__}) :[deadlock-free]
+assert P_OP_supplyVoltCheck :[deterministic]
+assert P_OP_supplyVoltCheck :[divergence-free]
+-- generate OP_AdjustLimits
+P_OP_AdjustLimits = let
+	id = 0 
+within
+	OP_AdjustLimits::O__(id)
+assert P_OP_AdjustLimits :[deadlock-free]	
+assert P_OP_AdjustLimits;RUN({r__}) :[deadlock-free]
+assert P_OP_AdjustLimits :[deterministic]
+assert P_OP_AdjustLimits :[divergence-free]
+-- generate OP_setPointRamping
+P_OP_setPointRamping = let
+	id = 0 
+	const_setPointRamping_newSetPoint = 0
+	const_setPointRamping_rampStep = 1
+within
+	OP_setPointRamping::O__(id, const_setPointRamping_newSetPoint, const_setPointRamping_rampStep)
+assert P_OP_setPointRamping :[deadlock-free]	
+assert P_OP_setPointRamping;RUN({r__}) :[deadlock-free]
+assert P_OP_setPointRamping :[deterministic]
+assert P_OP_setPointRamping :[divergence-free]
+-- generate OP_PID_Control
+P_OP_PID_Control = let
+	id = 0 
+within
+	OP_PID_Control::O__(id)
+assert P_OP_PID_Control :[deadlock-free]	
+assert P_OP_PID_Control;RUN({r__}) :[deadlock-free]
+assert P_OP_PID_Control :[deterministic]
+assert P_OP_PID_Control :[divergence-free]
+-- generate OP_enableHV
+P_OP_enableHV = let
+	id = 0 
+within
+	OP_enableHV::O__(id)
+assert P_OP_enableHV :[deadlock-free]	
+assert P_OP_enableHV;RUN({r__}) :[deadlock-free]
+assert P_OP_enableHV :[deterministic]
+assert P_OP_enableHV :[divergence-free]
+
+

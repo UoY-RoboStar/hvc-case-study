@@ -1,0 +1,182 @@
+diagram Transition_system 
+
+import Declarations::*
+
+module mod_sys {
+	rref rp_ref0 = RP1
+    cref ctrl_ref0 = ctrl0
+	cref ctrl_ref1 = ctrl1
+    cref ctrl_ref2 = ctrl2
+
+	connection rp_ref0 on ext_setPoint to ctrl_ref0 on ext_setPoint ( _async )
+
+	connection rp_ref0 on ext_errorAck to ctrl_ref0 on ext_errorAck ( _async )
+	connection rp_ref0 on ext_ActualHV to ctrl_ref0 on ext_ActualHV ( _async )
+
+	connection ctrl_ref3 on int_enablePWM to rp_ref0 on int_enablePWM ( _async )
+
+	connection ctrl_ref3 on int_dutyCyclePWM1 to rp_ref0 on int_dutyCyclePWM1 ( _async )
+	connection rp_ref0 on ext_pow24VStatus to ctrl_ref2 on ext_pow24VStatus ( _async )
+	connection ctrl_ref2 on ext_pow24_1 to ctrl_ref0 on ext_pow24VStatus connection ctrl_ref2 on ext_pow24_2 to ctrl_ref1 on ext_pow24VStatus
+cref ctrl_ref3 = ctrl3
+connection ctrl_ref0 on int_dutyCyclePWM1 to ctrl_ref3 on ctrl0_dutyCyclePWM1
+	connection ctrl_ref1 on int_dutyCyclePWM1 to ctrl_ref3 on ctrl1_dutyCyclePWM1
+	connection ctrl_ref0 on int_enablePWM to ctrl_ref3 on ctrl0_enablePWM
+	connection ctrl_ref1 on int_enablePWM to ctrl_ref3 on ctrl1_enablePWM
+}
+
+interface IEvents_ctrl3 {
+	event int_dutyCyclePWM1 : duty
+	event int_enablePWM : boolean
+	event ctrl0_dutyCyclePWM1 : duty
+	event ctrl1_dutyCyclePWM1 : duty
+	event ctrl0_enablePWM : boolean
+	event ctrl1_enablePWM : boolean
+}
+
+controller ctrl0 {
+	
+	uses IEvents_ctrl0 
+	requires IVars_seqSM_shared 
+	opref op_ref0 = disableHV
+	opref op_ref1 = supplyVoltCheck
+	opref op_ref2 = checkLimits
+	sref stm_ref0 = State_machine
+	
+	connection ctrl0 on ext_setPoint to stm_ref0 on ext_setPoint
+	opref op_ref3 = PID_Control
+	opref op_ref4 = setPointRamping
+	opref op_ref5 = AdjustLimits
+	
+	connection ctrl0 on ext_pow24VStatus to stm_ref0 on ext_pow24VStatus
+	
+	connection ctrl0 on ext_ActualHV to stm_ref0 on ext_ActualHV
+	connection ctrl0 on ext_errorAck to stm_ref0 on ext_errorAck
+
+	connection stm_ref0 on int_dutyCyclePWM1 to ctrl0 on int_dutyCyclePWM1
+	connection stm_ref0 on int_enablePWM to ctrl0 on int_enablePWM
+
+	opref op_ref6 = enableHV
+}
+
+controller ctrl1 {
+	
+	uses IEvents_ctrl1 
+	sref stm_ref0 = Watchdog
+	requires IVars_ctrl1 
+	
+	opref op_ref0 = supplyVoltCheck
+	opref op_ref1 = AdjustLimits
+	opref op_ref2 = disableHV
+	connection ctrl1 on ext_pow24VStatus to stm_ref0 on ext_pow24VStatus
+	
+connection stm_ref0 on int_dutyCyclePWM1 to ctrl1 on int_dutyCyclePWM1
+	connection stm_ref0 on int_enablePWM to ctrl1 on int_enablePWM
+}
+
+controller ctrl2 {
+	uses IEvents_ctrl2
+	
+	stm stm0 {
+		uses IEvents_ctrl2
+		var power : Power
+		initial i0
+		state s0 {
+			entry ext_pow24VStatus ? power ; fresh = true
+			initial i0
+			state s0 {
+				during ext_pow24_2 ! power ; fresh = false
+			}
+			transition t0 {
+				from i0
+				to s0
+			}
+			during ext_pow24_1 ! power ; fresh = false
+		}
+		transition t0 {
+			from i0
+			to s0
+		}
+		transition t1 {
+			from s0
+			to s0
+			condition fresh == false
+		}
+		var fresh : boolean
+	}
+
+	connection ctrl2 on ext_pow24VStatus to stm0 on ext_pow24VStatus
+	connection stm0 on ext_pow24_1 to ctrl2 on ext_pow24_1
+	connection stm0 on ext_pow24_2 to ctrl2 on ext_pow24_2
+}
+
+controller ctrl4 {
+	uses IEvents_ctrl4 
+	
+	stm stm0 {
+		uses IEvents_ctrl4 var power : Power
+		initial i0
+		state s0 {
+			entry int_pwmSignal ? power
+		}
+		transition t0 {
+			from i0
+			to s0
+		}
+		transition t1 {
+			from s0
+			to s0
+			action pwmSignal1 ! power ; pwmSignal2 ! power
+		}
+	}
+
+	connection ctrl4 on int_pwmSignal to stm0 on int_pwmSignal
+	connection stm0 on pwmSignal1 to ctrl4 on pwmSignal1
+	connection stm0 on pwmSignal2 to ctrl4 on pwmSignal2
+}
+
+controller ctrl3 {
+	uses IEvents_ctrl3 stm stm0 {
+		uses IEvents_ctrl3 var duty : duty
+		var enabled : boolean
+		initial i0
+		state s0 {
+		}
+		transition t0 {
+			from i0
+			to s0
+		}
+		transition t1 {
+			from s0
+			to s0
+			trigger ctrl1_enablePWM ? enabled
+			action int_enablePWM ! enabled <{ 0 }
+		}
+		transition t2 {
+			from s0
+			to s0
+			trigger ctrl0_enablePWM ? enabled
+			action int_enablePWM ! enabled <{ 0 }
+		}
+		transition t3 {
+			from s0
+			to s0
+			trigger ctrl1_dutyCyclePWM1 ? duty
+			action int_dutyCyclePWM1 ! duty <{ 0 }
+		}
+		transition t4 {
+			from s0
+			to s0
+			trigger ctrl0_dutyCyclePWM1 ? duty
+			action int_dutyCyclePWM1 ! duty <{ 0 }
+		}
+	}
+
+	connection stm0 on int_enablePWM to ctrl3 on int_enablePWM
+	connection stm0 on int_dutyCyclePWM1 to ctrl3 on int_dutyCyclePWM1
+	connection ctrl3 on ctrl0_dutyCyclePWM1 to stm0 on ctrl0_dutyCyclePWM1
+	connection ctrl3 on ctrl1_dutyCyclePWM1 to stm0 on ctrl1_dutyCyclePWM1
+	connection ctrl3 on ctrl0_enablePWM to stm0 on ctrl0_enablePWM
+	connection ctrl3 on ctrl1_enablePWM to stm0 on ctrl1_enablePWM
+}
+

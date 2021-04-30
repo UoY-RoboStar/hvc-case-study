@@ -1,0 +1,290 @@
+module OP_enableHV
+	-- Only the undefined operations are declared here.
+	-- If the state machine is in isolation, all required operations will be undefined.
+	-- If it is in the context of a controller, the required operations not provided by the
+	-- controller will be declared here, and the defined operations will be defined in the
+	-- context of the Controller module, and therefore within scope of the state machien module.
+	
+	
+	-- definition of functions used to expose flow channels
+	ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+					   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+					   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+					   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+						 
+	ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+				[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+				[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+				[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	
+	-- declaring identifiers of state and final states
+	datatype SIDS = SID_enableHV
+	              | SID_enableHV_f0
+	
+	-- declaring identifiers of transitions
+	datatype TIDS = NULLTRANSITION__
+	              | TID_enableHV_t1
+	
+	-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+	
+	ITIDS = {
+	}
+	
+	int_int = {|
+	|}
+		
+	
+	internal_events = {|enter,entered,exit,exited|}
+	shared_variable_events = {|
+		set_EXT_dutyCyclePWM1
+	|}
+			
+	
+	-- declaring all states
+	CS_enableHV_f0_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_enableHV_f0},
+		y____ <- {SID_enableHV_f0}
+	|}
+	
+	
+	enableHV_f0_triggers = {|
+	|}
+	
+	State_enableHV_f0(id__) = let
+		State_enableHV_f0_execute(id__,o____) = SKIP; 
+			entered!o____!SID_enableHV_f0 ->
+			terminate -> SKIP
+	within
+		enter?x____:diff(SIDS,{SID_enableHV_f0})!SID_enableHV_f0 -> (State_enableHV_f0_execute(id__,x____))
+	
+	
+	I_enableHV_i0(id__) = let
+		T_enableHV_t1(id__) = internal__!TID_enableHV_t1 -> true&(int_enablePWM.out!true -> SKIP);true & (set_dutyCyclePWM1!real2duty(0) -> SKIP);get_dutyCyclePWM1?dutyCyclePWM1 -> true&(int_dutyCyclePWM1.out!dutyCyclePWM1 -> SKIP);enter!SID_enableHV!SID_enableHV_f0 -> entered!SID_enableHV!SID_enableHV_f0 ->
+		SKIP
+	within
+		T_enableHV_t1(id__)
+	
+	
+	State_enableHV_f0_R(id__) = 
+		State_enableHV_f0(id__)
+			[|diff(int_int,enableHV_f0_triggers)|]
+		SKIP
+			 		
+		
+	STM(id__) = (
+		I_enableHV_i0(id__)
+			[|
+				{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+					x____ <- diff(SIDS,{SID_enableHV_f0}),
+					y____ <- {SID_enableHV_f0}
+			|}|]
+		State_enableHV_f0_R(id__)
+	)
+	
+	-- optimized memory process
+	channel getV_dutyCyclePWM1: duty
+	
+	-- individual memory processes
+	Memory_dutyCyclePWM1(dutyCyclePWM1) = (
+		get_dutyCyclePWM1!dutyCyclePWM1 -> Memory_dutyCyclePWM1(dutyCyclePWM1)
+		[]
+		getV_dutyCyclePWM1!dutyCyclePWM1 -> Memory_dutyCyclePWM1(dutyCyclePWM1)
+		[]
+		set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+		[]
+		set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+	)
+	
+	-- processes that read variables and offer transitions
+	MemoryTransitions(id__, dutyCyclePWM1) = 		
+	(internal__!TID_enableHV_t1 -> SKIP[]
+	set_dutyCyclePWM1?x__ -> SKIP[]
+	set_EXT_dutyCyclePWM1?x__ -> SKIP)
+	
+	MemoryTransitions_enableHV(id__) = (getV_dutyCyclePWM1?dutyCyclePWM1 ->
+	MemoryTransitions(id__, dutyCyclePWM1)			
+	); MemoryTransitions_enableHV(id__)
+			
+	
+	-- synchronisation, hiding and process sets 
+	MemoryVariablesProcesses_enableHV = Union(
+		{
+			{
+				(Memory_dutyCyclePWM1(0),{|set_dutyCyclePWM1,getV_dutyCyclePWM1,get_dutyCyclePWM1,set_EXT_dutyCyclePWM1|})
+			}
+		}
+	)
+	
+	MemoryVariablesSyncSet = Union({
+		{|
+			set_dutyCyclePWM1,
+			getV_dutyCyclePWM1,
+			set_EXT_dutyCyclePWM1
+		|}	
+	})
+	
+	MemoryVariablesHideSet = Union({
+		{|
+			getV_dutyCyclePWM1
+		|}
+	})
+	
+	-- combined individual memory processes
+	MemoryVariables = ||| (P, alpha) : MemoryVariablesProcesses_enableHV @ P
+	
+	-- complete memory process	
+	MemoryN(id__) = sbisim(diamond((sbisim(diamond(MemoryVariables)) [| MemoryVariablesSyncSet |] sbisim(diamond(MemoryTransitions_enableHV(id__)))) \ MemoryVariablesHideSet))
+	
+	-- optimised memory
+	-- Sets of named elements identified according to transition conditions:
+	-- {}
+	-- Summary of all identified named elements:
+	-- {
+	-- OP_enableHV::dutyCyclePWM1
+	-- }
+	
+	-- Allocation plan:
+	-- 0:{}
+	--	=> {
+	--		TID_enableHV_t1}
+	
+	-- Memory transition processes
+	MemoryTransitions_opt_0(id__) =
+	(
+		let
+			Update = Current(id__)
+			Current(id__)
+			 	   = 
+			 	   internal__!TID_enableHV_t1 -> Update
+		within
+			Update
+	)
+	
+	-- Memory cell processes
+	Memory_opt_dutyCyclePWM1(x__) = ( 
+		get_dutyCyclePWM1!x__ -> Memory_opt_dutyCyclePWM1(x__)
+		[]
+		set_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+		[]
+		set_EXT_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+	)
+	
+	-- Composition of memory, StateMachine and Memory transition processes
+	
+	MemorySTM_opt(id__) =
+		sbisim(	
+		  dbisim(
+		    sbisim(dbisim(sbisim(Memory_opt_dutyCyclePWM1(0)
+		          	[| {|set_dutyCyclePWM1,get_dutyCyclePWM1|} |] 
+		          	STM_core(id__)
+		          	)\ {|get_dutyCyclePWM1|}
+		          )
+		      	  [| {|internal__.TID_enableHV_t1|} |]
+		      	  MemoryTransitions_opt_0(id__)
+		      	  )\{|internal__.TID_enableHV_t1|})
+		      )
+	
+	-- main process
+	
+	MachineMemorySyncSet = Union({
+		union(
+			union(
+				{||},
+				{||}
+			)
+				
+			,
+			{|internal__.TID_enableHV_t1|}
+		)
+	})
+	
+	MachineMemoryHidingSet = Union({
+		union(
+			{||},
+			{||}
+		)
+	})
+	
+	MachineInternalEvents = {|
+		internal__
+	|}
+	AUX(id__) = (
+		(
+			STM(id__)
+				[|MachineMemorySyncSet|]
+			sbisim(diamond(MemoryN(id__)))
+		)[[
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet
+	)
+	[|{|terminate|}|>SKIP\MachineInternalEvents	
+	
+	STM_core(id__) = 
+		(STM(id__)
+		)
+		
+	AUX_opt(id__) = 
+		(MemorySTM_opt(id__)
+		)[[
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		[|{|terminate|}|>SKIP\MachineInternalEvents	
+	
+exports
+	-- flow channels
+	channel internal__ : TIDS
+	channel enteredV, enterV, exitV, exitedV : SIDS
+	channel enter, entered: SIDS.SIDS
+	channel exit,exited: SIDS.SIDS
+	channel terminate
+	
+	-- variable channels
+	channel get_dutyCyclePWM1, set_dutyCyclePWM1: duty
+			
+	-- shared variable channels
+	channel set_EXT_dutyCyclePWM1: duty
+	
+	-- local variable channels for defined operations that are required by the state machine
+	
+	-- declaring state machine events
+	channel int_enablePWM__: TIDS.InOut.core_boolean
+	channel int_enablePWM: InOut.core_boolean
+	channel int_dutyCyclePWM1__: TIDS.InOut.duty
+	channel int_dutyCyclePWM1: InOut.duty
+	
+	-- declaring call and ret events for undefined operations
+	
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	FVS__(id__) = AUX_opt(id__) \ {|terminate|}
+	
+	-- original process using the unoptimised memory model
+	Dunopt__(id__) = (AUX(id__) \ internal_events) \ {|terminate|}
+	
+	D__(id__) = (AUX_opt(id__) \ internal_events) \ {|terminate|}
+	
+	O__(id__) = sbisim(diamond(D__(id__)))
+	VS__(id__) = ShowV(FVS__(id__))
+	VS_O__(id__) = sbisim(diamond(VS__(id__)))
+endmodule

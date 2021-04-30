@@ -1,0 +1,392 @@
+-- P1 - refinement
+assert SpecP1 [T= ImplP1
+
+-- P1_fail - refinement
+assert SpecP1_nonFunctional [T= ImplP1
+
+-- P2_div_free - divergence free
+assert mod_sys_pwm :[divergence free]
+
+-- P2_dead_free - timed deadlock free
+assert prioritise(mod_sys_pwm[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- P2_non_trivial - not refinement
+assert not TStop [T= mod_sys_pwm
+
+-- P2 - refinement
+assert SpecP2 [T= mod_sys_pwm
+
+-- P3_div_free - divergence free
+assert mod_sys_setpoint :[divergence free]
+
+-- P3_dead_free - timed deadlock free
+assert prioritise(mod_sys_setpoint[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- P3_non_trivial - not refinement
+assert not TStop [T= mod_sys_setpoint
+
+-- P3 - refinement
+assert SpecP3 [T= mod_sys_setpoint
+
+-- P4 - timed deadlock free
+assert prioritise(let 
+	id__ = 0
+	
+	
+	
+	
+	const_State_machine_cycleTime = ms(10)
+		
+	const_setPointRamping_rampStep = 1
+within
+	mod_sys::D__(id__,
+			    const_ctrl0_stm_ref0_cycleTime,
+			   	const_setPointRamping_rampStep)[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+include "defs/timed_definitions.csp"
+include "defs/robochart_defs.csp"
+include "defs/core_defs.csp"
+include "defs/mod_sys.csp"
+include "defs/file_Transition_system_defs.csp"
+
+channel r__
+
+-- Compression function provided by FDR that can be useful to minimize the state-space
+transparent dbisim
+
+-- For convenience in the definition of subsequent data types related to reals we
+-- use two constants to define the interval.
+REAL_MAX = 2
+REAL_MIN = 0
+
+nametype core_real = { REAL_MIN..REAL_MAX}
+nametype core_nat = {0..1}
+nametype core_string = LSeq({'a'},1)
+nametype core_int = { 0..1}
+nametype core_boolean = Bool
+nametype duty = { 0..100 }
+
+-- Below we give a definition to functions used in the RoboChart model.
+
+overLimitMax(x) = if x > REAL_MAX then REAL_MAX else x
+underLimitMin(x) = if x < REAL_MIN then REAL_MIN else x
+
+overLimitF(x) = overLimitMax(x+2)
+underLimitF(x) = underLimitMin(x-2)
+
+-- The following constants are used by assertions, when no parameters are specified
+-- directly in the RoboChart language. Thus we set them here anyway.
+const_State_machine_cycleTime = milliseconds(10)
+const_ctrl0_stm_ref0_cycleTime = milliseconds(10)
+const_State_machine_stepTime = 1
+const_setPointRamping_rampStep = 1
+
+-- For our analysis, we define the time units of RoboChart (encoded in the semantics via 'tock'
+-- events) as representing 2 milliseconds, so below we define what it means to encode a seconds 
+-- and milliseconds.
+milliseconds(t1) = t1/2
+seconds(t1) = t1*1000/2
+
+-- These are also used to define the functions 'ms' and 't' as used by the RoboChart model. 
+ms(t) = milliseconds(t)
+s(t) = seconds(t)
+
+-- The function 'real2duty' is used to convert RoboChart 'reals' to the 'duty' value. In the
+-- model this is used to set duty to 0, for example, so here the function is the identity.
+real2duty(x) = x
+
+-- The following two functions are used by the PID controller to increase/decrease the value
+-- of 'duty'. So here we provide a definition that is closed under the duty type.
+increaseduty(x) = Plus(x,1,duty)
+decreaseduty(x) = Minus(x,1,duty)
+
+-- The following functions close the arithmetic in expressions by ensuring the result
+-- is within the type. They are automatically used by the CSPM semantics generated
+-- by RoboChart. By default they are auto-generated in an 'instantiations.csp' file,
+-- but because we are defining our own Instantiations.
+
+Div(e1,e2,T) = if member(e1/e2,T) then e1/e2 else e1
+Neg(e1,T) = if member(-e1,T) then -e1 else e1
+Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1
+Modulus(e1,e2,T) = if member(e1%e2,T) then e1%e2 else e1
+Plus(e1,e2,T) = if member(e1+e2,T) then e1+e2 else e1
+Minus(e1,e2,T) = if member(e1-e2,T) then e1-e2 else e1
+
+-- Note: USTOP is built-into RoboTool.
+
+TRUN(S) = RUN(union(S,{tock}))
+
+Timed(OneStep) {
+	TStop = STOP
+	EndBy(P,d) = timed_priority(P /\ (WAIT(d);USTOP))
+}
+
+Power_Voltage = {0,24}
+
+channel RPActualHV_out 	: core_real 			-- 'Actuator' output
+channel RPInputV_out 	: core_real				-- output from software via platform mapping 
+ 
+channel RPActualHV 		: core_real 			-- Sensor input
+channel RPActualHV_in 	: core_real 			-- and input to platform mapping 
+
+channel RPpow24V 		: Power_Voltage 		-- Sensor input
+channel RPpow24V_in 	: Power_Voltage			-- input to platform mapping
+
+channel RPsetPoint 		: core_real 			-- Sensor input with voltage (from user)
+channel RPsetPoint_in 	: core_real 			-- input to platform mapping
+
+channel RPerrorAck								-- (untyped) 'sensor' input 
+channel RPerrorAck_in							-- input to plaform mapping
+  
+-- These following events are used internally only for the HVC_Platform process.
+
+channel set_HV, get_HV, change, increase, decrease : core_real 
+
+-- All timed CSP specifications are enclosed in a Timed section, whose
+-- first parameter is a function that specifies an explicit delay after
+-- a particular event. In this case we use the CSPM function defined by
+-- the RoboChart semantics where OneStep(_) = 0, that is, all delays
+-- must be explicit in the CSP model.
+
+Timed(OneStep) {
+	
+	 HVC_Platform = timed_priority((HV(0)[[ get_HV <- RPActualHV_out ]]
+	 								[| {|set_HV|} |] 
+	 								HVC_Hardware)\{|set_HV|}) 
+	 
+	 -- Memory model of the high voltage
+	 
+	 HV(x) = set_HV?x__ -> HV(x__) [] get_HV!x -> HV(x)
+	 
+	 -- Mapping between RPInputV_out and RPActual_HV_out, which
+	 -- consists of assumptions that can be made about the hardware.
+	 
+	 HVC_Hardware = (Detector [| {| change, get_HV |} |] StatefulEvolution) \{|change,get_HV|} 
+	 		
+	 StatefulEvolution = (Evolution [| {| change |} |] HV(0)[[ set_HV <- change]])
+	 
+	 -- The process Evolution captures the different phases of changing
+	 -- the value of the HV: increase, decrease, stay the same.
+	 	
+	 Detector =
+	 	RPInputV_out?nv__ ->
+	 		(get_HV?x__ -> 
+	 			(
+	 				(nv__ != x__)&(change!nv__ -> Detector)
+	 				[]
+	 				(nv__ == x__)&Detector
+	 			)
+	 		)
+	 
+	 -- Evolution captures the assumption established in SDV, where it is
+	 -- shown, that the output takes up to 370ms to change its value.
+	 
+	 Evolution =
+	 	change?x__ -> 
+	 		(
+	 			(WAIT(ms(370)); set_HV!x__ -> Evolution)
+	 			[]
+	 			Evolution
+	 		)
+ }
+
+duty2volt(x__) = 
+	if member(x__,{0..19}) then 0
+		else (if member(x__,{20..60}) then 1 else
+				(if member(x__,{61..100}) then 2 else 0)
+		)
+ 
+Timed(OneStep) {
+
+	-- An interleaving (|||) of the two processes	
+	PlatformMapping = dbisim(timed_priority((RPInputV_out!0 -> PWM_Map(false)) ||| Pow24_Map(true)))
+
+	-- PWM_Map(pwm) records whether the pwm is turned on, via the parameter 'pwm', and if it is
+	-- true, then it acts as a buffer between int_dutyCyclePWM1 and RPInputV_out. If it is false,
+	-- then it outputs 0 via RPInputV_out.
+	
+	PWM_Map(pwm) = 
+	 	mod_sys::int_enablePWM.out?x__ -> ((if x__ == false then RPInputV_out!0 -> SKIP else SKIP) ; PWM_Map(x__))
+	 	[]
+	 	mod_sys::int_dutyCyclePWM1.out?x__ -> ((if pwm == true then RPInputV_out!duty2volt(x__) -> SKIP else SKIP); PWM_Map(pwm))
+	
+	-- Pow24Behaviour accepts a value via RPpow24V_in, and depending on the input value of
+	-- the sensor either offers ext_pow24VStatus.in!Power_On or ext_pow24VStatus.in!Power_Off.
+	 	
+	Pow24_Map(pwr) = 
+	 	RPpow24V_in?x__:{x__ | x__ <- Power_Voltage, (x__ <= 24 and x__ >= 18)} -> Pow24_Map(true)
+	 	[]
+	 	RPpow24V_in?x__:{x__ | x__ <- Power_Voltage, (not (x__ <= 24 and x__ >= 18))} -> Pow24_Map(false)
+		[]
+		(if (pwr==true) 
+			then (mod_sys::ext_pow24VStatus.in!Power_On  -> Pow24_Map(pwr))
+			else (mod_sys::ext_pow24VStatus.in!Power_Off -> Pow24_Map(pwr))
+		)
+
+ }
+
+Timed(OneStep) {
+ 	
+ 	-- The trivial platform mappings are captured here directly by renaming:
+ 	
+ 	Software = mod_sys::O__(0,ms(10),1)[[ mod_sys::ext_ActualHV.in <- RPActualHV_in,
+ 										  mod_sys::ext_errorAck.in <- RPerrorAck_in, 
+ 										  mod_sys::ext_setPoint.in <- RPsetPoint_in ]]
+ 					
+ 	-- The non-trivial mappings are in PlatformMapping, and are captured by the parallel composition.
+ 	 					  
+	Software_PMap = 
+		(Software
+		 [| {|mod_sys::int_enablePWM.out,mod_sys::int_dutyCyclePWM1.out,mod_sys::ext_pow24VStatus|} |]
+		PlatformMapping)\{|mod_sys::int_enablePWM.out,mod_sys::int_dutyCyclePWM1.out,mod_sys::ext_pow24VStatus|}
+	
+	-- Idealised sensors, so here we simply rename the events.
+	
+	MappedSoftware = Software_PMap[[ RPActualHV_in <- RPActualHV,
+									 RPerrorAck_in <- RPerrorAck,
+									 RPpow24V_in   <- RPpow24V,
+									 RPsetPoint_in <- RPsetPoint ]]
+
+	-- The event RPActualHV_out is relationally renamed, because it is assumed RPActualHV_out = RPActualHV,
+	-- and we still observe RPActualHV_out as an independent output too.
+										 
+	MappedSystem = 
+		timed_priority(
+			(MappedSoftware
+			 [| {| RPInputV_out, RPActualHV |} |]
+			 (HVC_Platform[[ RPActualHV_out <- RPActualHV_out,
+							 RPActualHV_out <- RPActualHV]])
+			)\{|RPInputV_out, RPActualHV|}
+		)
+ 	
+ }
+
+channel int_RPsetPoint, e : core_real
+
+abs_diff(x,y) = if (x-y >= 0) then (x - y) else (y - x) 
+ 
+Timed(OneStep) {
+	
+ 	-- No error acknowledgment
+ 	Assumption_RPerrorAck = STOP
+ 	
+ 	-- The power is stable, so this 'sensor' input is set to 24V once, and never changed.
+ 	Assumption_RPpow24V = RPpow24V!24 -> STOP 		
+ 
+  	-- The RPsetPoint is initially 0 for at least 22ms before it can be changed.
+ 	Assumption_SetPoint = EndBy(RPsetPoint.0 -> SKIP,0) ; WAIT(milliseconds(22)) ; RPChange
+ 
+ 	-- At most once per 1 second.
+ 	RPChange = RPsetPoint?x__ -> WAIT(s(1)) ; RPChange
+ 
+ 	SystemP1 =
+ 		(
+ 			(MappedSystem [| {| RPerrorAck |} |] Assumption_RPerrorAck) \{|RPerrorAck|}
+ 			[| {| RPpow24V |} |]
+ 			Assumption_RPpow24V
+ 		)\{| RPpow24V |}
+ 	
+ 	RPSystemP1 = 
+ 		(SystemP1[[ RPsetPoint <- int_RPsetPoint]]
+ 	 	 [| {|int_RPsetPoint|} |]
+		 RPEventMapping(0) 	 	 
+ 		)\{|int_RPsetPoint|}
+ 	
+ 	RPEventMapping(x) = 
+ 		RPsetPoint?x__ -> RPEventMapping(x__)
+ 		[]
+ 		int_RPsetPoint!x -> RPEventMapping(x)
+ 		
+	Error(actualhv,setpoint) = 
+ 		RPsetPoint?x__ -> Error(actualhv,x__)
+ 		[]
+ 		RPActualHV_out?x__ -> Error(x__,setpoint)
+ 		[]
+ 		e!abs_diff(actualhv,setpoint) -> Error(actualhv,setpoint)
+ 	
+ 	-- The ErrorSampler process is necessary to ensure that the error isn't calculated
+ 	-- more often than once every time unit. Otherwise it would lead to a divergence.
+ 	--
+ 	-- Furthermore, we need to ensure that the error is indeed outputted at least once per time unit,
+ 	-- otherwise traces may not contain any error events at all within a fixed amout of time.
+ 	
+ 	Sampler = EndBy(RPActualHV_out?x__ -> e?x__ -> SKIP,0); WAIT(1); Sampler
+ 
+ 	ESystemP1 = 
+ 		(RPSystemP1
+ 		 [| {|RPsetPoint,RPActualHV_out|} |]
+ 		 (Error(0,0) [| {| RPActualHV_out, e |} |] Sampler)
+ 		)\{|RPActualHV_out|}
+ 
+ 	ImplP1 = timed_priority(ESystemP1 [| {|RPsetPoint|}|] Assumption_SetPoint)
+ }
+
+Timed(OneStep) {
+	
+	ADeadline(S,E,d) = EndBy(TRUN(S),d) [|E|> SKIP
+		
+ 	SpecP1 = timed_priority(Follow(s(3)))
+ 	
+ 	Follow(d) = 
+ 		e?x__ -> (if x__ == 0 then Follow(d)
+ 							  else ((ADeadline({|e|},{|e.0|},d);TRUN({|e.0|})) /\ RPsetPoint?x__ -> Follow(d))	
+ 				 )
+ 		[]
+		RPsetPoint?x__ -> Follow(d)
+}
+
+Timed(OneStep) {
+	SpecP1_nonFunctional = timed_priority(Follow(ms(100)))
+}
+
+Timed(OneStep) {
+
+SpecP2 = timed_priority(PWM_off)
+
+PWM_Behaviour = 
+	mod_sys::int_dutyCyclePWM1.out?x__:{x__ | x__ <- duty, x__ > 0} -> PWM_on
+	[]
+	mod_sys::int_dutyCyclePWM1.out.0 -> PWM_off
+
+PWM_off = PWM_Behaviour [] mod_sys::ext_pow24VStatus.in.Power_Off -> PWM_off
+	  	  
+PWM_on = PWM_Behaviour
+		 []
+		 mod_sys::ext_pow24VStatus.in.Power_Off -> 
+		 	ADeadline({|mod_sys::ext_pow24VStatus.in.Power_Off,mod_sys::int_dutyCyclePWM1.out|},
+		 		      {|mod_sys::int_dutyCyclePWM1.out.0|},ms(10)) ; PWM_off
+}
+
+Timed(OneStep) {
+	mod_sys_pwm = timed_priority(Software |\ {|mod_sys::ext_pow24VStatus.in.Power_Off,mod_sys::int_dutyCyclePWM1.out,tock|})
+}
+
+Timed(OneStep) {
+
+SpecP3 = timed_priority(mSetPoint_zero)
+
+mSetPoint = 
+	mod_sys::set_mSetPoint?x__:{x__ | x__ <- core_real, x__ > 0} -> mSetPoint_non_zero
+	[]
+	mod_sys::set_mSetPoint.0 -> mSetPoint_zero
+
+mSetPoint_zero = mSetPoint [] mod_sys::ext_pow24VStatus.in.Power_Off -> mSetPoint_zero
+	  	  
+mSetPoint_non_zero = 
+		 mSetPoint_zero
+		 []
+		 mod_sys::ext_pow24VStatus.in.Power_Off -> 
+		 	ADeadline({|mod_sys::ext_pow24VStatus.in.Power_Off,mod_sys::set_mSetPoint|},
+		 		      {|mod_sys::set_mSetPoint.0|},ms(10)) ; mSetPoint_zero
+}
+
+Timed(OneStep) {
+	mod_sys_setpoint = timed_priority(mod_sys::AS_O__(0,5,1) |\ {|mod_sys::ext_pow24VStatus.in.Power_Off,mod_sys::set_mSetPoint,tock|})
+}
+
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref0::stm_ref0::Init::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref0::stm_ref0::Wait24Vpower::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref0::stm_ref0::ClosedLoop::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref0::stm_ref0::ErrorMode::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref1::stm_ref0::s0::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref1::stm_ref0::s1::entered|}

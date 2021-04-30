@@ -1,0 +1,21 @@
+include "core_timed_defs.csp"
+include "core_defs.csp"
+include "state_timed_defs.csp"
+include "setPointRamping.csp"
+include "file_Declarations_defs.csp"
+include "robochart_defs.csp"
+include "../instantiations.csp"
+
+transparent wbisim
+channel r__
+-- generate OP_setPointRamping
+P_OP_setPointRamping = let
+	id = 0 
+	const_setPointRamping_newSetPoint = 0
+	const_setPointRamping_rampStep = 1
+within
+	OP_setPointRamping::O__(id, const_setPointRamping_newSetPoint, const_setPointRamping_rampStep)
+assert P_OP_setPointRamping :[deadlock-free]	
+assert P_OP_setPointRamping;RUN({r__}) :[deadlock-free]
+assert P_OP_setPointRamping :[deterministic]
+assert P_OP_setPointRamping :[divergence-free]

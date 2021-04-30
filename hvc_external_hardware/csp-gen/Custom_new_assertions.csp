@@ -1,0 +1,180 @@
+-- C0 - not refinement
+assert not Stop [FD= mod_sys_extSetPointOut
+
+-- C1 - not refinement
+assert not Stop [FD= mod_sys_extpow24VStatus
+
+-- A1 - refinement
+assert Spec12 [T= mod_sys_power_on
+
+-- A1witness - not refinement
+assert not Stop [T= mod_sys_can_loop
+
+-- A2 - refinement
+assert Spec3 [FD= mod_sys_power
+
+-- A3 - refinement
+assert Spec4 [FD= mod_sys_power
+
+-- A4 - deadlock free
+assert let 
+	id__ = 0
+	
+	
+	
+	
+	const_State_machine_cycleTime = ms(10)
+		
+	const_setPointRamping_rampStep = 1
+within
+	mod_sys::O__(id__,
+			    const_ctrl0_stm_ref0_cycleTime,
+			   	const_setPointRamping_rampStep) :[deadlock free]
+
+-- A6 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	const_State_machine_cycleTime = ms(10)
+	
+	
+within
+	State_machine::VS_O__(id__,
+			    const_State_machine_cycleTime) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Init|}
+
+-- A8 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	const_State_machine_cycleTime = ms(10)
+	
+	
+within
+	State_machine::VS_O__(id__,
+			    const_State_machine_cycleTime) |\ {|State_machine::enteredV.State_machine::SID_State_machine_ClosedLoop|}
+
+include "defs/robochart_defs.csp"
+include "defs/core_defs.csp"
+include "defs/mod_sys.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/State_machine.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations_defs.csp"
+
+channel r__
+
+-- generate nat
+nametype core_nat = {0..3}
+
+-- generate string
+nametype core_string = LSeq({'a'},1)
+
+-- generate real
+nametype core_real = { -2..3}
+
+-- BASIC FUNCTIONS
+
+-- generate int
+nametype core_int = { 0..3}
+
+-- generate -- OPERATION BOUNDS
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate Div
+Div(e1,e2,T) = if member(e1/e2,T) then e1/e2 else e1
+
+-- generate Neg
+Neg(e1,T) = if member(-e1,T) then -e1 else e1
+
+-- generate boolean
+nametype core_boolean = Bool
+
+-- generate Mult
+Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1
+
+-- generate Modulus
+Modulus(e1,e2,T) = if member(e1%e2,T) then e1%e2 else e1
+
+-- generate Plus
+Plus(e1,e2,T) = if member(e1+e2,T) then e1+e2 else e1
+
+-- generate Minus
+Minus(e1,e2,T) = if member(e1-e2,T) then e1-e2 else e1
+
+mod_sys_analysis = mod_sys::O__(0) \ {|mod_sys::ext_setPoint.out|}
+
+mod_sys_cons = (mod_sys::O__(0) [| {| mod_sys::ext_pow24VStatus.in.Power_Off,mod_sys::ext_setPoint.in|} |] RUN({mod_sys::ext_setPoint.in.x__ | x__ <- {0,1}})) \ {|mod_sys::int_pwmSignal.out,mod_sys::ext_setPoint.out|}
+
+channel int_ActualHV : core_real
+channel read : core_real
+
+-- The Power can be read as being on all the time, and the ouput for int_ActualHV is buffered.
+-- We use an internal channel 'int_ActualHV' for this.
+
+ErrorSpec12 = ((RUN({| mod_sys::ext_pow24VStatus.in.Power_On |}) ||| Init) 
+				[| {| int_ActualHV |} |] BufferedOutput
+				) \{|int_ActualHV|} 
+
+-- The actual Buffered output is modelled as a composition of a Buffer
+-- and a process Output that produces the event mod_sys::int_ActualHV.
+-- The channel 'read' is used by Output internally to read from this buffer.
+BufferedOutput = (Buffer [| {|read|} |] Output) \{|read|}
+
+-- Output simply outputs what it reads.
+Output = read?x__ -> mod_sys::int_ActualHV.out!x__ -> Output
+
+-- A buffer, whose current 'value' can be overwritten.
+Buffer = int_ActualHV?x__ -> (read!x__ -> Buffer [] Buffer)
+
+-- Initialisation, the first setPoint can be anything.
+Init = mod_sys::ext_setPoint.in?x:{0,1} -> Wait24V
+ 
+-- This corresponds to waiting for the 24V power. At this point,
+-- the setPoint value must be 0, otherwise there is an error, and int_ActualHV should be zero.
+Wait24V = (mod_sys::ext_setPoint.in.0 -> ON [] mod_sys::ext_setPoint.in?x:{x|x<-{0,1},not x==0} -> int_ActualHV.0 -> Wait24V)
+
+-- If it's stable, and ON, then the value communicated via ext_setPoint 
+-- is used to set the ActualHV.
+ON = mod_sys::ext_setPoint.in?x__:{0,1} -> int_ActualHV.x__ -> ON
+
+mod_sys_power_on = (mod_sys::O__(0) 
+	[| {| mod_sys::ext_setPoint.in,mod_sys::ext_pow24VStatus.in |} |] 
+	RUN(union({mod_sys::ext_setPoint.in.x__ | x__ <- {0,1}},{|mod_sys::ext_pow24VStatus.in.Power_On|})))\{|mod_sys::int_pwmSignal.out|}
+
+mod_sys_can_loop = mod_sys_power_on |\ {| mod_sys::currentState.out.State_ClosedLoop |}
+
+Spec12 = (Behaviour [| {|int_ActualHV|} |] BufferedOutput)\{|int_ActualHV|}
+
+Behaviour = CHAOS(Events) 
+		 	[| {| mod_sys::currentState.out.State_ClosedLoop |} |> 
+		 	((RUN({|mod_sys::ext_pow24VStatus.in.Power_On|}) ||| ClosedLoop) /\ mod_sys::currentState.out.State_ErrorMode -> Behaviour)
+
+ClosedLoop = mod_sys::ext_setPoint.in?x__:{0,1} -> int_ActualHV.x__ -> ClosedLoop
+
+Stop = STOP
+
+mod_sys_extSetPointOut = mod_sys::O__(0) |\ {|mod_sys::ext_setPoint.in |}
+
+mod_sys_extpow24VStatus = mod_sys::O__(0) |\ {|mod_sys::ext_pow24VStatus.in |}
+
+Spec3 = CHAOS(Events) [| {| mod_sys::ext_pow24VStatus.in.Power_Off |} |> mod_sys::int_pwmSignal.out.Power_Off -> Spec3
+
+Spec4 = CHAOS(Events) [| {|mod_sys::ext_pow24VStatus.in.Power_Off|} |> mod_sys::ext_setPoint.out.0 -> Spec4
+
+mod_sys_power = (mod_sys::O__(0) [| {|mod_sys::ext_pow24VStatus.in.Power_Off|} |] SKIP)
+
+mod_sys_pow_pwm = mod_sys::O__(0) |\ {|mod_sys::ext_pow24VStatus.in,mod_sys::int_pwmSignal.out|}

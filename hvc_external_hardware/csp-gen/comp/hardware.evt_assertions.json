@@ -1,0 +1,27 @@
+[
+	{
+		"name": "System_SetPoint_Eventually_Error refines SetPoint_Error_Eventually_Zero (Eventually) [failures divergences model]",
+		"type": "refines",
+		"negated": false 
+	},
+	{
+		"name": "HV_Error_System refines SetPoint_Maintain_Error_Zero (Maintains) [failures divergences model]",
+		"type": "refines",
+		"negated": false 
+	},
+	{
+		"name": "HV_Error_System_NonZero is not refined by HV_Error_Zero (A0) [traces model]",
+		"type": "refines",
+		"negated": true 
+	},
+	{
+		"name": "HV_Error_System refines HV_Error_Zero_Follow (A1) [traces model]",
+		"type": "refines",
+		"negated": false 
+	},
+	{
+		"name": "mod_sys is deadlock free (A2) [failures divergences model]",
+		"type": "deadlock-free",
+		"negated": false 
+	}
+]

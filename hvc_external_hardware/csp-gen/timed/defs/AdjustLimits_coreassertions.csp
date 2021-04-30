@@ -1,0 +1,18 @@
+include "core_defs.csp"
+include "AdjustLimits.csp"
+include "timed_definitions.csp"
+include "file_Declarations_defs.csp"
+include "robochart_defs.csp"
+include "../instantiations.csp"
+
+transparent wbisim
+channel r__
+-- generate OP_AdjustLimits
+P_OP_AdjustLimits = let
+	id = 0 
+within
+	OP_AdjustLimits::O__(id)
+assert P_OP_AdjustLimits :[deadlock-free]	
+assert P_OP_AdjustLimits;RUN({r__}) :[deadlock-free]
+assert P_OP_AdjustLimits :[deterministic]
+assert P_OP_AdjustLimits :[divergence-free]

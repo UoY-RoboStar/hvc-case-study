@@ -1,0 +1,507 @@
+	module ctrl4
+		Timed(OneStep) {
+			shared_variable_events = {|
+			|}		
+		}	
+	exports
+		transparent diamond
+		transparent sbisim
+		transparent wbisim
+		transparent chase
+		
+				module stm0
+				exports
+					-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+					external prioritise
+					transparent wbisim
+					transparent dbisim
+					transparent sbisim
+				
+					Timed(OneStep) {	
+						-- flow channels
+						channel internal__ : TIDS
+						channel enteredV, enterV, exitV, exitedV : SIDS
+						channel enter, entered: SIDS.SIDS
+						channel exit,exited: SIDS.SIDS
+						channel terminate
+						
+						-- variable channels
+						channel get_power, set_power: Power
+								
+						-- shared variable channels
+						
+						-- local variable channels for defined operations that are required by the state machine
+						
+						-- declaring state machine events
+						channel int_pwmSignal__: TIDS.InOut.Power
+						channel int_pwmSignal: InOut.Power
+						channel pwmSignal1__: TIDS.InOut.Power
+						channel pwmSignal1: InOut.Power
+						channel pwmSignal2__: TIDS.InOut.Power
+						channel pwmSignal2: InOut.Power
+						
+						-- declaring call and ret events for undefined operations
+					
+						-- Only the undefined operations are declared here.
+						-- If the state machine is in isolation, all required operations will be undefined.
+						-- If it is in the context of a controller, the required operations not provided by the
+						-- controller will be declared here, and the defined operations will be defined in the
+						-- context of the Controller module, and therefore within scope of the state machien module.
+						
+						
+						-- definition of functions used to expose flow channels
+						ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+										   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+										   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+										   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+											 
+						ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+						ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+						ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+						ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+						ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+									[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+									[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+									[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+						
+						-- declaring identifiers of state and final states
+						datatype SIDS = SID_stm0
+						              | SID_stm0_s0
+						
+						-- declaring identifiers of transitions
+						datatype TIDS = NULLTRANSITION__
+						              | TID_stm0_t0
+						              | TID_stm0_t1
+						
+						-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+						
+						ITIDS = {
+							TID_stm0_t1
+						}
+						
+						int_int = {|
+							int_pwmSignal__.TID_stm0_t1,
+							pwmSignal1__.TID_stm0_t1,
+							pwmSignal2__.TID_stm0_t1,
+							internal__.TID_stm0_t1
+						|}
+							
+						
+						internal_events = {|enter,entered,exit,exited|}
+						shared_variable_events = {|
+						|}
+								
+						
+						-- declaring all states
+						CS_stm0_s0_sync = {|
+							enter.y____.x____, 
+							entered.y____.x____, 
+							exit.y____.x____, 
+							exited.y____.x____,
+							enter.x____.y____, 
+							entered.x____.y____, 
+							exit.x____.y____, 
+							exited.x____.y____ |
+							x____ <- {SID_stm0_s0},
+							y____ <- {SID_stm0_s0}
+						|}
+						
+						
+						stm0_s0_triggers = {|
+							internal__.TID_stm0_t1
+						|}
+						
+						State_stm0_s0(id__) = let
+							T_stm0_t1(id__) = internal__!TID_stm0_t1 ->  exit.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+												SKIP;exited.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+												get_power?power -> true&(pwmSignal1.out!power -> SKIP);get_power?power -> true&(pwmSignal2.out!power -> SKIP);enter!SID_stm0_s0!SID_stm0_s0 -> State_stm0_s0_execute(id__,SID_stm0_s0)
+							State_stm0_s0_execute(id__,o____) = true&(int_pwmSignal.in?power -> set_power!power -> SKIP); 
+								entered!o____!SID_stm0_s0 ->
+								(SKIP; STOP /\ (
+									T_stm0_t1(id__)
+									[]
+									internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t1}) -> exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+											SKIP;
+											exited!y____!SID_stm0_s0 -> SKIP);
+											State_stm0_s0(id__)
+									[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+											SKIP;
+											exited!y____!SID_stm0_s0 -> SKIP);
+											State_stm0_s0(id__)
+									[] pwmSignal1__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+											SKIP;
+											exited!y____!SID_stm0_s0 -> SKIP);
+											State_stm0_s0(id__)
+									[] pwmSignal2__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+											SKIP;
+											exited!y____!SID_stm0_s0 -> SKIP);
+											State_stm0_s0(id__)
+								))
+						within
+							enter?x____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (State_stm0_s0_execute(id__,x____))
+						
+						
+						I_stm0_i0(id__) = let
+							T_stm0_t0(id__) = internal__!TID_stm0_t0 -> enter!SID_stm0!SID_stm0_s0 -> entered!SID_stm0!SID_stm0_s0 ->
+							SKIP
+						within
+							T_stm0_t0(id__)
+						
+						
+						State_stm0_s0_R(id__) = 
+							State_stm0_s0(id__)
+								[|diff(int_int,stm0_s0_triggers)|]
+							SKIP
+								 		
+							
+						STM(id__) = (
+							I_stm0_i0(id__)
+								[|
+									{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+										x____ <- diff(SIDS,{SID_stm0_s0}),
+										y____ <- {SID_stm0_s0}
+								|}|]
+							State_stm0_s0_R(id__)
+						)
+						
+						-- optimized memory process
+						channel getV_power: Power
+						
+						-- individual memory processes
+						Memory_power(x__) = ( 
+							get_power!x__ -> Memory_power(x__)
+							[]
+							getV_power!x__ -> Memory_power(x__)
+							[]
+							set_power?x__ -> Memory_power(x__)
+						)
+						
+						-- processes that read variables and offer transitions
+						MemoryTransitions(id__,
+							 power) = (
+							internal__!TID_stm0_t0 -> SKIP
+							[]
+							internal__!TID_stm0_t1 -> SKIP
+						
+							[]
+								set_power?x__ -> SKIP
+						 	)
+						MemoryTransitions_stm0(id__) =
+							(
+							getV_power?power ->
+							 MemoryTransitions(id__,
+							 	 power);
+							 MemoryTransitions_stm0(id__)
+							)
+						
+						-- synchronisation, hiding and process sets 
+						MemoryVariablesProcesses_stm0 = Union(
+							{
+								{
+									Memory_power(Power_On)
+								}
+							}
+						)
+						
+						MemoryVariablesSyncSet = Union({
+							{|
+								getV_power,
+								set_power,
+								setWC
+							|}	
+						})
+						
+						MemoryVariablesHideSet = Union({
+							{|
+								getV_power,
+								getWC
+							|}
+						})
+						
+						-- combined individual memory processes
+						MemoryVariables = ||| P : MemoryVariablesProcesses_stm0 @ P
+						
+						-- complete memory process
+						MemoryN(id__) = (MemoryVariables [| MemoryVariablesSyncSet |] MemoryTransitions_stm0(id__)) \ MemoryVariablesHideSet
+						
+						-- optimised memory
+						-- Sets of named elements identified according to transition conditions:
+						-- {}
+						-- Summary of all identified named elements:
+						-- {
+						-- power
+						-- }
+						
+						-- Allocation plan:
+						-- 0:{}
+						--	=> {
+						--		TID_stm0_t1,
+						--		TID_stm0_t0}
+						
+						-- Memory transition processes
+						MemoryTransitions_opt_0(id__) =
+						(
+							let
+								Update = Current(id__)
+								Current(id__)
+								 	   = 
+								 	   internal__!TID_stm0_t1 -> Update
+								 	   []
+								 	   internal__!TID_stm0_t0 -> Update
+							within
+								Update
+						)
+						
+						-- Memory cell processes
+						Memory_opt_power(x__) = ( 
+							get_power!x__ -> Memory_opt_power(x__)
+							[]
+							set_power?x__ -> Memory_opt_power(x__)
+						)
+						
+						-- Composition of memory, StateMachine and Memory transition processes
+						
+						MemorySTM_opt(id__) =
+							sbisim(	
+							  dbisim(
+							    sbisim(dbisim(sbisim(Memory_opt_power(Power_On)
+							          	[| {|get_power,set_power|} |] 
+							          	STM_core(id__)
+							          	)\ {|get_power,set_power|}
+							          )
+							      	  [| {|internal__.TID_stm0_t0,internal__.TID_stm0_t1|} |]
+							      	  MemoryTransitions_opt_0(id__)
+							      	  )\{|internal__.TID_stm0_t0,internal__.TID_stm0_t1|})
+							      )
+						
+						-- main process
+						
+						MachineMemorySyncSet = Union({
+							union(
+								union(
+									{|get_power,set_power|},
+									{||}
+								)
+									
+								,
+								{|internal__.TID_stm0_t0,
+								internal__.TID_stm0_t1|}
+							),
+							{|deadline|},
+							WCresets
+						})
+						
+						MachineMemoryHidingSet = Union({
+							union(
+								{|get_power,set_power|},
+								{||}
+							)
+							,
+							{|deadline|}
+						})
+						
+						MachineInternalEvents = {|
+							internal__
+						|}
+					
+						-- main process
+						AUX(id__) = prioritise((((
+							wbisim(STM(id__))
+								[|MachineMemorySyncSet|]
+							(
+								(MemoryN(id__))
+									[| union(WCsets,WCsync) |]
+								Clocks(id__)
+							)\WCsets
+						)
+						[[
+							int_pwmSignal__.x____ <- int_pwmSignal,
+							pwmSignal1__.x____ <- pwmSignal1,
+							pwmSignal2__.x____ <- pwmSignal2
+							| x____ <- TIDS
+						]]
+						\MachineMemoryHidingSet)
+						[|{|terminate|}|>SKIP\MachineInternalEvents)
+						,<Union({internal_events, ClockResets, {|terminate|}}),{tock}>)
+						
+						STM_core(id__) = 
+							dbisim(
+								sbisim(
+										(STM(id__)
+										[| union(WCsync,WCresets) |]
+										Clocks(id__))\WCresets
+									  )
+								  )
+						
+						AUX_opt(id__) = 
+							prioritise(
+								(MemorySTM_opt(id__)
+								)[[
+									int_pwmSignal__.x____ <- int_pwmSignal,
+									pwmSignal1__.x____ <- pwmSignal1,
+									pwmSignal2__.x____ <- pwmSignal2
+									| x____ <- TIDS
+								]]
+							[|{|terminate|}|>SKIP\MachineInternalEvents
+							,<Union({internal_events, ClockResets, {|terminate|}}),{tock}>)
+						
+						internal_(id__) = prioritise((((
+							wbisim(STM(id__))
+								[|MachineMemorySyncSet|]
+							((MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+						)
+						\MachineMemoryHidingSet)
+						[|{|terminate|}|>SKIP)
+						,<Union({internal_events, ClockResets, {|internal__,terminate|}}),{tock}>)		
+						-- declare clocks
+						datatype ClockSet = dummyC
+						channel clockReset 				-- no clocks declared
+						
+						-- declare trigger deadlines channel
+						channel deadline : TIDS.deadlineSignal
+						
+						-- compile clocks process
+						
+						-- set of strings that uniquely identify the waiting conditions, each of which is 
+						-- used to synchronise with the Memory process to set the correspoding variable in
+						-- the memory process.
+						datatype setWC_identifierSet = dummyWC
+						
+						-- declaring getWC and setWC channel for updating memory variables related to clocks
+						channel setWC : setWC_identifierSet.Bool
+						channel getWC : setWC_identifierSet.Bool
+						
+						-- Set of pairs capturing waiting condition processes and their alphabet.
+						-- It includes the corresponding set of the defined operations.
+						WCset(id__) = Union({
+							{
+							}
+							})
+						
+						-- Auxiliary function to rename the channel set for required clocks.
+						
+						-- Set of transition events for which synchronisation is required between Clocks and the Memory process.
+						-- It includes the corresponding set of the defined operations.
+						WCsync = Union({
+							{||}
+							})
+						-- Set of all clock resets, including 'clockReset.C' events and 'entered.x.y' events where x is drawn
+						-- from the set of all state machine state identifiers. It includes the corresponding set of the defined operations.
+						WCresets = Union({
+							{| | x <- SIDS |}
+							})
+						-- Set of all waiting condition set events. It includes the corresponding set of the defined operations.
+						WCsets = Union({
+							{|setWC|}
+							})
+						
+						
+						
+						-- Clocks process
+						Clocks(id__) = || (alpha, P) : WCset(id__) @ [alpha] wbisim(P)
+		
+						-- collects all clockResets including those of operations
+						ClockResets = Union({
+							{|clockReset|}
+											})
+						
+						-- With no internal events visible
+						Dunopt__(id__) = timed_priority(AUX(id__) \ union(internal_events,ClockResets))
+						
+						D__(id__) = timed_priority(AUX_opt(id__) \ union(internal_events,ClockResets))
+						
+						O__(id__) = D__(id__)
+						
+						-- With enter/entered/exit/exited events visible
+						FVS__(id__) = timed_priority(AUX(id__) \ ClockResets)
+						
+						-- With enterV/enteredV/exitV/exitedV events visible
+						VS__(id__) = ShowV(timed_priority(AUX(id__) \ ClockResets))
+						
+						-- With clock resets visible
+						FVS_C__(id__) = AUX(id__)
+					}
+				endmodule
+	
+	
+		Timed(OneStep) {
+			-- declaring call and ret events for undefined operations
+	
+						
+			-- declaring controller events
+			channel int_pwmSignal: InOut.Power
+			channel pwmSignal1: InOut.Power
+			channel pwmSignal2: InOut.Power
+							
+
+		
+			-- declaring controller memory
+			Memory(id__) = SKIP
+			-- declaring controller termination channel
+			channel terminate
+			
+			-- set of visible memory events
+			visibleMemoryEvents = {||}
+		
+			D__(id__) = prioritise(wbisim(
+				(
+					stm0::D__(id__)[[
+						stm0::terminate <- terminate,
+						stm0::int_pwmSignal <- int_pwmSignal,
+						stm0::pwmSignal1 <- pwmSignal1,
+						stm0::pwmSignal2 <- pwmSignal2
+					]]
+				)
+					[|
+						union(
+							{|
+							|},
+							{|
+							|}
+						)
+					|]
+				Memory(id__)
+			)
+			\ union(
+				{|
+				|},
+				{|
+				|}
+			)
+			[|{|terminate|}|>SKIP,
+			<union(visibleMemoryEvents,{terminate}),{tock}>)
+			
+			O__(id__) = D__(id__)
+			
+			-- VS version
+			VS__(id__) = prioritise(wbisim(
+				(
+					stm0::VS__(id__)[[
+						stm0::terminate <- terminate,
+						stm0::int_pwmSignal <- int_pwmSignal,
+						stm0::pwmSignal1 <- pwmSignal1,
+						stm0::pwmSignal2 <- pwmSignal2
+					]]
+				)
+					[|
+						union(
+							{|
+							|},
+							{|
+							|}
+						)
+					|]
+				Memory(id__)
+			)
+			\ union(
+				{|
+				|},
+				{|
+				|}
+			)
+			[|{|terminate|}|>SKIP,
+			<union(visibleMemoryEvents,{terminate}),{tock}>)
+		
+			HEXT(id__) = D__(id__) [|shared_variable_events|] SKIP
+		}
+	endmodule

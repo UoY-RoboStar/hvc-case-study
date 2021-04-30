@@ -1,0 +1,111 @@
+include "defs/file_Transition_system.csp"
+include "defs/file_sequential_StateMachine.csp"
+include "defs/robochart_defs.csp"
+include "defs/state_defs.csp"
+include "defs/core_defs.csp"
+include "defs/file_Interrupt.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations.csp"
+include "defs/file_Declarations_defs.csp"
+include "../instantiations.csp"
+
+module original
+exports
+	include "../defs/file_Interrupt.csp"
+	include "../defs/file_Transition_system.csp"
+	include "../defs/file_Declarations.csp"
+	include "../defs/file_sequential_StateMachine.csp"
+endmodule
+
+-- Assertions
+
+
+
+-- StateMachineDef: State_machine
+assert (let 
+	id__ = 0
+	
+	
+	const_State_machine_cycleTime = ms(10)
+	
+within
+	original::State_machine::O__(id__,
+			    const_State_machine_cycleTime)
+	   [[ original::State_machine::ext_ActualHV <- State_machine::ext_ActualHV ]]
+	   [[ original::State_machine::ext_pow24VStatus <- State_machine::ext_pow24VStatus ]]
+	   [[ original::State_machine::ext_errorAck <- State_machine::ext_errorAck ]]
+	   [[ original::State_machine::ext_setPoint <- State_machine::ext_setPoint ]]
+	   [[ original::State_machine::int_dutyCyclePWM1 <- State_machine::int_dutyCyclePWM1 ]]
+	   [[ original::State_machine::int_enablePWM <- State_machine::int_enablePWM ]]
+	   [[ original::State_machine::set_overLimit <- State_machine::set_overLimit, original::State_machine::set_EXT_overLimit <- State_machine::set_EXT_overLimit]]
+	   [[ original::State_machine::set_underLimit <- State_machine::set_underLimit, original::State_machine::set_EXT_underLimit <- State_machine::set_EXT_underLimit]]
+	   [[ original::State_machine::set_currentState <- State_machine::set_currentState, original::State_machine::set_EXT_currentState <- State_machine::set_EXT_currentState]]
+	   [[ original::State_machine::set_HVEnabled <- State_machine::set_HVEnabled, original::State_machine::set_EXT_HVEnabled <- State_machine::set_EXT_HVEnabled]]
+	   [[ original::State_machine::set_pow24VStatus <- State_machine::set_pow24VStatus, original::State_machine::set_EXT_pow24VStatus <- State_machine::set_EXT_pow24VStatus]]
+	   [[ original::State_machine::set_mSetPoint <- State_machine::set_mSetPoint, original::State_machine::set_EXT_mSetPoint <- State_machine::set_EXT_mSetPoint]]
+	   [[ original::State_machine::set_dutyCyclePWM1 <- State_machine::set_dutyCyclePWM1, original::State_machine::set_EXT_dutyCyclePWM1 <- State_machine::set_EXT_dutyCyclePWM1]]
+	   [[ original::State_machine::terminate <- State_machine::terminate ]]
+	   [[ original::State_machine::setPointRampingCall <- State_machine::setPointRampingCall ]]
+	   	   [[ original::State_machine::AdjustLimitsCall <- State_machine::AdjustLimitsCall ]]
+	   	   [[ original::State_machine::PID_ControlCall <- State_machine::PID_ControlCall ]]
+	   	   [[ original::State_machine::disableHVCall <- State_machine::disableHVCall ]]
+	   	   [[ original::State_machine::checkLimitsCall <- State_machine::checkLimitsCall ]]
+	   	   [[ original::State_machine::enableHVCall <- State_machine::enableHVCall ]]
+	   	   [[ original::State_machine::supplyVoltCheckCall <- State_machine::supplyVoltCheckCall ]]
+	   )
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	const_State_machine_cycleTime = ms(10)
+	   	
+	   within
+	   	State_machine::O__(id__,
+	   			    const_State_machine_cycleTime))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	const_State_machine_cycleTime = ms(10)
+	
+within
+	State_machine::O__(id__,
+			    const_State_machine_cycleTime))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	const_State_machine_cycleTime = ms(10)
+	   	
+	   within
+	   	original::State_machine::O__(id__,
+	   			    const_State_machine_cycleTime)
+		[[ original::State_machine::ext_ActualHV <- State_machine::ext_ActualHV ]]
+		[[ original::State_machine::ext_pow24VStatus <- State_machine::ext_pow24VStatus ]]
+		[[ original::State_machine::ext_errorAck <- State_machine::ext_errorAck ]]
+		[[ original::State_machine::ext_setPoint <- State_machine::ext_setPoint ]]
+		[[ original::State_machine::int_dutyCyclePWM1 <- State_machine::int_dutyCyclePWM1 ]]
+		[[ original::State_machine::int_enablePWM <- State_machine::int_enablePWM ]]
+		[[ original::State_machine::set_overLimit <- State_machine::set_overLimit, original::State_machine::set_EXT_overLimit <- State_machine::set_EXT_overLimit]]
+		[[ original::State_machine::set_underLimit <- State_machine::set_underLimit, original::State_machine::set_EXT_underLimit <- State_machine::set_EXT_underLimit]]
+		[[ original::State_machine::set_currentState <- State_machine::set_currentState, original::State_machine::set_EXT_currentState <- State_machine::set_EXT_currentState]]
+		[[ original::State_machine::set_HVEnabled <- State_machine::set_HVEnabled, original::State_machine::set_EXT_HVEnabled <- State_machine::set_EXT_HVEnabled]]
+		[[ original::State_machine::set_pow24VStatus <- State_machine::set_pow24VStatus, original::State_machine::set_EXT_pow24VStatus <- State_machine::set_EXT_pow24VStatus]]
+		[[ original::State_machine::set_mSetPoint <- State_machine::set_mSetPoint, original::State_machine::set_EXT_mSetPoint <- State_machine::set_EXT_mSetPoint]]
+		[[ original::State_machine::set_dutyCyclePWM1 <- State_machine::set_dutyCyclePWM1, original::State_machine::set_EXT_dutyCyclePWM1 <- State_machine::set_EXT_dutyCyclePWM1]]
+		[[ original::State_machine::terminate <- State_machine::terminate ]]
+		[[ original::State_machine::setPointRampingCall <- State_machine::setPointRampingCall ]]
+				[[ original::State_machine::AdjustLimitsCall <- State_machine::AdjustLimitsCall ]]
+				[[ original::State_machine::PID_ControlCall <- State_machine::PID_ControlCall ]]
+				[[ original::State_machine::disableHVCall <- State_machine::disableHVCall ]]
+				[[ original::State_machine::checkLimitsCall <- State_machine::checkLimitsCall ]]
+				[[ original::State_machine::enableHVCall <- State_machine::enableHVCall ]]
+				[[ original::State_machine::supplyVoltCheckCall <- State_machine::supplyVoltCheckCall ]]
+		)
+
+
