@@ -1,0 +1,183 @@
+-- A0 - timed deadlock free
+assert prioritise(let 
+	id__ = 0
+	
+	
+	
+	
+		
+within
+	mod_sys::D__(id__)[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+
+
+
+
+
+
+
+
+-- TA2_T - refinement
+assert TSpec2 [T= mod_power_pwm_time
+
+-- TA2_F - refinement
+assert TSpec2 [F= mod_power_pwm_time
+
+
+
+
+
+-- A5 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+		
+within
+	mod_sys::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Ramping|}
+
+-- A6 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+		
+within
+	mod_sys::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Init|}
+
+-- A7 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+		
+within
+	mod_sys::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Wait24Vpower|}
+
+-- A8 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+		
+within
+	mod_sys::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_ClosedLoop|}
+
+-- A9 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+	
+		
+within
+	mod_sys::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_ErrorMode|}
+
+include "defs/timed_definitions.csp"
+include "defs/robochart_defs.csp"
+include "defs/core_defs.csp"
+include "defs/mod_sys.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/State_machine.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations_defs.csp"
+
+channel r__
+
+-- generate nat
+nametype core_nat = {0..2}
+
+-- generate string
+nametype core_string = LSeq({'a'},1)
+
+REAL_MAX = 2
+REAL_MIN = 0
+
+-- generate real
+nametype core_real = { REAL_MIN..REAL_MAX}
+
+-- BASIC FUNCTIONS
+
+-- generate int
+nametype core_int = { 0..2}
+
+-- generate -- OPERATION BOUNDS
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate Div
+Div(e1,e2,T) = if member(e1/e2,T) then e1/e2 else e1
+
+-- generate Neg
+Neg(e1,T) = if member(-e1,T) then -e1 else e1
+
+-- generate boolean
+nametype core_boolean = Bool
+
+-- generate Mult
+Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1
+
+-- generate Modulus
+Modulus(e1,e2,T) = if member(e1%e2,T) then e1%e2 else e1
+
+-- generate Plus
+Plus(e1,e2,T) = if member(e1+e2,T) then e1+e2 else e1
+
+-- generate Minus
+Minus(e1,e2,T) = if member(e1-e2,T) then e1-e2 else e1
+
+overLimitMax(x) = if x > REAL_MAX then REAL_MAX else x
+underLimitMin(x) = if x < REAL_MIN then REAL_MIN else x
+
+overLimitF(x) = overLimitMax(x+2)
+underLimitF(x) = underLimitMin(x-2)
+
+Timed(OneStep) {
+mod_power_pwm_time = timed_priority(
+						((mod_sys::O__(0) |\ {|mod_sys::ext_pow24VStatus.in,mod_sys::int_pwmSignal.out,mod_sys::currentState.out.State_Wait24Vpower,tock|}) 
+					 	[| {| mod_sys::ext_pow24VStatus.in,mod_sys::currentState |} |]
+					 	TAssumption2)
+					 	[| {|mod_sys::ext_pow24VStatus.in|} |]
+					 	TPowStatus)
+				
+TAssumption2 = mod_sys::ext_pow24VStatus.in.Power_On -> TAssumption2
+			   []
+			   mod_sys::ext_pow24VStatus.in.Power_Off -> mod_sys::currentState.out.State_Wait24Vpower -> TAssumption2
+			   
+TPowStatus = TimedInterrupt(mod_sys::ext_pow24VStatus.in?x__ -> RUN({|mod_sys::ext_pow24VStatus.in.x__|}),1) ; TPowStatus
+}
+
+ADeadline(E,d) = (CHAOS(Events) [| {tock} |] Wait(d)) [|E|> SKIP	
+
+Timed(OneStep) {
+
+Wait(d) = timed_priority(WAIT(d))
+	
+TSpec2_Init = CHAOS(Events)
+			  [| {| mod_sys::currentState.out.State_Wait24Vpower |} |>	
+			  TSpec2_aux
+	
+TSpec2_aux = CHAOS(Events)
+		 	 [| {| mod_sys::ext_pow24VStatus.in.Power_Off |} |> 
+		 	 (ADeadline({|mod_sys::int_pwmSignal.out.Power_Off|},10) ; TSpec2_aux)
+		 	 
+TSpec2 = timed_priority(TSpec2_Init)
+}

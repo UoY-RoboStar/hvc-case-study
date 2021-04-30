@@ -1,0 +1,16 @@
+include "file_sequential_StateMachine.csp"
+
+-- generate State_machine
+P_State_machine = let
+	id = 0
+within
+	State_machine::O__(
+		id
+	)
+assert P_State_machine :[deadlock-free]	
+assert P_State_machine;RUN({r__}) :[deadlock-free]
+assert P_State_machine :[deterministic]
+assert P_State_machine :[divergence-free]
+
+
+

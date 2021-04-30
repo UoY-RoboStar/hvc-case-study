@@ -1,0 +1,68 @@
+include "core_timed_defs.csp"
+include "core_defs.csp"
+include "state_timed_defs.csp"
+include "mod_sys.csp"
+include "file_Transition_system_defs.csp"
+include "robochart_defs.csp"
+include "../instantiations.csp"
+
+transparent wbisim
+channel r__
+-- generate mod_sys
+P_mod_sys = let
+	id__ = 0
+
+
+	
+	
+within
+	mod_sys::O__(id__)
+assert P_mod_sys :[deadlock-free]	
+assert P_mod_sys;RUN({r__}) :[deadlock-free]
+assert P_mod_sys :[deterministic]
+assert P_mod_sys :[divergence-free]
+
+-- generate mod_sys_ctrl_ref0
+P_mod_sys_ctrl_ref0 = let
+	id__ = 0
+within
+	mod_sys::ctrl_ref0::O__(id__)
+
+assert P_mod_sys_ctrl_ref0 :[deadlock-free]	
+assert P_mod_sys_ctrl_ref0;RUN({r__}) :[deadlock-free]
+assert P_mod_sys_ctrl_ref0 :[deterministic]
+assert P_mod_sys_ctrl_ref0 :[divergence-free]
+
+-- generate mod_sys_ctrl_ref1
+P_mod_sys_ctrl_ref1 = let
+	id__ = 0
+within
+	mod_sys::ctrl_ref1::O__(id__)
+
+assert P_mod_sys_ctrl_ref1 :[deadlock-free]	
+assert P_mod_sys_ctrl_ref1;RUN({r__}) :[deadlock-free]
+assert P_mod_sys_ctrl_ref1 :[deterministic]
+assert P_mod_sys_ctrl_ref1 :[divergence-free]
+
+-- generate mod_sys_ctrl_ref2
+P_mod_sys_ctrl_ref2 = let
+	id__ = 0
+within
+	mod_sys::ctrl_ref2::O__(id__)
+
+assert P_mod_sys_ctrl_ref2 :[deadlock-free]	
+assert P_mod_sys_ctrl_ref2;RUN({r__}) :[deadlock-free]
+assert P_mod_sys_ctrl_ref2 :[deterministic]
+assert P_mod_sys_ctrl_ref2 :[divergence-free]
+
+-- generate mod_sys_ctrl_ref3
+P_mod_sys_ctrl_ref3 = let
+	id__ = 0
+within
+	mod_sys::ctrl_ref3::O__(id__)
+
+assert P_mod_sys_ctrl_ref3 :[deadlock-free]	
+assert P_mod_sys_ctrl_ref3;RUN({r__}) :[deadlock-free]
+assert P_mod_sys_ctrl_ref3 :[deterministic]
+assert P_mod_sys_ctrl_ref3 :[divergence-free]
+

@@ -1,0 +1,34 @@
+[
+{ "name": "mod_sys is deadlock free (A0) [failures divergences model]",
+  "type": "deadlock-free",
+  "negated": false 
+},
+{ "name": "timed mod_power_pwm_time refines TSpec2 (TA2_T) [traces model]",
+  "type": "refines",
+  "negated": false 
+},
+{ "name": "timed mod_power_pwm_time refines TSpec2 (TA2_F) [failures model]",
+  "type": "refines",
+  "negated": false 
+},
+{ "name": "State_machine::Ramping is reachable in mod_sys (A5)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::Init is reachable in mod_sys (A6)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::Wait24Vpower is reachable in mod_sys (A7)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::ClosedLoop is reachable in mod_sys (A8)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::ErrorMode is reachable in mod_sys (A9)",
+  "type": "reachable",
+  "negated": false 
+}
+			]

@@ -1,0 +1,26 @@
+[
+{ "name": "mod_sys is deadlock free (A4) [failures divergences model]",
+  "type": "deadlock-free",
+  "negated": false 
+},
+{ "name": "State_machine::Ramping is reachable in State_machine (A5)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::Init is reachable in State_machine (A6)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::Wait24Vpower is reachable in State_machine (A7)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::ClosedLoop is reachable in State_machine (A8)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::ErrorMode is reachable in State_machine (A9)",
+  "type": "reachable",
+  "negated": false 
+}
+			]

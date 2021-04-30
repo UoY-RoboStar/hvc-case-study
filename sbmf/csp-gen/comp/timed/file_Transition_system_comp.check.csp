@@ -1,0 +1,462 @@
+include "defs/file_Transition_system.csp"
+include "defs/state_timed_defs.csp"
+include "defs/core_defs.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_sequential_StateMachine.csp"
+include "defs/robochart_defs.csp"
+include "../../timed/instantiations.csp"
+include "defs/file_Interrupt.csp"
+include "defs/core_timed_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations.csp"
+include "defs/file_Declarations_defs.csp"
+
+module original
+exports
+	include "../../timed/defs/file_Transition_system.csp"
+	include "../../timed/defs/file_Interrupt.csp"
+	include "../../timed/defs/file_sequential_StateMachine.csp"
+	include "../../timed/defs/file_Declarations.csp"
+endmodule
+
+-- Assertions
+
+-- Module: mod_sys
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	original::mod_sys::O__(id__)
+	   [[ original::mod_sys::int_ActualHV <- mod_sys::int_ActualHV ]]
+	   [[ original::mod_sys::currentState <- mod_sys::currentState ]]
+	   [[ original::mod_sys::int_pwmSignal <- mod_sys::int_pwmSignal ]]
+	   [[ original::mod_sys::ext_setPoint <- mod_sys::ext_setPoint ]]
+	   [[ original::mod_sys::ext_pow24VStatus <- mod_sys::ext_pow24VStatus ]]
+	   [[ original::mod_sys::terminate <- mod_sys::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	mod_sys::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	mod_sys::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	original::mod_sys::O__(id__)
+		[[ original::mod_sys::int_ActualHV <- mod_sys::int_ActualHV ]]
+		[[ original::mod_sys::currentState <- mod_sys::currentState ]]
+		[[ original::mod_sys::int_pwmSignal <- mod_sys::int_pwmSignal ]]
+		[[ original::mod_sys::ext_setPoint <- mod_sys::ext_setPoint ]]
+		[[ original::mod_sys::ext_pow24VStatus <- mod_sys::ext_pow24VStatus ]]
+		[[ original::mod_sys::terminate <- mod_sys::terminate ]]
+)
+
+-- ControllerDef: ctrl0
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	original::ctrl0::O__(id__)
+	   [[ original::ctrl0::currentState <- ctrl0::currentState ]]
+	   [[ original::ctrl0::ext_setPoint <- ctrl0::ext_setPoint ]]
+	   [[ original::ctrl0::ext_pow24VStatus <- ctrl0::ext_pow24VStatus ]]
+	   [[ original::ctrl0::int_overLimit <- ctrl0::int_overLimit ]]
+	   [[ original::ctrl0::int_pwmSignal <- ctrl0::int_pwmSignal ]]
+	   [[ original::ctrl0::int_underLimit <- ctrl0::int_underLimit ]]
+	   [[ original::ctrl0::int_DisableHV <- ctrl0::int_DisableHV ]]
+	   [[ original::ctrl0::int_ActualHV <- ctrl0::int_ActualHV ]]
+	   [[ original::ctrl0::terminate <- ctrl0::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	ctrl0::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	ctrl0::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	original::ctrl0::O__(id__)
+		[[ original::ctrl0::currentState <- ctrl0::currentState ]]
+		[[ original::ctrl0::ext_setPoint <- ctrl0::ext_setPoint ]]
+		[[ original::ctrl0::ext_pow24VStatus <- ctrl0::ext_pow24VStatus ]]
+		[[ original::ctrl0::int_overLimit <- ctrl0::int_overLimit ]]
+		[[ original::ctrl0::int_pwmSignal <- ctrl0::int_pwmSignal ]]
+		[[ original::ctrl0::int_underLimit <- ctrl0::int_underLimit ]]
+		[[ original::ctrl0::int_DisableHV <- ctrl0::int_DisableHV ]]
+		[[ original::ctrl0::int_ActualHV <- ctrl0::int_ActualHV ]]
+		[[ original::ctrl0::terminate <- ctrl0::terminate ]]
+)
+-- ControllerDef: ctrl1
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	original::ctrl1::O__(id__)
+	   [[ original::ctrl1::ext_pow24VStatus <- ctrl1::ext_pow24VStatus ]]
+	   [[ original::ctrl1::int_overLimit <- ctrl1::int_overLimit ]]
+	   [[ original::ctrl1::int_underLimit <- ctrl1::int_underLimit ]]
+	   [[ original::ctrl1::int_DisableHV <- ctrl1::int_DisableHV ]]
+	   [[ original::ctrl1::int_ActualHV <- ctrl1::int_ActualHV ]]
+	   [[ original::ctrl1::terminate <- ctrl1::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	ctrl1::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	ctrl1::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	original::ctrl1::O__(id__)
+		[[ original::ctrl1::ext_pow24VStatus <- ctrl1::ext_pow24VStatus ]]
+		[[ original::ctrl1::int_overLimit <- ctrl1::int_overLimit ]]
+		[[ original::ctrl1::int_underLimit <- ctrl1::int_underLimit ]]
+		[[ original::ctrl1::int_DisableHV <- ctrl1::int_DisableHV ]]
+		[[ original::ctrl1::int_ActualHV <- ctrl1::int_ActualHV ]]
+		[[ original::ctrl1::terminate <- ctrl1::terminate ]]
+)
+-- ControllerDef: ctrl2
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	original::ctrl2::O__(id__)
+	   [[ original::ctrl2::ext_pow24VStatus <- ctrl2::ext_pow24VStatus ]]
+	   [[ original::ctrl2::ext_pow24_1 <- ctrl2::ext_pow24_1 ]]
+	   [[ original::ctrl2::ext_pow24_2 <- ctrl2::ext_pow24_2 ]]
+	   [[ original::ctrl2::terminate <- ctrl2::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	ctrl2::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	ctrl2::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	original::ctrl2::O__(id__)
+		[[ original::ctrl2::ext_pow24VStatus <- ctrl2::ext_pow24VStatus ]]
+		[[ original::ctrl2::ext_pow24_1 <- ctrl2::ext_pow24_1 ]]
+		[[ original::ctrl2::ext_pow24_2 <- ctrl2::ext_pow24_2 ]]
+		[[ original::ctrl2::terminate <- ctrl2::terminate ]]
+)
+-- ControllerDef: ctrl3
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	original::ctrl3::O__(id__)
+	   [[ original::ctrl3::int_ActualHV <- ctrl3::int_ActualHV ]]
+	   [[ original::ctrl3::ActualHV_1 <- ctrl3::ActualHV_1 ]]
+	   [[ original::ctrl3::ActualHV_2 <- ctrl3::ActualHV_2 ]]
+	   [[ original::ctrl3::terminate <- ctrl3::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	ctrl3::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+		
+within
+	ctrl3::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   		
+	   within
+	   	original::ctrl3::O__(id__)
+		[[ original::ctrl3::int_ActualHV <- ctrl3::int_ActualHV ]]
+		[[ original::ctrl3::ActualHV_1 <- ctrl3::ActualHV_1 ]]
+		[[ original::ctrl3::ActualHV_2 <- ctrl3::ActualHV_2 ]]
+		[[ original::ctrl3::terminate <- ctrl3::terminate ]]
+)
+
+
+-- Controller: ctrl0
+-- StateMachine: stm_ref0
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	original::ctrl0::stm_ref0::O__(id__)
+	   [[ original::ctrl0::stm_ref0::currentState <- ctrl0::stm_ref0::currentState ]]
+	   [[ original::ctrl0::stm_ref0::ext_setPoint <- ctrl0::stm_ref0::ext_setPoint ]]
+	   [[ original::ctrl0::stm_ref0::ext_pow24VStatus <- ctrl0::stm_ref0::ext_pow24VStatus ]]
+	   [[ original::ctrl0::stm_ref0::int_overLimit <- ctrl0::stm_ref0::int_overLimit ]]
+	   [[ original::ctrl0::stm_ref0::int_pwmSignal <- ctrl0::stm_ref0::int_pwmSignal ]]
+	   [[ original::ctrl0::stm_ref0::int_underLimit <- ctrl0::stm_ref0::int_underLimit ]]
+	   [[ original::ctrl0::stm_ref0::int_DisableHV <- ctrl0::stm_ref0::int_DisableHV ]]
+	   [[ original::ctrl0::stm_ref0::int_ActualHV <- ctrl0::stm_ref0::int_ActualHV ]]
+	   [[ original::ctrl0::stm_ref0::terminate <- ctrl0::stm_ref0::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	ctrl0::stm_ref0::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	ctrl0::stm_ref0::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	original::ctrl0::stm_ref0::O__(id__)
+		[[ original::ctrl0::stm_ref0::currentState <- ctrl0::stm_ref0::currentState ]]
+		[[ original::ctrl0::stm_ref0::ext_setPoint <- ctrl0::stm_ref0::ext_setPoint ]]
+		[[ original::ctrl0::stm_ref0::ext_pow24VStatus <- ctrl0::stm_ref0::ext_pow24VStatus ]]
+		[[ original::ctrl0::stm_ref0::int_overLimit <- ctrl0::stm_ref0::int_overLimit ]]
+		[[ original::ctrl0::stm_ref0::int_pwmSignal <- ctrl0::stm_ref0::int_pwmSignal ]]
+		[[ original::ctrl0::stm_ref0::int_underLimit <- ctrl0::stm_ref0::int_underLimit ]]
+		[[ original::ctrl0::stm_ref0::int_DisableHV <- ctrl0::stm_ref0::int_DisableHV ]]
+		[[ original::ctrl0::stm_ref0::int_ActualHV <- ctrl0::stm_ref0::int_ActualHV ]]
+		[[ original::ctrl0::stm_ref0::terminate <- ctrl0::stm_ref0::terminate ]]
+)
+-- Controller: ctrl1
+-- StateMachine: stm_ref0
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	original::ctrl1::stm_ref0::O__(id__)
+	   [[ original::ctrl1::stm_ref0::int_overLimit <- ctrl1::stm_ref0::int_overLimit ]]
+	   [[ original::ctrl1::stm_ref0::int_underLimit <- ctrl1::stm_ref0::int_underLimit ]]
+	   [[ original::ctrl1::stm_ref0::int_DisableHV <- ctrl1::stm_ref0::int_DisableHV ]]
+	   [[ original::ctrl1::stm_ref0::int_ActualHV <- ctrl1::stm_ref0::int_ActualHV ]]
+	   [[ original::ctrl1::stm_ref0::ext_pow24VStatus <- ctrl1::stm_ref0::ext_pow24VStatus ]]
+	   [[ original::ctrl1::stm_ref0::terminate <- ctrl1::stm_ref0::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	ctrl1::stm_ref0::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	ctrl1::stm_ref0::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	original::ctrl1::stm_ref0::O__(id__)
+		[[ original::ctrl1::stm_ref0::int_overLimit <- ctrl1::stm_ref0::int_overLimit ]]
+		[[ original::ctrl1::stm_ref0::int_underLimit <- ctrl1::stm_ref0::int_underLimit ]]
+		[[ original::ctrl1::stm_ref0::int_DisableHV <- ctrl1::stm_ref0::int_DisableHV ]]
+		[[ original::ctrl1::stm_ref0::int_ActualHV <- ctrl1::stm_ref0::int_ActualHV ]]
+		[[ original::ctrl1::stm_ref0::ext_pow24VStatus <- ctrl1::stm_ref0::ext_pow24VStatus ]]
+		[[ original::ctrl1::stm_ref0::terminate <- ctrl1::stm_ref0::terminate ]]
+)
+-- Controller: ctrl2
+-- StateMachine: stm0
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	original::ctrl2::stm0::O__(id__)
+	   [[ original::ctrl2::stm0::ext_pow24VStatus <- ctrl2::stm0::ext_pow24VStatus ]]
+	   [[ original::ctrl2::stm0::ext_pow24_1 <- ctrl2::stm0::ext_pow24_1 ]]
+	   [[ original::ctrl2::stm0::ext_pow24_2 <- ctrl2::stm0::ext_pow24_2 ]]
+	   [[ original::ctrl2::stm0::terminate <- ctrl2::stm0::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	ctrl2::stm0::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	ctrl2::stm0::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	original::ctrl2::stm0::O__(id__)
+		[[ original::ctrl2::stm0::ext_pow24VStatus <- ctrl2::stm0::ext_pow24VStatus ]]
+		[[ original::ctrl2::stm0::ext_pow24_1 <- ctrl2::stm0::ext_pow24_1 ]]
+		[[ original::ctrl2::stm0::ext_pow24_2 <- ctrl2::stm0::ext_pow24_2 ]]
+		[[ original::ctrl2::stm0::terminate <- ctrl2::stm0::terminate ]]
+)
+-- Controller: ctrl3
+-- StateMachine: stm0
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	original::ctrl3::stm0::O__(id__)
+	   [[ original::ctrl3::stm0::int_ActualHV <- ctrl3::stm0::int_ActualHV ]]
+	   [[ original::ctrl3::stm0::ActualHV_1 <- ctrl3::stm0::ActualHV_1 ]]
+	   [[ original::ctrl3::stm0::ActualHV_2 <- ctrl3::stm0::ActualHV_2 ]]
+	   [[ original::ctrl3::stm0::terminate <- ctrl3::stm0::terminate ]]
+)
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	ctrl3::stm0::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	ctrl3::stm0::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	original::ctrl3::stm0::O__(id__)
+		[[ original::ctrl3::stm0::int_ActualHV <- ctrl3::stm0::int_ActualHV ]]
+		[[ original::ctrl3::stm0::ActualHV_1 <- ctrl3::stm0::ActualHV_1 ]]
+		[[ original::ctrl3::stm0::ActualHV_2 <- ctrl3::stm0::ActualHV_2 ]]
+		[[ original::ctrl3::stm0::terminate <- ctrl3::stm0::terminate ]]
+)
+

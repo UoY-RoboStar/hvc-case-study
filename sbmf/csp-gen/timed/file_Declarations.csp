@@ -1,0 +1,11 @@
+include "defs/timed_definitions.csp"
+include "defs/robochart_defs.csp"
+include "defs/core_defs.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations.csp"
+include "instantiations.csp"
+include "defs/file_Declarations_defs.csp"
+		
+channel r__
