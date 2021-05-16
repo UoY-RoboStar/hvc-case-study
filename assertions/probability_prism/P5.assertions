@@ -9,7 +9,7 @@ prob property P_reach_Ramping:
 	]
 	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
 	with definitions D1
-	with cmdoptions "-hybrid -cuddmaxmem 1024g -javamaxmem 8g"
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
 	
 prob property P_reach_Init:
 	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
@@ -17,7 +17,7 @@ prob property P_reach_Init:
 	]
 	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
 	with definitions D1
-	with cmdoptions "-hybrid -cuddmaxmem 1024g -javamaxmem 8g"
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
 
 prob property P_reach_Wait24Vpower:
 	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
@@ -25,7 +25,7 @@ prob property P_reach_Wait24Vpower:
 	]
 	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
 	with definitions D1
-	with cmdoptions "-hybrid -cuddmaxmem 1024g -javamaxmem 8g"
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
 	
 prob property P_reach_ClosedLoop:
 	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
@@ -33,7 +33,7 @@ prob property P_reach_ClosedLoop:
 	]
 	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
 	with definitions D1
-	with cmdoptions "-hybrid -cuddmaxmem 1024g -javamaxmem 8g"
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
 	
 prob property P_reach_ErrorMode:
 	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
@@ -41,4 +41,4 @@ prob property P_reach_ErrorMode:
 	]
 	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
 	with definitions D1
-	with cmdoptions "-hybrid -cuddmaxmem 1024g -javamaxmem 8g"
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"

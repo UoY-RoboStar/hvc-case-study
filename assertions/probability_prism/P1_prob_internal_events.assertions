@@ -1,0 +1,99 @@
+package P1
+
+import basics::*
+
+// P1: That the actual system voltage always follows the set-point
+pmodules M1:
+	// This module is used to output int_ActualHV as long as there is an internal int_ActualHV
+	// from state_machine to the buffer simulating an asynchronous connection
+	pmodule P1_clear_ActualHV_buffer {
+		send2buff: bool init true;
+		
+		[mod_sys::ctrl_ref0::stm_ref0::int_ActualHV.out] (@send2buff==true) -> (@send2buff=false);
+		[mod_sys::rp_ref0::int_ActualHV.in] (@send2buff==false) -> (@send2buff=true);
+	}
+	
+	pmodule P1 {
+		// -1 - failure
+		// 0 - idle
+		// 1 & 2 - ClosedLoop
+		// 3 & 4: ErrorMode
+		P1_scpc : [-1 to 4] init 0;
+		P1_updating: bool init false;
+		
+		//////////////////////////////////// Idle state 0 (free events) ////////////////////////////////////////////
+		//[mod_sys::rp_ref0::ext_setPoint.in]  (P1_updating==false)/\(P1_scpc==0)	-> (0.5:P1_updating=false) & (0.5:P1_updating=true); 
+		[mod_sys::rp_ref0::ext_setPoint.out]  (@P1_updating==false)/\(@P1_scpc==0)	-> skip; 
+		[mod_sys::rp_ref0::int_ActualHV.in] (@P1_updating==false)/\(@P1_scpc==0) -> skip;
+		
+	    [mod_sys::rp_ref0::currentState.in] (@P1_updating==false) /\ ((@P1_scpc >= 0) /\ (@P1_scpc <= 4))            
+	    	-> (@P1_scpc=0)&(@P1_updating=true);		
+	    // if current state is ClosedLoop, then scpc stays the same as 1
+	    // (0, busy) --> (1, idle)
+	    [] (@P1_scpc==0)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val==State::ClosedLoop) 
+	    	-> (@P1_scpc=1)&(@P1_updating=false);
+	    //
+	    [] (@P1_scpc==0)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val==State::ErrorMode) 
+	    	-> (@P1_scpc=3)&(@P1_updating=false);
+	    // otherwise, return to idle by setting scpc to 0
+	    [] (@P1_scpc==0)/\(@P1_updating==true)/\(mod_sys::rp_ref0::currentState.in.val!=State::ClosedLoop) 
+	    	/\(mod_sys::rp_ref0::currentState.in.val!=State::ErrorMode) 
+	    	-> (@P1_scpc=0)&(@P1_updating=false);
+	    
+	    /////////////////////////////////////////////// State 1  //////////////////////////////////////////////////
+	    // (1, idle) --> (1, busy)
+	    [mod_sys::rp_ref0::ext_setPoint.out]   (@P1_updating==false)/\(@P1_scpc==1)                      
+	    	-> (@P1_scpc=1)&(@P1_updating=true);
+
+	    [] (@P1_scpc==1)/\(@P1_updating==true) 
+	    	-> (@P1_scpc=2)&(@P1_updating=false);
+	    
+	    /////////////////////////////////////////////// State 2  //////////////////////////////////////////////////
+	    
+	    [mod_sys::rp_ref0::int_ActualHV.in]  (@P1_updating==false)/\(@P1_scpc==2)                    
+	    	-> (@P1_scpc=2)&(@P1_updating=true);
+	    
+	    // The actualHV is equal to current setPoint or buffered setPoint
+	    [] (@P1_scpc==2)/\(@P1_updating==true) /\
+	    	(mod_sys::rp_ref0::int_ActualHV.in.val != mod_sys::rp_ref0::ext_setPoint.out.val)
+	    	-> (@P1_scpc=-1)&(@P1_updating=false); 
+	    // The actualHV is not equal to current setPoint or buffered setPoint
+	    [] (@P1_scpc==2)/\(@P1_updating==true) /\ 
+	    	(mod_sys::rp_ref0::int_ActualHV.in.val == mod_sys::rp_ref0::ext_setPoint.out.val) 
+	    	-> (@P1_scpc=1)&(@P1_updating=false);
+	    
+	    /////////////////////////////////////////////// State 3  //////////////////////////////////////////////////
+	    [mod_sys::rp_ref0::ext_setPoint.in]   (@P1_updating==false)/\(@P1_scpc==3)                      
+	    	-> (@P1_scpc=3)&(@P1_updating=true);
+
+	    [] (@P1_scpc==3)/\(@P1_updating==true)/\(mod_sys::rp_ref0::ext_setPoint.in.val==0)             
+	    	-> (@P1_scpc=4)&(@P1_updating=false);
+	    	
+	    [] (@P1_scpc==3)/\(@P1_updating==true)/\(mod_sys::rp_ref0::ext_setPoint.in.val!=0)             
+	    	-> (@P1_scpc=-1)&(@P1_updating=false);
+	    	
+	    /////////////////////////////////////////////// State 4  //////////////////////////////////////////////////
+	    [mod_sys::rp_ref0::int_ActualHV.in]  (@P1_updating==false)/\(@P1_scpc==4)                    
+	    	-> (@P1_scpc=4)&(@P1_updating=true);
+	    
+	    [] (@P1_scpc==4)/\(@P1_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val==0)             
+	    	-> (@P1_scpc=3)&(@P1_updating=false);
+	    	
+	    [] (@P1_scpc==4)/\(@P1_updating==true)/\(mod_sys::rp_ref0::int_ActualHV.in.val!=0)             
+	    	-> (@P1_scpc=-1)&(@P1_updating=false);
+	    	
+	}
+	
+label l1 = @M1::P1::P1_scpc != -1
+
+prob property P1_deadlock_free:
+	not Exists [Finally deadlock]
+	with definitions D1
+	with modules M1
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
+	
+prob property P1:
+	Forall [Globally #l1]
+	with definitions D1
+	with modules M1
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"

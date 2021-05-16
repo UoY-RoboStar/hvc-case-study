@@ -47,9 +47,14 @@ prob property P3_sim_f:
 
 label l3 = @M3::P3::P3_scpc != -1
 
+prob property P3_deadlock_free:
+	not Exists [Finally deadlock]
+	with definitions D1
+	with modules M3
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
+
 prob property P3:
 	Forall [Globally #l3]
 	with definitions D1
 	with modules M3
 	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
-

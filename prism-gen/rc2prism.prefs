@@ -1,0 +1,17 @@
+# Configuration file for the translator from RoboChart to PRISM
+BOUNDED_NUM_OPTION=0
+DBG_OPTION=true
+ERROR_LOG_FILE=err.log
+INT_MAX=2
+INT_MIN=0
+MAX_SEQ_INS=3
+NAT_MAX=2
+NAT_MIN=0
+OP_BOUND=3
+OUTPUT_LOG_FILE=debug.log
+PRISM_MODELTYPE=dtmc
+REAL_MAX=2
+REAL_MIN=0
+STM_GEN_ORDER=mod_sys::ctrl_ref1::stm_ref0,mod_sys::ctrl_ref3::stm0,mod_sys::ctrl_ref2::stm0,mod_sys::ctrl_ref0::stm_ref0mod_sys::rp_ref0
+TYPE_OVERRIDE=
+USE_CONF_FROM_INSTANTIATION_CSP=false

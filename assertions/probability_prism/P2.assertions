@@ -84,6 +84,12 @@ pmodules M2:
 	
 label l2 = @M2::P2::P2_scpc != -1
 
+prob property P2_deadlock_free:
+	not Exists [Finally deadlock]
+	with definitions D1
+	with modules M2
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
+	
 prob property P2:
 	Forall [Globally #l2]
 	with definitions D1
