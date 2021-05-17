@@ -1,0 +1,44 @@
+package P5
+
+import basics::*
+
+// P5: That all states in the state machine are reachable.
+prob property P_reach_Ramping:
+	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
+		mod_sys::ctrl_ref0::stm_ref0::Ramping
+	]
+	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
+	with definitions D1
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
+	
+prob property P_reach_Init:
+	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
+		mod_sys::ctrl_ref0::stm_ref0::Init
+	]
+	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
+	with definitions D1
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
+
+prob property P_reach_Wait24Vpower:
+	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
+		mod_sys::ctrl_ref0::stm_ref0::Wait24Vpower
+	]
+	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
+	with definitions D1
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
+	
+prob property P_reach_ClosedLoop:
+	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
+		mod_sys::ctrl_ref0::stm_ref0::ClosedLoop
+	]
+	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
+	with definitions D1
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
+	
+prob property P_reach_ErrorMode:
+	Prob> 0.0 of [Finally mod_sys::ctrl_ref0::stm_ref0 is in
+		mod_sys::ctrl_ref0::stm_ref0::ErrorMode
+	]
+	using sim with CI at alpha=0.01, n=100, and pathlen=100000000
+	with definitions D1
+	with cmdoptions "-hybrid -cuddmaxmem 400g -javamaxmem 8g"
