@@ -2,7 +2,8 @@ package P1_Spec1A
 
 import basics::*
 
-// P1A: That the actual system voltage always follows the set-point
+// P1A: That the actual system voltage always follows the set-point while in the ClosedLoop state
+// Correspond to the CSP process Spec1A in the properties.assertions file
 pmodules M1A:
 	// This module is used to output int_ActualHV as long as there is an internal int_ActualHV
 	// from state_machine to the buffer simulating an asynchronous connection
