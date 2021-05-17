@@ -1,0 +1,24 @@
+-- data definitions used by /Model_autumn_external_hardware_fixed/Declarations.rct
+datatype State = State_Wait24Vpower | State_ClosedLoop | State_ErrorMode
+State_is(State_Wait24Vpower,State_Wait24Vpower) = true
+State_is(_,State_Wait24Vpower) = false
+State_is(State_ClosedLoop,State_ClosedLoop) = true
+State_is(_,State_ClosedLoop) = false
+State_is(State_ErrorMode,State_ErrorMode) = true
+State_is(_,State_ErrorMode) = false
+
+datatype Power = Power_On | Power_Off
+Power_is(Power_On,Power_On) = true
+Power_is(_,Power_On) = false
+Power_is(Power_Off,Power_Off) = true
+Power_is(_,Power_Off) = false
+
+
+pre_underLimitF(x) = true
+pre_overLimitF(x) = true
+pre_real2duty(x) = true
+pre_increaseduty(x) = true
+pre_decreaseduty(x) = true
+pre_ms(t) = true
+pre_s(t) = true
+	

@@ -1,0 +1,2433 @@
+module State_machine
+exports
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+
+	-- Transition identifiers
+	-- declaring identifiers of transitions
+	datatype NIDS = 
+	              NID_Init|
+	              NID_ClosedLoop|
+	              NID_i0|
+	              NID_Wait24Vpower|
+	              NID_ErrorMode
+	
+	channel internal__ : NIDS
+	
+	-- Flow channels		
+	channel interrupt
+	channel exited
+	channel exit
+	channel terminate
+	
+	-- Variable channels
+	channel get_setPoint, set_setPoint, setL_setPoint, setR_setPoint: core_real
+	channel get_newSetPoint, set_newSetPoint, setL_newSetPoint, setR_newSetPoint: core_real
+	channel get_ActualHV, set_ActualHV, setL_ActualHV, setR_ActualHV: core_real
+	channel get_overLimit, set_overLimit, setL_overLimit, setR_overLimit: core_real
+	channel get_underLimit, set_underLimit, setL_underLimit, setR_underLimit: core_real
+	channel get_currentState, set_currentState, setL_currentState, setR_currentState: State
+	channel get_HVEnabled, set_HVEnabled, setL_HVEnabled, setR_HVEnabled: core_boolean
+	channel get_pow24VStatus, set_pow24VStatus, setL_pow24VStatus, setR_pow24VStatus: Power
+	channel get_mSetPoint, set_mSetPoint, setL_mSetPoint, setR_mSetPoint: core_real
+	channel get_dutyCyclePWM1, set_dutyCyclePWM1, setL_dutyCyclePWM1, setR_dutyCyclePWM1: duty
+	
+	-- Shared variable channels
+	channel set_EXT_overLimit: core_real
+	channel set_EXT_underLimit: core_real
+	channel set_EXT_currentState: State
+	channel set_EXT_HVEnabled: core_boolean
+	channel set_EXT_pow24VStatus: Power
+	channel set_EXT_mSetPoint: core_real
+	channel set_EXT_dutyCyclePWM1: duty
+	
+	-- Local variable channels for defined operations that are required by the state machine
+	
+	-- Declaring state machine events
+	channel ext_ActualHV__: NIDS.InOut.core_real
+	channel ext_ActualHV: InOut.core_real
+	channel ext_pow24VStatus__: NIDS.InOut.Power
+	channel ext_pow24VStatus: InOut.Power
+	channel ext_errorAck__: NIDS.InOut
+	channel ext_errorAck: InOut
+	channel ext_setPoint__: NIDS.InOut.core_real
+	channel ext_setPoint: InOut.core_real
+	channel int_dutyCyclePWM1__: NIDS.InOut.duty
+	channel int_dutyCyclePWM1: InOut.duty
+	channel int_enablePWM__: NIDS.InOut.core_boolean
+	channel int_enablePWM: InOut.core_boolean
+	
+	-- Declaring call and ret events for undefined operations
+	channel setPointRampingCall: core_real
+	channel AdjustLimitsCall
+	channel PID_ControlCall
+	channel disableHVCall: core_boolean
+	channel checkLimitsCall
+	channel enableHVCall
+	channel supplyVoltCheckCall
+	
+	enterSS = {|
+	Init::enter,
+	ClosedLoop::enter,
+	i0::enter,
+	Wait24Vpower::enter,
+	ErrorMode::enter
+	|}
+	
+	enteredSS = 	{|
+	Init::entered,
+	ClosedLoop::entered,
+	Wait24Vpower::entered,
+	ErrorMode::entered
+	|}
+	
+	internal_events = union(enteredSS,union(enterSS,{|interrupt,exited|}))
+	
+	shared_variable_events = {|
+		set_EXT_overLimit,
+		set_EXT_underLimit,
+		set_EXT_currentState,
+		set_EXT_HVEnabled,
+		set_EXT_pow24VStatus,
+		set_EXT_mSetPoint,
+		set_EXT_dutyCyclePWM1
+	|}
+	datatype ClockSet = 
+		CLID_Cl1
+	
+	channel clockReset, clockResetL, clockResetR : ClockSet
+	
+	localClockResets = {|clockReset.CLID_Cl1|}
+	
+	
+	channel get_CLID_Init : CLID_Init_clock_type
+	channel get_CLID_ErrorMode : CLID_ErrorMode_clock_type
+	channel get_CLID_Cl1 : CLID_Cl1_clock_type
+	channel get_CLID_ClosedLoop : CLID_ClosedLoop_clock_type
+	channel get_CLID_Wait24Vpower : CLID_Wait24Vpower_clock_type
+	
+	--channel increment__
+	
+	CLID_Init_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	CLID_ErrorMode_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	CLID_Cl1_clock_type = {0..(clock_type_max(Union({
+	{},
+	({const_State_machine_cycleTime|cycleTime <- core_nat}),
+	({const_State_machine_cycleTime|cycleTime <- core_nat}),
+	({const_State_machine_cycleTime|cycleTime <- core_nat})
+	}))+1)}
+	CLID_ClosedLoop_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	CLID_Wait24Vpower_clock_type = {0..(clock_type_max(Union({
+	{}
+	}))+1)}
+	
+
+		-- Nodes --
+		-- declaring all nodes
+		
+		----------------------------------------------------------------------
+		-- State: Init
+		module Init
+		
+		enterSS = {}
+		
+		enteredSS = {}
+		
+		exports
+		
+			--  Declarations
+			
+			channel enter, entered, interrupt
+			channel enteredL, enteredR
+			
+							
+			
+			
+			--channel increment__
+			
+			
+			--	Nodes
+			-- declaring all nodes
+			
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				--  Note that FDR has problems with efficiently compiling the process below
+				-- 	if using a different recursion pattern.
+				D__(id__,
+						    const_State_machine_cycleTime) = 
+				dbisim(let
+					-- IMPLEMENTATION NOTE: 
+					-- The following should be defined as: Inactive = share__choice(Activation [] Termination),
+					-- however FDR struggles with that form in certain cases. So we use the exception operator
+					-- instead to 'terminate'.
+					
+					Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+					
+					Termination = terminate -> SKIP
+					
+					Active 		= true&CALL__AdjustLimits(
+								id__
+							) ; 
+							 	  Behaviour ; 
+							 	  share__choice(exit -> SKIP) ; SKIP ; 
+							 	  share__choice(exited -> SKIP) ; Inactive
+				
+					Behaviour 	= entered -> During
+					During 		= ((SKIP ; SStop) /\ interrupt -> SKIP)
+				within
+					Inactive [| {terminate} |> SKIP)
+					
+				VS_O__(id__,
+						    const_State_machine_cycleTime) = 
+				dbisim(let
+					Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+					
+					Termination = terminate -> SKIP
+					
+					Active 		= true&CALL__AdjustLimits(
+								id__
+							) ; 
+							 	  Behaviour ; 
+							 	  share__choice(exit -> SKIP) ; SKIP ; 
+							 	  share__choice(exited -> SKIP) ; Inactive
+				
+					Behaviour 	= entered -> During
+					During 		= ((SKIP ; SStop) /\ interrupt -> SKIP)
+				within
+					Inactive [| {terminate} |> SKIP)
+				
+				
+				-- Clocks
+				
+				StateClocks = terminate -> SKIP
+				
+				stateClockSync = {||}
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- State: ClosedLoop
+		module ClosedLoop
+		
+		enterSS = 
+				{|			i0::enter,
+					j0::enter,
+					j1::enter,
+					j2::enter,
+					j3::enter,
+					j4::enter,
+					j6::enter,
+					s0::enter,
+					j7::enter
+				|}
+		enteredSS = 
+				{|			s0::entered
+				|}
+		exports
+		
+			--  Declarations
+			
+			channel enter, entered, interrupt
+			channel enteredL, enteredR
+			
+							
+			-- declaring identifiers of transitions
+			datatype NIDS = 
+			              NID_i0|
+			              NID_j0|
+			              NID_j1|
+			              NID_j2|
+			              NID_j3|
+			              NID_j4|
+			              NID_j6|
+			              NID_s0|
+			              NID_j7
+			
+			channel internal__ : NIDS
+			channel ext_ActualHV__: NIDS.InOut.core_real
+			channel ext_pow24VStatus__: NIDS.InOut.Power
+			channel ext_errorAck__: NIDS.InOut
+			channel ext_setPoint__: NIDS.InOut.core_real
+			channel int_dutyCyclePWM1__: NIDS.InOut.duty
+			channel int_enablePWM__: NIDS.InOut.core_boolean
+			
+			channel get_CLID_s0 : CLID_s0_clock_type
+			
+			--channel increment__
+			
+			CLID_s0_clock_type = {0..(clock_type_max(Union({
+			{}
+			}))+1)}
+			
+			--	Nodes
+			-- declaring all nodes
+			
+			----------------------------------------------------------------------
+			-- Initial: i0
+			module i0
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Termination = terminate -> SKIP
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+					
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j0
+			module j0
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j1
+			module j1
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j2
+			module j2
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j3
+			module j3
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j4
+			module j4
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j6
+			module j6
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- State: s0
+			module s0
+			
+			enterSS = {}
+			
+			enteredSS = {}
+			
+			exports
+			
+				--  Declarations
+				
+				channel enter, entered, interrupt
+				channel enteredL, enteredR
+				
+								
+				
+				
+				--channel increment__
+				
+				
+				--	Nodes
+				-- declaring all nodes
+				
+				
+				Timed(OneStep) {
+					--	Rule: behaviours(Node)
+					--  Note that FDR has problems with efficiently compiling the process below
+					-- 	if using a different recursion pattern.
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+					dbisim(let
+						-- IMPLEMENTATION NOTE: 
+						-- The following should be defined as: Inactive = share__choice(Activation [] Termination),
+						-- however FDR struggles with that form in certain cases. So we use the exception operator
+						-- instead to 'terminate'.
+						
+						Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+						
+						Termination = terminate -> SKIP
+						
+						Active 		= SKIP ; 
+								 	  Behaviour ; 
+								 	  share__choice(exit -> SKIP) ; SKIP ; 
+								 	  share__choice(exited -> SKIP) ; Inactive
+					
+						Behaviour 	= entered -> During
+						During 		= ((SKIP ; SStop) /\ interrupt -> SKIP)
+					within
+						Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = 
+					dbisim(let
+						Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+						
+						Termination = terminate -> SKIP
+						
+						Active 		= SKIP ; 
+								 	  Behaviour ; 
+								 	  share__choice(exit -> SKIP) ; SKIP ; 
+								 	  share__choice(exited -> SKIP) ; Inactive
+					
+						Behaviour 	= entered -> During
+						During 		= ((SKIP ; SStop) /\ interrupt -> SKIP)
+					within
+						Inactive [| {terminate} |> SKIP)
+					
+					
+					-- Clocks
+					
+					StateClocks = terminate -> SKIP
+					
+					stateClockSync = {||}
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j7
+			module j7
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				--  Note that FDR has problems with efficiently compiling the process below
+				-- 	if using a different recursion pattern.
+				D__(id__,
+						    const_State_machine_cycleTime) = 
+				dbisim(let
+					-- IMPLEMENTATION NOTE: 
+					-- The following should be defined as: Inactive = share__choice(Activation [] Termination),
+					-- however FDR struggles with that form in certain cases. So we use the exception operator
+					-- instead to 'terminate'.
+					
+					Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+					
+					Termination = terminate -> SKIP
+					
+					Active 		= share__choice(true & (share__choice(set_currentState!State_ClosedLoop -> SKIP))) ; 
+							 	  Behaviour ; 
+							 	  share__choice(exit -> SKIP) ; SKIP ; 
+							 	  share__choice(exited -> SKIP) ; Inactive
+				
+				
+					Behaviour 	= dbisim(
+						((
+						 ((dbisim((dbisim((let
+						 	-- IMPLEMENTATION NOTE:
+						 	-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+						 	-- modules for defining the semantics of each node.
+						 	enterSS = {|
+						 	i0::enter,
+						 	j0::enter,
+						 	j1::enter,
+						 	j2::enter,
+						 	j3::enter,
+						 	j4::enter,
+						 	j6::enter,
+						 	s0::enter,
+						 	j7::enter
+						 	|}
+						 	hideSet = union(enterSS,{|exit,exited,internal__|})
+						 within 
+						 	((let
+						 		-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+						 		-- because CSPM modules are used for the semantics of Node.
+						 		flowevts = union(enterSS,{|exit,exited|})
+						 		transSync = {|internal__.NID_i0,internal__.NID_j0,internal__.NID_j1,internal__.NID_j0,internal__.NID_j2,internal__.NID_j2,internal__.NID_j3,internal__.NID_s0,internal__.NID_j6,internal__.NID_j4,internal__.NID_j4,internal__.NID_j7|}
+						 	within
+						 		((
+						 		 (((-- RULE composeNodes(nc:NodeContainer)^nops : TimedCSPProcess
+						 		   		  (-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+						 		   		    i0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j1::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j2::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j3::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j4::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j6::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    s0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j7::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		  )
+						 		 )
+						 		 [[s0::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_s0|}]]
+						 		 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+						 		 [[j0::interrupt <- x__ | x__ <- {|internal__.NID_j0,internal__.NID_j0|}]]
+						 		 [[j1::interrupt <- x__ | x__ <- {|internal__.NID_j1|}]]
+						 		 [[j2::interrupt <- x__ | x__ <- {|internal__.NID_j2,internal__.NID_j2|}]]
+						 		 [[j3::interrupt <- x__ | x__ <- {|internal__.NID_j3|}]]
+						 		 [[j4::interrupt <- x__ | x__ <- {|internal__.NID_j4,internal__.NID_j4|}]]
+						 		 [[j6::interrupt <- x__ | x__ <- {|internal__.NID_j6|}]]
+						 		 [[j7::interrupt <- x__ | x__ <- {|internal__.NID_j7|}]]
+						 		 )
+						 		  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+						 		  [[set_setPoint <- setL_setPoint,set_HVEnabled <- setL_HVEnabled,set_currentState <- setL_currentState]]
+						 		 )
+						 		 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+						 		 			,setL_setPoint
+						 		 			,setL_HVEnabled
+						 		 			,setL_currentState
+						 		|}) |]
+						 		 ((i0::enter -> Transitions(id__,
+						 		 		    const_State_machine_cycleTime))
+						 		  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_HVEnabled,setL_currentState |} ]]
+						 		 )
+						 		)[[setL_setPoint <- set_setPoint,setL_HVEnabled <- set_HVEnabled,setL_currentState <- set_currentState]]
+						 		)
+						 	)
+						 	 \ hideSet)
+						 	[[
+						 		ext_ActualHV__.x____ <- ext_ActualHV,
+						 		ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+						 		ext_errorAck__.x____ <- ext_errorAck,
+						 		ext_setPoint__.x____ <- ext_setPoint,
+						 		int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+						 		int_enablePWM__.x____ <- int_enablePWM
+						 		| x____ <- NIDS
+						 	]]
+						 )
+						 )
+						  [| union(stateClockSync,{terminate}) |]
+						  StateClocks
+						 )\diff(stateClockSync,enteredSS)))
+						  [[ share__ <- x__ | x__ <- {| share__,setR_setPoint,setR_dutyCyclePWM1,setR_pow24VStatus,setR_ActualHV,setR_overLimit,setR_underLimit,setR_currentState,setR_HVEnabled,setR_newSetPoint,setR_mSetPoint |} ]] 
+						  [[set_setPoint <- setL_setPoint,set_dutyCyclePWM1 <- setL_dutyCyclePWM1,set_pow24VStatus <- setL_pow24VStatus,set_ActualHV <- setL_ActualHV,set_overLimit <- setL_overLimit,set_underLimit <- setL_underLimit,set_currentState <- setL_currentState,set_HVEnabled <- setL_HVEnabled,set_newSetPoint <- setL_newSetPoint,set_mSetPoint <- setL_mSetPoint]]
+						 )
+						 [| union(union(enteredSS,{| interrupt, terminate |}),{|share__
+						 			,setL_setPoint
+						 			,setL_dutyCyclePWM1
+						 			,setL_pow24VStatus
+						 			,setL_ActualHV
+						 			,setL_overLimit
+						 			,setL_underLimit
+						 			,setL_currentState
+						 			,setL_HVEnabled
+						 			,setL_newSetPoint
+						 			,setL_mSetPoint
+						 			,setR_setPoint
+						 			 			,setR_dutyCyclePWM1
+						 			 			,setR_pow24VStatus
+						 			 			,setR_ActualHV
+						 			 			,setR_overLimit
+						 			 			,setR_underLimit
+						 			 			,setR_currentState
+						 			 			,setR_HVEnabled
+						 			 			,setR_newSetPoint
+						 			 			,setR_mSetPoint
+						 			|}) |]
+						 ((During)
+						  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_dutyCyclePWM1,setL_pow24VStatus,setL_ActualHV,setL_overLimit,setL_underLimit,setL_currentState,setL_HVEnabled,setL_newSetPoint,setL_mSetPoint |} ]]
+						  [[set_setPoint <- setR_setPoint,set_dutyCyclePWM1 <- setR_dutyCyclePWM1,set_pow24VStatus <- setR_pow24VStatus,set_ActualHV <- setR_ActualHV,set_overLimit <- setR_overLimit,set_underLimit <- setR_underLimit,set_currentState <- setR_currentState,set_HVEnabled <- setR_HVEnabled,set_newSetPoint <- setR_newSetPoint,set_mSetPoint <- setR_mSetPoint]]
+						 )
+						)[[setL_setPoint <- set_setPoint,setL_dutyCyclePWM1 <- set_dutyCyclePWM1,setL_pow24VStatus <- set_pow24VStatus,setL_ActualHV <- set_ActualHV,setL_overLimit <- set_overLimit,setL_underLimit <- set_underLimit,setL_currentState <- set_currentState,setL_HVEnabled <- set_HVEnabled,setL_newSetPoint <- set_newSetPoint,setL_mSetPoint <- set_mSetPoint]]
+						 [[setR_setPoint <- set_setPoint,setR_dutyCyclePWM1 <- set_dutyCyclePWM1,setR_pow24VStatus <- set_pow24VStatus,setR_ActualHV <- set_ActualHV,setR_overLimit <- set_overLimit,setR_underLimit <- set_underLimit,setR_currentState <- set_currentState,setR_HVEnabled <- set_HVEnabled,setR_newSetPoint <- set_newSetPoint,setR_mSetPoint <- set_mSetPoint]]
+						)\union(enteredSS,{terminate}) 
+					)
+					During 		= share__choice(([] e__ : enteredSS @ e__ -> SKIP))
+							 	  ; entered -> ((CRUN(enteredSS) ||| SKIP ; SStop) /\ interrupt -> terminate -> SKIP)
+				within
+					Inactive [| {terminate} |> SKIP)
+					
+				VS_O__(id__,
+						    const_State_machine_cycleTime) = 
+				dbisim(let
+					Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+					
+					Termination = terminate -> SKIP
+					
+					Active 		= share__choice(true & (share__choice(set_currentState!State_ClosedLoop -> SKIP))) ; 
+							 	  Behaviour ; 
+							 	  share__choice(exit -> SKIP) ; SKIP ; 
+							 	  share__choice(exited -> SKIP) ; Inactive
+				
+				
+					Behaviour 	= dbisim(
+						((
+						 ((dbisim((dbisim((let
+						 	-- IMPLEMENTATION NOTE:
+						 	-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+						 	-- modules for defining the semantics of each node.
+						 	enterSS = {|
+						 	i0::enter,
+						 	j0::enter,
+						 	j1::enter,
+						 	j2::enter,
+						 	j3::enter,
+						 	j4::enter,
+						 	j6::enter,
+						 	s0::enter,
+						 	j7::enter
+						 	|}
+						 	hideSet = union(enterSS,{|exit,exited,internal__|})
+						 within 
+						 	((let
+						 		-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+						 		-- because CSPM modules are used for the semantics of Node.
+						 		flowevts = union(enterSS,{|exit,exited|})
+						 		transSync = {|internal__.NID_i0,internal__.NID_j0,internal__.NID_j1,internal__.NID_j0,internal__.NID_j2,internal__.NID_j2,internal__.NID_j3,internal__.NID_s0,internal__.NID_j6,internal__.NID_j4,internal__.NID_j4,internal__.NID_j7|}
+						 	within
+						 		((
+						 		 (((-- RULE composeNodes(nc:NodeContainer)^nops : TimedCSPProcess
+						 		   		  (-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+						 		   		    i0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j1::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j2::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j3::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j4::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j6::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    s0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j7::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		  )
+						 		 )
+						 		 [[s0::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_s0|}]]
+						 		 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+						 		 [[j0::interrupt <- x__ | x__ <- {|internal__.NID_j0,internal__.NID_j0|}]]
+						 		 [[j1::interrupt <- x__ | x__ <- {|internal__.NID_j1|}]]
+						 		 [[j2::interrupt <- x__ | x__ <- {|internal__.NID_j2,internal__.NID_j2|}]]
+						 		 [[j3::interrupt <- x__ | x__ <- {|internal__.NID_j3|}]]
+						 		 [[j4::interrupt <- x__ | x__ <- {|internal__.NID_j4,internal__.NID_j4|}]]
+						 		 [[j6::interrupt <- x__ | x__ <- {|internal__.NID_j6|}]]
+						 		 [[j7::interrupt <- x__ | x__ <- {|internal__.NID_j7|}]]
+						 		 )
+						 		  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+						 		  [[set_setPoint <- setL_setPoint,set_HVEnabled <- setL_HVEnabled,set_currentState <- setL_currentState]]
+						 		 )
+						 		 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+						 		 			,setL_setPoint
+						 		 			,setL_HVEnabled
+						 		 			,setL_currentState
+						 		|}) |]
+						 		 ((i0::enter -> Transitions(id__,
+						 		 		    const_State_machine_cycleTime))
+						 		  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_HVEnabled,setL_currentState |} ]]
+						 		 )
+						 		)[[setL_setPoint <- set_setPoint,setL_HVEnabled <- set_HVEnabled,setL_currentState <- set_currentState]]
+						 		)
+						 	)
+						 	 \ hideSet)
+						 	[[
+						 		ext_ActualHV__.x____ <- ext_ActualHV,
+						 		ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+						 		ext_errorAck__.x____ <- ext_errorAck,
+						 		ext_setPoint__.x____ <- ext_setPoint,
+						 		int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+						 		int_enablePWM__.x____ <- int_enablePWM
+						 		| x____ <- NIDS
+						 	]]
+						 )
+						 )
+						  [| union(stateClockSync,{terminate}) |]
+						  StateClocks
+						 )\diff(stateClockSync,enteredSS)))
+						  [[ share__ <- x__ | x__ <- {| share__,setR_setPoint,setR_dutyCyclePWM1,setR_pow24VStatus,setR_ActualHV,setR_overLimit,setR_underLimit,setR_currentState,setR_HVEnabled,setR_newSetPoint,setR_mSetPoint |} ]] 
+						  [[set_setPoint <- setL_setPoint,set_dutyCyclePWM1 <- setL_dutyCyclePWM1,set_pow24VStatus <- setL_pow24VStatus,set_ActualHV <- setL_ActualHV,set_overLimit <- setL_overLimit,set_underLimit <- setL_underLimit,set_currentState <- setL_currentState,set_HVEnabled <- setL_HVEnabled,set_newSetPoint <- setL_newSetPoint,set_mSetPoint <- setL_mSetPoint]]
+						 )
+						 [| union(union(enteredSS,{| interrupt, terminate |}),{|share__
+						 			,setL_setPoint
+						 			,setL_dutyCyclePWM1
+						 			,setL_pow24VStatus
+						 			,setL_ActualHV
+						 			,setL_overLimit
+						 			,setL_underLimit
+						 			,setL_currentState
+						 			,setL_HVEnabled
+						 			,setL_newSetPoint
+						 			,setL_mSetPoint
+						 			,setR_setPoint
+						 			 			,setR_dutyCyclePWM1
+						 			 			,setR_pow24VStatus
+						 			 			,setR_ActualHV
+						 			 			,setR_overLimit
+						 			 			,setR_underLimit
+						 			 			,setR_currentState
+						 			 			,setR_HVEnabled
+						 			 			,setR_newSetPoint
+						 			 			,setR_mSetPoint
+						 			|}) |]
+						 ((During)
+						  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_dutyCyclePWM1,setL_pow24VStatus,setL_ActualHV,setL_overLimit,setL_underLimit,setL_currentState,setL_HVEnabled,setL_newSetPoint,setL_mSetPoint |} ]]
+						  [[set_setPoint <- setR_setPoint,set_dutyCyclePWM1 <- setR_dutyCyclePWM1,set_pow24VStatus <- setR_pow24VStatus,set_ActualHV <- setR_ActualHV,set_overLimit <- setR_overLimit,set_underLimit <- setR_underLimit,set_currentState <- setR_currentState,set_HVEnabled <- setR_HVEnabled,set_newSetPoint <- setR_newSetPoint,set_mSetPoint <- setR_mSetPoint]]
+						 )
+						)[[setL_setPoint <- set_setPoint,setL_dutyCyclePWM1 <- set_dutyCyclePWM1,setL_pow24VStatus <- set_pow24VStatus,setL_ActualHV <- set_ActualHV,setL_overLimit <- set_overLimit,setL_underLimit <- set_underLimit,setL_currentState <- set_currentState,setL_HVEnabled <- set_HVEnabled,setL_newSetPoint <- set_newSetPoint,setL_mSetPoint <- set_mSetPoint]]
+						 [[setR_setPoint <- set_setPoint,setR_dutyCyclePWM1 <- set_dutyCyclePWM1,setR_pow24VStatus <- set_pow24VStatus,setR_ActualHV <- set_ActualHV,setR_overLimit <- set_overLimit,setR_underLimit <- set_underLimit,setR_currentState <- set_currentState,setR_HVEnabled <- set_HVEnabled,setR_newSetPoint <- set_newSetPoint,setR_mSetPoint <- set_mSetPoint]]
+						)\{terminate} 
+					)
+					During 		= share__choice(([] e__ : enteredSS @ e__ -> SKIP))
+							 	  ; entered -> ((CRUN(enteredSS) ||| SKIP ; SStop) /\ interrupt -> terminate -> SKIP)
+				within
+					Inactive [| {terminate} |> SKIP)
+				
+				Transitions(id__,
+						    const_State_machine_cycleTime) = ((let
+					Trans = get_setPoint?setPoint -> get_HVEnabled?HVEnabled -> get_currentState?currentState -> TimeOut_1(
+						 (share__ -> SKIP
+						 [] dbisim((true)&(internal__!NID_i0 -> SKIP ;  ((SKIP ; j7::enter -> SKIP))))
+						 [] dbisim((((setPoint!=0) and (HVEnabled==false)))&(internal__!NID_j0 -> SKIP ;  ((share__choice(true & (share__choice(set_HVEnabled!true -> SKIP))) ; j1::enter -> SKIP))))
+						 [] dbisim((true)&(internal__!NID_j1 -> SKIP ;  ((true&CALL__supplyVoltCheck(
+						 			id__
+						 		) ; j2::enter -> SKIP))))
+						 [] dbisim((((setPoint==0) or (HVEnabled==true)))&(internal__!NID_j0 -> SKIP ;  ((SKIP ; j3::enter -> SKIP))))
+						 [] dbisim(((HVEnabled==true))&(internal__!NID_j2 -> SKIP ;  ((true&CALL__enableHV(
+						 			id__
+						 		) ; j3::enter -> SKIP))))
+						 [] dbisim(((HVEnabled==false))&(internal__!NID_j2 -> SKIP ;  ((SKIP ; j3::enter -> SKIP))))
+						 [] dbisim((true)&(internal__!NID_j3 -> SKIP ;  ((true&CALL__checkLimits(
+						 			id__
+						 		) ; j4::enter -> SKIP))))
+						 [] dbisim(((currentState==State_ClosedLoop))&(internal__!NID_s0 -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; SHARE_WAIT(const_State_machine_cycleTime) ; j7::enter -> SKIP)))
+						 [] dbisim((true)&(internal__!NID_j6 -> SKIP ;  ((true&CALL__PID_Control(
+						 			id__
+						 		) ; s0::enter -> SKIP))))
+						 [] dbisim(((HVEnabled==true))&(internal__!NID_j4 -> SKIP ;  ((Deadline(true&(share__choice(ext_setPoint.in?setPoint -> (SStop /\ set_setPoint!setPoint -> SKIP))),0);share__choice(get_setPoint?setPoint -> true&CALL__setPointRamping(
+						 			id__,
+						 			setPoint
+						 		)) ; j6::enter -> SKIP))))
+						 [] dbisim(((HVEnabled==false))&(internal__!NID_j4 -> SKIP ;  ((SKIP ; j6::enter -> SKIP))))
+						 [] dbisim((true)&(internal__!NID_j7 -> SKIP ;  ((Deadline(true&(share__choice(ext_setPoint.in?setPoint -> (SStop /\ set_setPoint!setPoint -> SKIP))),0);share__choice(get_setPoint?setPoint -> true&(if ((setPoint==0)) then (true&CALL__disableHV(
+						 			id__,
+						 			false
+						 		)) else (SKIP))) ; j0::enter -> SKIP))))
+						 []
+						 (exit -> SKIP ; share__choice(exited -> terminate -> SKIP))
+						 []
+						 terminate -> SKIP
+						 )
+					,SKIP);Trans
+				within
+					Trans [|{terminate}|> SKIP
+				)
+				)
+				
+				
+				-- Clocks
+				Clock_CLID_s0(x__) = 
+					TimeOut_1(
+						s0::entered -> Clock_CLID_s0(0)
+						[]
+						get_CLID_s0!x__ -> Clock_CLID_s0(x__)
+						[]
+						terminate -> SKIP,Clock_CLID_s0(Plus(x__,1,CLID_s0_clock_type)))
+				
+				StateClocks = dbisim(Clock_CLID_s0(0))
+				
+				stateClockSync = {|get_CLID_s0,s0::entered|}
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- Initial: i0
+		module i0
+		exports
+		
+			channel enter, interrupt
+			
+			Timed(OneStep) {
+				D__(id__,
+						    const_State_machine_cycleTime) = 
+					dbisim(let
+						Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+						
+						Termination = terminate -> SKIP
+						
+						Active 		= share__choice(interrupt -> SKIP) ; Inactive
+					within
+						Inactive [| {terminate} |> SKIP)
+				
+				VS_O__(id__,
+						    const_State_machine_cycleTime) = D__(id__,
+						    const_State_machine_cycleTime)
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- State: Wait24Vpower
+		module Wait24Vpower
+		
+		enterSS = 
+				{|			i0::enter,
+					j0::enter,
+					j1::enter,
+					f0::enter
+				|}
+		enteredSS = 
+				{|			f0::entered
+				|}
+		exports
+		
+			--  Declarations
+			
+			channel enter, entered, interrupt
+			channel enteredL, enteredR
+			
+							
+			-- declaring identifiers of transitions
+			datatype NIDS = 
+			              NID_i0|
+			              NID_j0|
+			              NID_j1|
+			              NID_f0
+			
+			channel internal__ : NIDS
+			channel ext_ActualHV__: NIDS.InOut.core_real
+			channel ext_pow24VStatus__: NIDS.InOut.Power
+			channel ext_errorAck__: NIDS.InOut
+			channel ext_setPoint__: NIDS.InOut.core_real
+			channel int_dutyCyclePWM1__: NIDS.InOut.duty
+			channel int_enablePWM__: NIDS.InOut.core_boolean
+			
+			channel get_CLID_f0 : CLID_f0_clock_type
+			
+			--channel increment__
+			
+			CLID_f0_clock_type = {0..(clock_type_max(Union({
+			{}
+			}))+1)}
+			
+			--	Nodes
+			-- declaring all nodes
+			
+			----------------------------------------------------------------------
+			-- Initial: i0
+			module i0
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Termination = terminate -> SKIP
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+					
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j0
+			module j0
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Junction: j1
+			module j1
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Final state: f0
+			module f0
+			
+			exports
+			
+				channel enter, entered, interrupt
+				channel enteredL, enteredR
+				
+				Timed(OneStep) {
+					--	Rule: behaviours(Node)
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Entering
+							
+							Entering 	= entered -> SKIP ; Active
+							Active		= share__choice(terminate -> SKIP [] interrupt -> SKIP) ; Interrupted
+							Interrupted	= share__choice(exit -> exited -> Inactive)
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				--  Note that FDR has problems with efficiently compiling the process below
+				-- 	if using a different recursion pattern.
+				D__(id__,
+						    const_State_machine_cycleTime) = 
+				dbisim(let
+					-- IMPLEMENTATION NOTE: 
+					-- The following should be defined as: Inactive = share__choice(Activation [] Termination),
+					-- however FDR struggles with that form in certain cases. So we use the exception operator
+					-- instead to 'terminate'.
+					
+					Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+					
+					Termination = terminate -> SKIP
+					
+					Active 		= share__choice(true & (share__choice(set_currentState!State_Wait24Vpower -> SKIP))) ; 
+							 	  Behaviour ; 
+							 	  share__choice(exit -> SKIP) ; SKIP ; 
+							 	  share__choice(exited -> SKIP) ; Inactive
+				
+				
+					Behaviour 	= dbisim(
+						((
+						 ((dbisim((dbisim((let
+						 	-- IMPLEMENTATION NOTE:
+						 	-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+						 	-- modules for defining the semantics of each node.
+						 	enterSS = {|
+						 	i0::enter,
+						 	j0::enter,
+						 	j1::enter,
+						 	f0::enter
+						 	|}
+						 	hideSet = union(enterSS,{|exit,exited,internal__|})
+						 within 
+						 	((let
+						 		-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+						 		-- because CSPM modules are used for the semantics of Node.
+						 		flowevts = union(enterSS,{|exit,exited|})
+						 		transSync = {|internal__.NID_i0,internal__.NID_j0,internal__.NID_j1,internal__.NID_j1,internal__.NID_j1|}
+						 	within
+						 		((
+						 		 (((-- RULE composeNodes(nc:NodeContainer)^nops : TimedCSPProcess
+						 		   		  (-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+						 		   		    i0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j1::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    f0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		  )
+						 		 )
+						 		 [[f0::interrupt <- x__ | x__ <- {|interrupt|}]]
+						 		 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+						 		 [[j0::interrupt <- x__ | x__ <- {|internal__.NID_j0|}]]
+						 		 [[j1::interrupt <- x__ | x__ <- {|internal__.NID_j1,internal__.NID_j1,internal__.NID_j1|}]]
+						 		 )
+						 		  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+						 		  [[set_setPoint <- setL_setPoint,set_pow24VStatus <- setL_pow24VStatus]]
+						 		 )
+						 		 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+						 		 			,setL_setPoint
+						 		 			,setL_pow24VStatus
+						 		|}) |]
+						 		 ((i0::enter -> Transitions(id__,
+						 		 		    const_State_machine_cycleTime))
+						 		  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_pow24VStatus |} ]]
+						 		 )
+						 		)[[setL_setPoint <- set_setPoint,setL_pow24VStatus <- set_pow24VStatus]]
+						 		)
+						 	)
+						 	 \ hideSet)
+						 	[[
+						 		ext_ActualHV__.x____ <- ext_ActualHV,
+						 		ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+						 		ext_errorAck__.x____ <- ext_errorAck,
+						 		ext_setPoint__.x____ <- ext_setPoint,
+						 		int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+						 		int_enablePWM__.x____ <- int_enablePWM
+						 		| x____ <- NIDS
+						 	]]
+						 )
+						 )
+						  [| union(stateClockSync,{terminate}) |]
+						  StateClocks
+						 )\diff(stateClockSync,enteredSS)))
+						  [[ share__ <- x__ | x__ <- {| share__,setR_setPoint,setR_dutyCyclePWM1,setR_pow24VStatus,setR_ActualHV,setR_overLimit,setR_underLimit,setR_currentState,setR_HVEnabled,setR_newSetPoint,setR_mSetPoint |} ]] 
+						  [[set_setPoint <- setL_setPoint,set_dutyCyclePWM1 <- setL_dutyCyclePWM1,set_pow24VStatus <- setL_pow24VStatus,set_ActualHV <- setL_ActualHV,set_overLimit <- setL_overLimit,set_underLimit <- setL_underLimit,set_currentState <- setL_currentState,set_HVEnabled <- setL_HVEnabled,set_newSetPoint <- setL_newSetPoint,set_mSetPoint <- setL_mSetPoint]]
+						 )
+						 [| union(union(enteredSS,{| interrupt, terminate |}),{|share__
+						 			,setL_setPoint
+						 			,setL_dutyCyclePWM1
+						 			,setL_pow24VStatus
+						 			,setL_ActualHV
+						 			,setL_overLimit
+						 			,setL_underLimit
+						 			,setL_currentState
+						 			,setL_HVEnabled
+						 			,setL_newSetPoint
+						 			,setL_mSetPoint
+						 			,setR_setPoint
+						 			 			,setR_dutyCyclePWM1
+						 			 			,setR_pow24VStatus
+						 			 			,setR_ActualHV
+						 			 			,setR_overLimit
+						 			 			,setR_underLimit
+						 			 			,setR_currentState
+						 			 			,setR_HVEnabled
+						 			 			,setR_newSetPoint
+						 			 			,setR_mSetPoint
+						 			|}) |]
+						 ((During)
+						  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_dutyCyclePWM1,setL_pow24VStatus,setL_ActualHV,setL_overLimit,setL_underLimit,setL_currentState,setL_HVEnabled,setL_newSetPoint,setL_mSetPoint |} ]]
+						  [[set_setPoint <- setR_setPoint,set_dutyCyclePWM1 <- setR_dutyCyclePWM1,set_pow24VStatus <- setR_pow24VStatus,set_ActualHV <- setR_ActualHV,set_overLimit <- setR_overLimit,set_underLimit <- setR_underLimit,set_currentState <- setR_currentState,set_HVEnabled <- setR_HVEnabled,set_newSetPoint <- setR_newSetPoint,set_mSetPoint <- setR_mSetPoint]]
+						 )
+						)[[setL_setPoint <- set_setPoint,setL_dutyCyclePWM1 <- set_dutyCyclePWM1,setL_pow24VStatus <- set_pow24VStatus,setL_ActualHV <- set_ActualHV,setL_overLimit <- set_overLimit,setL_underLimit <- set_underLimit,setL_currentState <- set_currentState,setL_HVEnabled <- set_HVEnabled,setL_newSetPoint <- set_newSetPoint,setL_mSetPoint <- set_mSetPoint]]
+						 [[setR_setPoint <- set_setPoint,setR_dutyCyclePWM1 <- set_dutyCyclePWM1,setR_pow24VStatus <- set_pow24VStatus,setR_ActualHV <- set_ActualHV,setR_overLimit <- set_overLimit,setR_underLimit <- set_underLimit,setR_currentState <- set_currentState,setR_HVEnabled <- set_HVEnabled,setR_newSetPoint <- set_newSetPoint,setR_mSetPoint <- set_mSetPoint]]
+						)\union(enteredSS,{terminate}) 
+					)
+					During 		= share__choice(([] e__ : enteredSS @ e__ -> SKIP))
+							 	  ; entered -> ((CRUN(enteredSS) ||| SKIP ; SStop) /\ interrupt -> terminate -> SKIP)
+				within
+					Inactive [| {terminate} |> SKIP)
+					
+				VS_O__(id__,
+						    const_State_machine_cycleTime) = 
+				dbisim(let
+					Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+					
+					Termination = terminate -> SKIP
+					
+					Active 		= share__choice(true & (share__choice(set_currentState!State_Wait24Vpower -> SKIP))) ; 
+							 	  Behaviour ; 
+							 	  share__choice(exit -> SKIP) ; SKIP ; 
+							 	  share__choice(exited -> SKIP) ; Inactive
+				
+				
+					Behaviour 	= dbisim(
+						((
+						 ((dbisim((dbisim((let
+						 	-- IMPLEMENTATION NOTE:
+						 	-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+						 	-- modules for defining the semantics of each node.
+						 	enterSS = {|
+						 	i0::enter,
+						 	j0::enter,
+						 	j1::enter,
+						 	f0::enter
+						 	|}
+						 	hideSet = union(enterSS,{|exit,exited,internal__|})
+						 within 
+						 	((let
+						 		-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+						 		-- because CSPM modules are used for the semantics of Node.
+						 		flowevts = union(enterSS,{|exit,exited|})
+						 		transSync = {|internal__.NID_i0,internal__.NID_j0,internal__.NID_j1,internal__.NID_j1,internal__.NID_j1|}
+						 	within
+						 		((
+						 		 (((-- RULE composeNodes(nc:NodeContainer)^nops : TimedCSPProcess
+						 		   		  (-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+						 		   		    i0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    j1::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    f0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    )
+						 		   		    )
+						 		   		    )
+						 		   		  )
+						 		 )
+						 		 [[f0::interrupt <- x__ | x__ <- {|interrupt|}]]
+						 		 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+						 		 [[j0::interrupt <- x__ | x__ <- {|internal__.NID_j0|}]]
+						 		 [[j1::interrupt <- x__ | x__ <- {|internal__.NID_j1,internal__.NID_j1,internal__.NID_j1|}]]
+						 		 )
+						 		  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+						 		  [[set_setPoint <- setL_setPoint,set_pow24VStatus <- setL_pow24VStatus]]
+						 		 )
+						 		 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+						 		 			,setL_setPoint
+						 		 			,setL_pow24VStatus
+						 		|}) |]
+						 		 ((i0::enter -> Transitions(id__,
+						 		 		    const_State_machine_cycleTime))
+						 		  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_pow24VStatus |} ]]
+						 		 )
+						 		)[[setL_setPoint <- set_setPoint,setL_pow24VStatus <- set_pow24VStatus]]
+						 		)
+						 	)
+						 	 \ hideSet)
+						 	[[
+						 		ext_ActualHV__.x____ <- ext_ActualHV,
+						 		ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+						 		ext_errorAck__.x____ <- ext_errorAck,
+						 		ext_setPoint__.x____ <- ext_setPoint,
+						 		int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+						 		int_enablePWM__.x____ <- int_enablePWM
+						 		| x____ <- NIDS
+						 	]]
+						 )
+						 )
+						  [| union(stateClockSync,{terminate}) |]
+						  StateClocks
+						 )\diff(stateClockSync,enteredSS)))
+						  [[ share__ <- x__ | x__ <- {| share__,setR_setPoint,setR_dutyCyclePWM1,setR_pow24VStatus,setR_ActualHV,setR_overLimit,setR_underLimit,setR_currentState,setR_HVEnabled,setR_newSetPoint,setR_mSetPoint |} ]] 
+						  [[set_setPoint <- setL_setPoint,set_dutyCyclePWM1 <- setL_dutyCyclePWM1,set_pow24VStatus <- setL_pow24VStatus,set_ActualHV <- setL_ActualHV,set_overLimit <- setL_overLimit,set_underLimit <- setL_underLimit,set_currentState <- setL_currentState,set_HVEnabled <- setL_HVEnabled,set_newSetPoint <- setL_newSetPoint,set_mSetPoint <- setL_mSetPoint]]
+						 )
+						 [| union(union(enteredSS,{| interrupt, terminate |}),{|share__
+						 			,setL_setPoint
+						 			,setL_dutyCyclePWM1
+						 			,setL_pow24VStatus
+						 			,setL_ActualHV
+						 			,setL_overLimit
+						 			,setL_underLimit
+						 			,setL_currentState
+						 			,setL_HVEnabled
+						 			,setL_newSetPoint
+						 			,setL_mSetPoint
+						 			,setR_setPoint
+						 			 			,setR_dutyCyclePWM1
+						 			 			,setR_pow24VStatus
+						 			 			,setR_ActualHV
+						 			 			,setR_overLimit
+						 			 			,setR_underLimit
+						 			 			,setR_currentState
+						 			 			,setR_HVEnabled
+						 			 			,setR_newSetPoint
+						 			 			,setR_mSetPoint
+						 			|}) |]
+						 ((During)
+						  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_dutyCyclePWM1,setL_pow24VStatus,setL_ActualHV,setL_overLimit,setL_underLimit,setL_currentState,setL_HVEnabled,setL_newSetPoint,setL_mSetPoint |} ]]
+						  [[set_setPoint <- setR_setPoint,set_dutyCyclePWM1 <- setR_dutyCyclePWM1,set_pow24VStatus <- setR_pow24VStatus,set_ActualHV <- setR_ActualHV,set_overLimit <- setR_overLimit,set_underLimit <- setR_underLimit,set_currentState <- setR_currentState,set_HVEnabled <- setR_HVEnabled,set_newSetPoint <- setR_newSetPoint,set_mSetPoint <- setR_mSetPoint]]
+						 )
+						)[[setL_setPoint <- set_setPoint,setL_dutyCyclePWM1 <- set_dutyCyclePWM1,setL_pow24VStatus <- set_pow24VStatus,setL_ActualHV <- set_ActualHV,setL_overLimit <- set_overLimit,setL_underLimit <- set_underLimit,setL_currentState <- set_currentState,setL_HVEnabled <- set_HVEnabled,setL_newSetPoint <- set_newSetPoint,setL_mSetPoint <- set_mSetPoint]]
+						 [[setR_setPoint <- set_setPoint,setR_dutyCyclePWM1 <- set_dutyCyclePWM1,setR_pow24VStatus <- set_pow24VStatus,setR_ActualHV <- set_ActualHV,setR_overLimit <- set_overLimit,setR_underLimit <- set_underLimit,setR_currentState <- set_currentState,setR_HVEnabled <- set_HVEnabled,setR_newSetPoint <- set_newSetPoint,setR_mSetPoint <- set_mSetPoint]]
+						)\{terminate} 
+					)
+					During 		= share__choice(([] e__ : enteredSS @ e__ -> SKIP))
+							 	  ; entered -> ((CRUN(enteredSS) ||| SKIP ; SStop) /\ interrupt -> terminate -> SKIP)
+				within
+					Inactive [| {terminate} |> SKIP)
+				
+				Transitions(id__,
+						    const_State_machine_cycleTime) = ((let
+					Trans = get_setPoint?setPoint -> get_pow24VStatus?pow24VStatus -> TimeOut_1(
+						 (share__ -> SKIP
+						 [] dbisim((true)&(internal__!NID_i0 -> SKIP ;  ((SKIP ; j0::enter -> SKIP))))
+						 [] dbisim((true)&(internal__!NID_j0 -> SKIP ;  ((true&CALL__disableHV(
+						 			id__,
+						 			false
+						 		);true&CALL__supplyVoltCheck(
+						 			id__
+						 		);Deadline(true&(share__choice(ext_setPoint.in?setPoint -> (SStop /\ set_setPoint!setPoint -> SKIP))),0) ; j1::enter -> SKIP))))
+						 [] dbisim(((setPoint!=0))&(internal__!NID_j1 -> SKIP ;  ((true&CALL__disableHV(
+						 			id__,
+						 			true
+						 		);SHARE_WAIT(const_State_machine_cycleTime) ; f0::enter -> SKIP))))
+						 [] dbisim((((pow24VStatus==Power_On) and (setPoint==0)))&(internal__!NID_j1 -> SKIP ;  ((SHARE_WAIT(const_State_machine_cycleTime) ; f0::enter -> SKIP))))
+						 [] dbisim(((not (((((setPoint!=0)) or ((pow24VStatus==Power_On)))))))&(internal__!NID_j1 -> SKIP ;  ((SHARE_WAIT(const_State_machine_cycleTime) ; j0::enter -> SKIP))))
+						 []
+						 (exit -> SKIP ; share__choice(exited -> terminate -> SKIP))
+						 []
+						 terminate -> SKIP
+						 )
+					,SKIP);Trans
+				within
+					Trans [|{terminate}|> SKIP
+				)
+				)
+				
+				
+				-- Clocks
+				Clock_CLID_f0(x__) = 
+					TimeOut_1(
+						f0::entered -> Clock_CLID_f0(0)
+						[]
+						get_CLID_f0!x__ -> Clock_CLID_f0(x__)
+						[]
+						terminate -> SKIP,Clock_CLID_f0(Plus(x__,1,CLID_f0_clock_type)))
+				
+				StateClocks = dbisim(Clock_CLID_f0(0))
+				
+				stateClockSync = {|get_CLID_f0,f0::entered|}
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		
+		----------------------------------------------------------------------
+		-- State: ErrorMode
+		module ErrorMode
+		
+		enterSS = 
+				{|			i0::enter,
+					s0::enter,
+					f0::enter
+				|}
+		enteredSS = 
+				{|			s0::entered,
+					f0::entered
+				|}
+		exports
+		
+			--  Declarations
+			
+			channel enter, entered, interrupt
+			channel enteredL, enteredR
+			
+							
+			-- declaring identifiers of transitions
+			datatype NIDS = 
+			              NID_i0|
+			              NID_s0|
+			              NID_f0
+			
+			channel internal__ : NIDS
+			channel ext_ActualHV__: NIDS.InOut.core_real
+			channel ext_pow24VStatus__: NIDS.InOut.Power
+			channel ext_errorAck__: NIDS.InOut
+			channel ext_setPoint__: NIDS.InOut.core_real
+			channel int_dutyCyclePWM1__: NIDS.InOut.duty
+			channel int_enablePWM__: NIDS.InOut.core_boolean
+			
+			channel get_CLID_s0 : CLID_s0_clock_type
+			channel get_CLID_f0 : CLID_f0_clock_type
+			
+			--channel increment__
+			
+			CLID_s0_clock_type = {0..(clock_type_max(Union({
+			{}
+			}))+1)}
+			CLID_f0_clock_type = {0..(clock_type_max(Union({
+			{}
+			}))+1)}
+			
+			--	Nodes
+			-- declaring all nodes
+			
+			----------------------------------------------------------------------
+			-- Initial: i0
+			module i0
+			exports
+			
+				channel enter, interrupt
+				
+				Timed(OneStep) {
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+							
+							Termination = terminate -> SKIP
+							
+							Active 		= share__choice(interrupt -> SKIP) ; Inactive
+						within
+							Inactive [| {terminate} |> SKIP)
+					
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- State: s0
+			module s0
+			
+			enterSS = {}
+			
+			enteredSS = {}
+			
+			exports
+			
+				--  Declarations
+				
+				channel enter, entered, interrupt
+				channel enteredL, enteredR
+				
+								
+				
+				
+				--channel increment__
+				
+				
+				--	Nodes
+				-- declaring all nodes
+				
+				
+				Timed(OneStep) {
+					--	Rule: behaviours(Node)
+					--  Note that FDR has problems with efficiently compiling the process below
+					-- 	if using a different recursion pattern.
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+					dbisim(let
+						-- IMPLEMENTATION NOTE: 
+						-- The following should be defined as: Inactive = share__choice(Activation [] Termination),
+						-- however FDR struggles with that form in certain cases. So we use the exception operator
+						-- instead to 'terminate'.
+						
+						Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+						
+						Termination = terminate -> SKIP
+						
+						Active 		= true&CALL__disableHV(
+									id__,
+									false
+								);DoClockReset({clockReset.CLID_Cl1}) ; 
+								 	  Behaviour ; 
+								 	  share__choice(exit -> SKIP) ; SKIP ; 
+								 	  share__choice(exited -> SKIP) ; Inactive
+					
+						Behaviour 	= entered -> During
+						During 		= ((SKIP ; SStop) /\ interrupt -> SKIP)
+					within
+						Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = 
+					dbisim(let
+						Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+						
+						Termination = terminate -> SKIP
+						
+						Active 		= true&CALL__disableHV(
+									id__,
+									false
+								);DoClockReset({clockReset.CLID_Cl1}) ; 
+								 	  Behaviour ; 
+								 	  share__choice(exit -> SKIP) ; SKIP ; 
+								 	  share__choice(exited -> SKIP) ; Inactive
+					
+						Behaviour 	= entered -> During
+						During 		= ((SKIP ; SStop) /\ interrupt -> SKIP)
+					within
+						Inactive [| {terminate} |> SKIP)
+					
+					
+					-- Clocks
+					
+					StateClocks = terminate -> SKIP
+					
+					stateClockSync = {||}
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			----------------------------------------------------------------------
+			-- Final state: f0
+			module f0
+			
+			exports
+			
+				channel enter, entered, interrupt
+				channel enteredL, enteredR
+				
+				Timed(OneStep) {
+					--	Rule: behaviours(Node)
+					D__(id__,
+							    const_State_machine_cycleTime) = 
+						dbisim(let
+							Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Entering
+							
+							Entering 	= entered -> SKIP ; Active
+							Active		= share__choice(terminate -> SKIP [] interrupt -> SKIP) ; Interrupted
+							Interrupted	= share__choice(exit -> exited -> Inactive)
+						within
+							Inactive [| {terminate} |> SKIP)
+						
+					VS_O__(id__,
+							    const_State_machine_cycleTime) = D__(id__,
+							    const_State_machine_cycleTime)
+				}
+			
+			endmodule
+			----------------------------------------------------------------------
+			
+			
+			
+			Timed(OneStep) {
+				--	Rule: behaviours(Node)
+				--  Note that FDR has problems with efficiently compiling the process below
+				-- 	if using a different recursion pattern.
+				D__(id__,
+						    const_State_machine_cycleTime) = 
+				dbisim(let
+					-- IMPLEMENTATION NOTE: 
+					-- The following should be defined as: Inactive = share__choice(Activation [] Termination),
+					-- however FDR struggles with that form in certain cases. So we use the exception operator
+					-- instead to 'terminate'.
+					
+					Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+					
+					Termination = terminate -> SKIP
+					
+					Active 		= share__choice(true & (share__choice(set_currentState!State_ErrorMode -> SKIP))) ; 
+							 	  Behaviour ; 
+							 	  share__choice(exit -> SKIP) ; SKIP ; 
+							 	  share__choice(exited -> SKIP) ; Inactive
+				
+				
+					Behaviour 	= dbisim(
+						((
+						 ((dbisim((dbisim((let
+						 	-- IMPLEMENTATION NOTE:
+						 	-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+						 	-- modules for defining the semantics of each node.
+						 	enterSS = {|
+						 	i0::enter,
+						 	s0::enter,
+						 	f0::enter
+						 	|}
+						 	hideSet = union(enterSS,{|exit,exited,internal__|})
+						 within 
+						 	((let
+						 		-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+						 		-- because CSPM modules are used for the semantics of Node.
+						 		flowevts = union(enterSS,{|exit,exited|})
+						 		transSync = {|internal__.NID_i0,internal__.NID_s0,ext_errorAck__.NID_s0.in|}
+						 	within
+						 		((
+						 		 (((-- RULE composeNodes(nc:NodeContainer)^nops : TimedCSPProcess
+						 		   		  (-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+						 		   		    i0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    s0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    f0::D__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    )
+						 		   		    )
+						 		   		  )
+						 		 )
+						 		 [[s0::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_s0,ext_errorAck__.NID_s0.in|}]]
+						 		 [[f0::interrupt <- x__ | x__ <- {|interrupt|}]]
+						 		 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+						 		 )
+						 		  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+						 		  [[clockReset.CLID_Cl1 <- clockResetL.CLID_Cl1]]
+						 		 )
+						 		 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+						 		 			,clockResetL.CLID_Cl1
+						 		|}) |]
+						 		 ((i0::enter -> Transitions(id__,
+						 		 		    const_State_machine_cycleTime))
+						 		  [[ share__ <- x__ | x__ <- {| share__,clockResetL.CLID_Cl1 |} ]]
+						 		 )
+						 		)[[clockResetL.CLID_Cl1 <- clockReset.CLID_Cl1]]
+						 		)
+						 	)
+						 	 \ hideSet)
+						 	[[
+						 		ext_ActualHV__.x____ <- ext_ActualHV,
+						 		ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+						 		ext_errorAck__.x____ <- ext_errorAck,
+						 		ext_setPoint__.x____ <- ext_setPoint,
+						 		int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+						 		int_enablePWM__.x____ <- int_enablePWM
+						 		| x____ <- NIDS
+						 	]]
+						 )
+						 )
+						  [| union(stateClockSync,{terminate}) |]
+						  StateClocks
+						 )\diff(stateClockSync,enteredSS)))
+						  [[ share__ <- x__ | x__ <- {| share__,setR_pow24VStatus,setR_overLimit,setR_currentState,setR_setPoint,setR_dutyCyclePWM1,setR_ActualHV,setR_underLimit,setR_HVEnabled,setR_newSetPoint,setR_mSetPoint |} ]] 
+						  [[set_setPoint <- setL_setPoint,set_dutyCyclePWM1 <- setL_dutyCyclePWM1,set_pow24VStatus <- setL_pow24VStatus,set_ActualHV <- setL_ActualHV,set_overLimit <- setL_overLimit,set_underLimit <- setL_underLimit,set_currentState <- setL_currentState,set_HVEnabled <- setL_HVEnabled,set_newSetPoint <- setL_newSetPoint,set_mSetPoint <- setL_mSetPoint]]
+						 )
+						 [| union(union(enteredSS,{| interrupt, terminate |}),{|share__
+						 			,setL_setPoint
+						 			,setL_dutyCyclePWM1
+						 			,setL_pow24VStatus
+						 			,setL_ActualHV
+						 			,setL_overLimit
+						 			,setL_underLimit
+						 			,setL_currentState
+						 			,setL_HVEnabled
+						 			,setL_newSetPoint
+						 			,setL_mSetPoint
+						 			,setR_pow24VStatus
+						 			 			,setR_overLimit
+						 			 			,setR_currentState
+						 			 			,setR_setPoint
+						 			 			,setR_dutyCyclePWM1
+						 			 			,setR_ActualHV
+						 			 			,setR_underLimit
+						 			 			,setR_HVEnabled
+						 			 			,setR_newSetPoint
+						 			 			,setR_mSetPoint
+						 			|}) |]
+						 ((During)
+						  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_dutyCyclePWM1,setL_pow24VStatus,setL_ActualHV,setL_overLimit,setL_underLimit,setL_currentState,setL_HVEnabled,setL_newSetPoint,setL_mSetPoint |} ]]
+						  [[set_pow24VStatus <- setR_pow24VStatus,set_overLimit <- setR_overLimit,set_currentState <- setR_currentState,set_setPoint <- setR_setPoint,set_dutyCyclePWM1 <- setR_dutyCyclePWM1,set_ActualHV <- setR_ActualHV,set_underLimit <- setR_underLimit,set_HVEnabled <- setR_HVEnabled,set_newSetPoint <- setR_newSetPoint,set_mSetPoint <- setR_mSetPoint]]
+						 )
+						)[[setL_setPoint <- set_setPoint,setL_dutyCyclePWM1 <- set_dutyCyclePWM1,setL_pow24VStatus <- set_pow24VStatus,setL_ActualHV <- set_ActualHV,setL_overLimit <- set_overLimit,setL_underLimit <- set_underLimit,setL_currentState <- set_currentState,setL_HVEnabled <- set_HVEnabled,setL_newSetPoint <- set_newSetPoint,setL_mSetPoint <- set_mSetPoint]]
+						 [[setR_pow24VStatus <- set_pow24VStatus,setR_overLimit <- set_overLimit,setR_currentState <- set_currentState,setR_setPoint <- set_setPoint,setR_dutyCyclePWM1 <- set_dutyCyclePWM1,setR_ActualHV <- set_ActualHV,setR_underLimit <- set_underLimit,setR_HVEnabled <- set_HVEnabled,setR_newSetPoint <- set_newSetPoint,setR_mSetPoint <- set_mSetPoint]]
+						)\union(enteredSS,{terminate}) 
+					)
+					During 		= share__choice(([] e__ : enteredSS @ e__ -> SKIP))
+							 	  ; entered -> ((CRUN(enteredSS) ||| SKIP ; SStop) /\ interrupt -> terminate -> SKIP)
+				within
+					Inactive [| {terminate} |> SKIP)
+					
+				VS_O__(id__,
+						    const_State_machine_cycleTime) = 
+				dbisim(let
+					Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+					
+					Termination = terminate -> SKIP
+					
+					Active 		= share__choice(true & (share__choice(set_currentState!State_ErrorMode -> SKIP))) ; 
+							 	  Behaviour ; 
+							 	  share__choice(exit -> SKIP) ; SKIP ; 
+							 	  share__choice(exited -> SKIP) ; Inactive
+				
+				
+					Behaviour 	= dbisim(
+						((
+						 ((dbisim((dbisim((let
+						 	-- IMPLEMENTATION NOTE:
+						 	-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+						 	-- modules for defining the semantics of each node.
+						 	enterSS = {|
+						 	i0::enter,
+						 	s0::enter,
+						 	f0::enter
+						 	|}
+						 	hideSet = union(enterSS,{|exit,exited,internal__|})
+						 within 
+						 	((let
+						 		-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+						 		-- because CSPM modules are used for the semantics of Node.
+						 		flowevts = union(enterSS,{|exit,exited|})
+						 		transSync = {|internal__.NID_i0,internal__.NID_s0,ext_errorAck__.NID_s0.in|}
+						 	within
+						 		((
+						 		 (((-- RULE composeNodes(nc:NodeContainer)^nops : TimedCSPProcess
+						 		   		  (-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+						 		   		    i0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    s0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    [| { share__, terminate } |] (
+						 		   		    f0::VS_O__(id__,
+						 		   		    		    const_State_machine_cycleTime)
+						 		   		    )
+						 		   		    )
+						 		   		  )
+						 		 )
+						 		 [[s0::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_s0,ext_errorAck__.NID_s0.in|}]]
+						 		 [[f0::interrupt <- x__ | x__ <- {|interrupt|}]]
+						 		 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+						 		 )
+						 		  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+						 		  [[clockReset.CLID_Cl1 <- clockResetL.CLID_Cl1]]
+						 		 )
+						 		 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+						 		 			,clockResetL.CLID_Cl1
+						 		|}) |]
+						 		 ((i0::enter -> Transitions(id__,
+						 		 		    const_State_machine_cycleTime))
+						 		  [[ share__ <- x__ | x__ <- {| share__,clockResetL.CLID_Cl1 |} ]]
+						 		 )
+						 		)[[clockResetL.CLID_Cl1 <- clockReset.CLID_Cl1]]
+						 		)
+						 	)
+						 	 \ hideSet)
+						 	[[
+						 		ext_ActualHV__.x____ <- ext_ActualHV,
+						 		ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+						 		ext_errorAck__.x____ <- ext_errorAck,
+						 		ext_setPoint__.x____ <- ext_setPoint,
+						 		int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+						 		int_enablePWM__.x____ <- int_enablePWM
+						 		| x____ <- NIDS
+						 	]]
+						 )
+						 )
+						  [| union(stateClockSync,{terminate}) |]
+						  StateClocks
+						 )\diff(stateClockSync,enteredSS)))
+						  [[ share__ <- x__ | x__ <- {| share__,setR_pow24VStatus,setR_overLimit,setR_currentState,setR_setPoint,setR_dutyCyclePWM1,setR_ActualHV,setR_underLimit,setR_HVEnabled,setR_newSetPoint,setR_mSetPoint |} ]] 
+						  [[set_setPoint <- setL_setPoint,set_dutyCyclePWM1 <- setL_dutyCyclePWM1,set_pow24VStatus <- setL_pow24VStatus,set_ActualHV <- setL_ActualHV,set_overLimit <- setL_overLimit,set_underLimit <- setL_underLimit,set_currentState <- setL_currentState,set_HVEnabled <- setL_HVEnabled,set_newSetPoint <- setL_newSetPoint,set_mSetPoint <- setL_mSetPoint]]
+						 )
+						 [| union(union(enteredSS,{| interrupt, terminate |}),{|share__
+						 			,setL_setPoint
+						 			,setL_dutyCyclePWM1
+						 			,setL_pow24VStatus
+						 			,setL_ActualHV
+						 			,setL_overLimit
+						 			,setL_underLimit
+						 			,setL_currentState
+						 			,setL_HVEnabled
+						 			,setL_newSetPoint
+						 			,setL_mSetPoint
+						 			,setR_pow24VStatus
+						 			 			,setR_overLimit
+						 			 			,setR_currentState
+						 			 			,setR_setPoint
+						 			 			,setR_dutyCyclePWM1
+						 			 			,setR_ActualHV
+						 			 			,setR_underLimit
+						 			 			,setR_HVEnabled
+						 			 			,setR_newSetPoint
+						 			 			,setR_mSetPoint
+						 			|}) |]
+						 ((During)
+						  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_dutyCyclePWM1,setL_pow24VStatus,setL_ActualHV,setL_overLimit,setL_underLimit,setL_currentState,setL_HVEnabled,setL_newSetPoint,setL_mSetPoint |} ]]
+						  [[set_pow24VStatus <- setR_pow24VStatus,set_overLimit <- setR_overLimit,set_currentState <- setR_currentState,set_setPoint <- setR_setPoint,set_dutyCyclePWM1 <- setR_dutyCyclePWM1,set_ActualHV <- setR_ActualHV,set_underLimit <- setR_underLimit,set_HVEnabled <- setR_HVEnabled,set_newSetPoint <- setR_newSetPoint,set_mSetPoint <- setR_mSetPoint]]
+						 )
+						)[[setL_setPoint <- set_setPoint,setL_dutyCyclePWM1 <- set_dutyCyclePWM1,setL_pow24VStatus <- set_pow24VStatus,setL_ActualHV <- set_ActualHV,setL_overLimit <- set_overLimit,setL_underLimit <- set_underLimit,setL_currentState <- set_currentState,setL_HVEnabled <- set_HVEnabled,setL_newSetPoint <- set_newSetPoint,setL_mSetPoint <- set_mSetPoint]]
+						 [[setR_pow24VStatus <- set_pow24VStatus,setR_overLimit <- set_overLimit,setR_currentState <- set_currentState,setR_setPoint <- set_setPoint,setR_dutyCyclePWM1 <- set_dutyCyclePWM1,setR_ActualHV <- set_ActualHV,setR_underLimit <- set_underLimit,setR_HVEnabled <- set_HVEnabled,setR_newSetPoint <- set_newSetPoint,setR_mSetPoint <- set_mSetPoint]]
+						)\{terminate} 
+					)
+					During 		= share__choice(([] e__ : enteredSS @ e__ -> SKIP))
+							 	  ; entered -> ((CRUN(enteredSS) ||| SKIP ; SStop) /\ interrupt -> terminate -> SKIP)
+				within
+					Inactive [| {terminate} |> SKIP)
+				
+				Transitions(id__,
+						    const_State_machine_cycleTime) = ((let
+					Trans = get_CLID_Cl1?Cl1 -> TimeOut_1(
+						 (share__ -> SKIP
+						 [] dbisim((true)&(internal__!NID_i0 -> SKIP ;  ((SKIP ; s0::enter -> SKIP))))
+						 [] dbisim(((Cl1==const_State_machine_cycleTime))&(internal__!NID_s0 -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; SKIP ; s0::enter -> SKIP)))
+						 [] dbisim(((Cl1<const_State_machine_cycleTime))&(ext_errorAck__!NID_s0.in -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; share__choice(true & (share__choice(set_currentState!State_Wait24Vpower -> SKIP))) ; f0::enter -> SKIP)))
+						 []
+						 (exit -> SKIP ; share__choice(exited -> terminate -> SKIP))
+						 []
+						 terminate -> SKIP
+						 )
+					,SKIP);Trans
+				within
+					Trans [|{terminate}|> SKIP
+				)
+				)
+				
+				
+				-- Clocks
+				Clock_CLID_s0(x__) = 
+					TimeOut_1(
+						s0::entered -> Clock_CLID_s0(0)
+						[]
+						get_CLID_s0!x__ -> Clock_CLID_s0(x__)
+						[]
+						terminate -> SKIP,Clock_CLID_s0(Plus(x__,1,CLID_s0_clock_type)))
+				Clock_CLID_f0(x__) = 
+					TimeOut_1(
+						f0::entered -> Clock_CLID_f0(0)
+						[]
+						get_CLID_f0!x__ -> Clock_CLID_f0(x__)
+						[]
+						terminate -> SKIP,Clock_CLID_f0(Plus(x__,1,CLID_f0_clock_type)))
+				
+				StateClocks = dbisim(Clock_CLID_s0(0))
+				[| { terminate } |] (
+				dbisim(Clock_CLID_f0(0))
+				)
+				
+				stateClockSync = {|get_CLID_s0,s0::entered,get_CLID_f0,f0::entered|}
+			}
+		
+		endmodule
+		----------------------------------------------------------------------
+		
+		-- END of Nodes --
+		
+		Timed(OneStep) {
+		-- Operation calls --
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machine module.
+		CALL__setPointRamping(id__,
+				    newSetPoint) = EDeadline(setPointRampingCall.newSetPoint,0)
+		CALL__AdjustLimits(id__) = EDeadline(AdjustLimitsCall,0)
+		CALL__PID_Control(id__) = EDeadline(PID_ControlCall,0)
+		CALL__disableHV(id__,
+				    arg) = EDeadline(disableHVCall.arg,0)
+		CALL__checkLimits(id__) = EDeadline(checkLimitsCall,0)
+		CALL__enableHV(id__) = EDeadline(enableHVCall,0)
+		CALL__supplyVoltCheck(id__) = EDeadline(supplyVoltCheckCall,0)
+		
+		-- END of Operation calls --
+	
+		-- STM processes
+		STM(id__,
+				    const_State_machine_cycleTime) = prioritise(-- RULE: [[stm:StateMachineDef]]_STM^nops : CSPProcess
+		( 
+			(
+				(
+					(Stateful(id__,
+							    const_State_machine_cycleTime) \ {terminate} ; share__choice(terminate -> SKIP))
+				 	[[ share__ <- x__ | x__ <- {|set_EXT_overLimit,set_EXT_underLimit,set_EXT_currentState,set_EXT_HVEnabled,set_EXT_pow24VStatus,set_EXT_mSetPoint,set_EXT_dutyCyclePWM1|} ]]
+				)
+			[| {share__} |]
+			SKIP
+			)
+			[| union(sharedVarSync,{terminate}) |]
+			dbisim(sharedVarMemory(id__,
+					    const_State_machine_cycleTime))
+		)\sharedVarHide
+		,<{terminate},{tock}>)
+		
+		STM_VS_O(id__,
+				    const_State_machine_cycleTime) = prioritise(-- RULE: [[stm:StateMachineDef]]_STM^nops : CSPProcess
+		( 
+			(
+				(
+					(Stateful_VS_O(id__,
+							    const_State_machine_cycleTime) \ {terminate} ; share__choice(terminate -> SKIP))
+				 	[[ share__ <- x__ | x__ <- {|set_EXT_overLimit,set_EXT_underLimit,set_EXT_currentState,set_EXT_HVEnabled,set_EXT_pow24VStatus,set_EXT_mSetPoint,set_EXT_dutyCyclePWM1|} ]]
+				)
+			[| {share__} |]
+			SKIP
+			)
+			[| union(sharedVarSync,{terminate}) |]
+			dbisim(sharedVarMemory(id__,
+					    const_State_machine_cycleTime))
+		)\sharedVarHide
+		,<{terminate},{tock}>)
+		
+		-- Transitions
+		Transitions(id__,
+				    const_State_machine_cycleTime) = ((let
+			Trans = get_setPoint?setPoint -> get_pow24VStatus?pow24VStatus -> get_CLID_Cl1?Cl1 -> get_currentState?currentState -> TimeOut_1(
+				 (share__ -> SKIP
+				 [] dbisim((true)&(internal__!NID_Init -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; SHARE_WAIT(const_State_machine_cycleTime) ; Wait24Vpower::enter -> SKIP)))
+				 [] dbisim(((currentState==State_ErrorMode))&(internal__!NID_Wait24Vpower -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; SKIP ; ErrorMode::enter -> SKIP)))
+				 [] dbisim(((((setPoint==0) and (currentState!=State_ErrorMode)) and (pow24VStatus==Power_On)))&(internal__!NID_Wait24Vpower -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; SKIP ; ClosedLoop::enter -> SKIP)))
+				 [] dbisim(((currentState==State_ErrorMode))&(internal__!NID_ClosedLoop -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; SHARE_WAIT(const_State_machine_cycleTime) ; ErrorMode::enter -> SKIP)))
+				 [] dbisim((true)&(internal__!NID_i0 -> SKIP ;  ((share__choice(true & (share__choice(set_mSetPoint!0 -> SKIP)));share__choice(true & (share__choice(set_HVEnabled!false -> SKIP)));SHARE_WAIT(const_State_machine_cycleTime) ; Init::enter -> SKIP))))
+				 [] dbisim((((Cl1>=const_State_machine_cycleTime) and (currentState==State_Wait24Vpower)))&(internal__!NID_ErrorMode -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; SKIP ; Wait24Vpower::enter -> SKIP)))
+				 []
+				 (exit -> SKIP ; share__choice(exited -> terminate -> SKIP))
+				 []
+				 terminate -> SKIP
+				 )
+			,SKIP);Trans
+		within
+			Trans [|{terminate}|> SKIP
+		)
+		)
+		
+		-- Stateful
+		-- RULE: Stateful(stm:StateMachineBody) : CSPProcess
+		
+		-- Named process definitions
+		MachineBody(id__,
+				    const_State_machine_cycleTime) = 
+			dbisim((
+			let
+				finalNodesEntered = {||}
+			within
+				((let
+					-- IMPLEMENTATION NOTE:
+					-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+					-- modules for defining the semantics of each node.
+					enterSS = {|
+					Init::enter,
+					ClosedLoop::enter,
+					i0::enter,
+					Wait24Vpower::enter,
+					ErrorMode::enter
+					|}
+					hideSet = union(enterSS,{|exit,exited,internal__|})
+				within 
+					((let
+						-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+						-- because CSPM modules are used for the semantics of Node.
+						flowevts = union(enterSS,{|exit,exited|})
+						transSync = {|internal__.NID_Init,internal__.NID_Wait24Vpower,internal__.NID_Wait24Vpower,internal__.NID_ClosedLoop,internal__.NID_i0,internal__.NID_ErrorMode|}
+					within
+						((
+						 (((-- RULE composeNodes(nc:NodeContainer)^nops : TimedCSPProcess
+						   		  (-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+						   		    Init::D__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    [| { share__, terminate } |] (
+						   		    ClosedLoop::D__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    [| { share__, terminate } |] (
+						   		    i0::D__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    [| { share__, terminate } |] (
+						   		    Wait24Vpower::D__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    [| { share__, terminate } |] (
+						   		    ErrorMode::D__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    )
+						   		    )
+						   		    )
+						   		    )
+						   		  )
+						 )
+						 [[Init::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_Init|}]]
+						 [[ClosedLoop::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_ClosedLoop|}]]
+						 [[Wait24Vpower::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_Wait24Vpower,internal__.NID_Wait24Vpower|}]]
+						 [[ErrorMode::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_ErrorMode|}]]
+						 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+						 )
+						  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+						  [[set_setPoint <- setL_setPoint,set_pow24VStatus <- setL_pow24VStatus,clockReset.CLID_Cl1 <- clockResetL.CLID_Cl1,set_currentState <- setL_currentState]]
+						 )
+						 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+						 			,setL_setPoint
+						 			,setL_pow24VStatus
+						 			,clockResetL.CLID_Cl1
+						 			,setL_currentState
+						|}) |]
+						 ((i0::enter -> Transitions(id__,
+						 		    const_State_machine_cycleTime))
+						  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_pow24VStatus,clockResetL.CLID_Cl1,setL_currentState |} ]]
+						 )
+						)[[setL_setPoint <- set_setPoint,setL_pow24VStatus <- set_pow24VStatus,clockResetL.CLID_Cl1 <- clockReset.CLID_Cl1,setL_currentState <- set_currentState]]
+						)
+					)
+					 \ hideSet)
+					[[
+						ext_ActualHV__.x____ <- ext_ActualHV,
+						ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+						ext_errorAck__.x____ <- ext_errorAck,
+						ext_setPoint__.x____ <- ext_setPoint,
+						int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+						int_enablePWM__.x____ <- int_enablePWM
+						| x____ <- NIDS
+					]]
+				)
+				 [| {| interrupt |} |] SKIP)
+			)
+			)
+		
+		Behaviour(id__,
+				    const_State_machine_cycleTime) = 
+			dbisim((let
+				stateClockSync = {|get_CLID_Init,Init::entered,get_CLID_ErrorMode,ErrorMode::entered,get_CLID_ClosedLoop,ClosedLoop::entered,get_CLID_Wait24Vpower,Wait24Vpower::entered|}
+			 within
+				(MachineBody(id__,
+						    const_State_machine_cycleTime) [| union(stateClockSync,{terminate}) |] StateClocks) \ union(stateClockSync,enteredSS)
+			)
+			)
+		
+		Stateful(id__,
+				    const_State_machine_cycleTime) = 
+			dbisim((let
+				getsetLocalChannels = {|get_setPoint,set_setPoint,
+				get_newSetPoint,set_newSetPoint,
+				get_ActualHV,set_ActualHV|}
+				clockSync = {|get_CLID_Cl1,clockReset.CLID_Cl1|}
+			within
+				(Behaviour(id__,
+						    const_State_machine_cycleTime) 
+				 [| union(union(getsetLocalChannels,clockSync),{terminate}) |] 
+				 (varMemory(id__,
+				 		    const_State_machine_cycleTime) [| {terminate} |] Clocks)
+			 	)\union(getsetLocalChannels,clockSync)
+			)
+			)
+		
+		-- Visible counterparts
+		MachineBody_VS_O(id__,
+				    const_State_machine_cycleTime) = 
+			dbisim((
+			let
+				finalNodesEntered = {||}
+			within
+				((let
+					-- IMPLEMENTATION NOTE:
+					-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+					-- modules for defining the semantics of each node.
+					enterSS = {|
+					Init::enter,
+					ClosedLoop::enter,
+					i0::enter,
+					Wait24Vpower::enter,
+					ErrorMode::enter
+					|}
+					hideSet = union(enterSS,{|exit,exited,internal__|})
+				within 
+					((let
+						-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+						-- because CSPM modules are used for the semantics of Node.
+						flowevts = union(enterSS,{|exit,exited|})
+						transSync = {|internal__.NID_Init,internal__.NID_Wait24Vpower,internal__.NID_Wait24Vpower,internal__.NID_ClosedLoop,internal__.NID_i0,internal__.NID_ErrorMode|}
+					within
+						((
+						 (((-- RULE composeNodes(nc:NodeContainer)^nops : TimedCSPProcess
+						   		  (-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+						   		    Init::VS_O__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    [| { share__, terminate } |] (
+						   		    ClosedLoop::VS_O__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    [| { share__, terminate } |] (
+						   		    i0::VS_O__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    [| { share__, terminate } |] (
+						   		    Wait24Vpower::VS_O__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    [| { share__, terminate } |] (
+						   		    ErrorMode::VS_O__(id__,
+						   		    		    const_State_machine_cycleTime)
+						   		    )
+						   		    )
+						   		    )
+						   		    )
+						   		  )
+						 )
+						 [[Init::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_Init|}]]
+						 [[ClosedLoop::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_ClosedLoop|}]]
+						 [[Wait24Vpower::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_Wait24Vpower,internal__.NID_Wait24Vpower|}]]
+						 [[ErrorMode::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_ErrorMode|}]]
+						 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+						 )
+						  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+						  [[set_setPoint <- setL_setPoint,set_pow24VStatus <- setL_pow24VStatus,clockReset.CLID_Cl1 <- clockResetL.CLID_Cl1,set_currentState <- setL_currentState]]
+						 )
+						 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+						 			,setL_setPoint
+						 			,setL_pow24VStatus
+						 			,clockResetL.CLID_Cl1
+						 			,setL_currentState
+						|}) |]
+						 ((i0::enter -> Transitions(id__,
+						 		    const_State_machine_cycleTime))
+						  [[ share__ <- x__ | x__ <- {| share__,setL_setPoint,setL_pow24VStatus,clockResetL.CLID_Cl1,setL_currentState |} ]]
+						 )
+						)[[setL_setPoint <- set_setPoint,setL_pow24VStatus <- set_pow24VStatus,clockResetL.CLID_Cl1 <- clockReset.CLID_Cl1,setL_currentState <- set_currentState]]
+						)
+					)
+					 \ hideSet)
+					[[
+						ext_ActualHV__.x____ <- ext_ActualHV,
+						ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+						ext_errorAck__.x____ <- ext_errorAck,
+						ext_setPoint__.x____ <- ext_setPoint,
+						int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+						int_enablePWM__.x____ <- int_enablePWM
+						| x____ <- NIDS
+					]]
+				)
+				 [| {| interrupt |} |] SKIP)
+			)
+			)
+		
+		Behaviour_VS_O(id__,
+				    const_State_machine_cycleTime) = 
+			dbisim((let
+				stateClockSync = {|get_CLID_Init,Init::entered,get_CLID_ErrorMode,ErrorMode::entered,get_CLID_ClosedLoop,ClosedLoop::entered,get_CLID_Wait24Vpower,Wait24Vpower::entered|}
+			 within
+				(MachineBody_VS_O(id__,
+						    const_State_machine_cycleTime) [| union(stateClockSync,{terminate}) |] StateClocks) \ diff(union(stateClockSync,enteredSS),enteredSS)
+			)
+			)
+		
+		Stateful_VS_O(id__,
+				    const_State_machine_cycleTime) = 
+			dbisim((let
+				getsetLocalChannels = {|get_setPoint,set_setPoint,
+				get_newSetPoint,set_newSetPoint,
+				get_ActualHV,set_ActualHV|}
+				clockSync = {|get_CLID_Cl1,clockReset.CLID_Cl1|}
+			within
+				(Behaviour_VS_O(id__,
+						    const_State_machine_cycleTime) 
+				 [| union(union(getsetLocalChannels,clockSync),{terminate}) |] 
+				 (varMemory(id__,
+				 		    const_State_machine_cycleTime) [| {terminate} |] Clocks)
+			 	)\union(getsetLocalChannels,clockSync)
+			)
+			)
+			
+		-- END
+		
+		-- Memory
+		-- Memory variables
+		Memory_setPoint(setPoint) =
+			get_setPoint!setPoint -> Memory_setPoint(setPoint)
+			[]
+			set_setPoint?x__ -> Memory_setPoint(x__)
+			[]
+			terminate -> SKIP
+		Memory_newSetPoint(newSetPoint) =
+			get_newSetPoint!newSetPoint -> Memory_newSetPoint(newSetPoint)
+			[]
+			set_newSetPoint?x__ -> Memory_newSetPoint(x__)
+			[]
+			terminate -> SKIP
+		Memory_ActualHV(ActualHV) =
+			get_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
+			[]
+			set_ActualHV?x__ -> Memory_ActualHV(x__)
+			[]
+			terminate -> SKIP
+		
+		-- varMemory process
+		varMemory(id__,
+				    const_State_machine_cycleTime) = Memory_setPoint(0)
+		[| { terminate } |] (
+		Memory_newSetPoint(0)
+		[| { terminate } |] (
+		Memory_ActualHV(0)
+		)
+		)
+		
+		getsetLocalChannels = {|get_setPoint,set_setPoint,get_newSetPoint,set_newSetPoint,get_ActualHV,set_ActualHV|}
+		
+		-- Definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+		FVS__(id__,
+				    const_State_machine_cycleTime) = STM_VS_O(id__,
+				    const_State_machine_cycleTime) \ localClockResets
+		D__(id__,
+				    const_State_machine_cycleTime) = timed_priority(STM(id__,
+				    const_State_machine_cycleTime) \ union(internal_events,localClockResets))
+		O__(id__,
+				    const_State_machine_cycleTime) = dbisim(D__(id__,
+				    const_State_machine_cycleTime))
+		VS__(id__,
+				    const_State_machine_cycleTime) = FVS__(id__,
+				    const_State_machine_cycleTime)
+		VS_O__(id__,
+				    const_State_machine_cycleTime) = dbisim(FVS__(id__,
+				    const_State_machine_cycleTime))
+		HEXT__(id__,
+				    const_State_machine_cycleTime) = O__(id__,
+				    const_State_machine_cycleTime) [|shared_variable_events|] SKIP
+		FVS_C__(id__,
+				    const_State_machine_cycleTime) = dbisim(timed_priority(STM(id__,
+				    const_State_machine_cycleTime) \ internal_events))
+		HUP__(id__,
+				    const_State_machine_cycleTime) = timed_priority(O__(id__,
+				    const_State_machine_cycleTime) [|{share__}|] SKIP)
+		
+		-- Clocks
+		Clock_CLID_Cl1(x__) = 
+			TimeOut_1(
+				clockReset.CLID_Cl1 -> Clock_CLID_Cl1(0)
+				[]
+				get_CLID_Cl1!x__ -> Clock_CLID_Cl1(x__)
+				[]
+				terminate -> SKIP,Clock_CLID_Cl1(Plus(x__,1,CLID_Cl1_clock_type)))
+		
+		Clocks = dbisim(Clock_CLID_Cl1(0))
+		
+		clockSync = {|get_CLID_Cl1,clockReset.CLID_Cl1|}
+		
+		Clock_CLID_Init(x__) = 
+			TimeOut_1(
+				Init::entered -> Clock_CLID_Init(0)
+				[]
+				get_CLID_Init!x__ -> Clock_CLID_Init(x__)
+				[]
+				terminate -> SKIP,Clock_CLID_Init(Plus(x__,1,CLID_Init_clock_type)))
+		Clock_CLID_ErrorMode(x__) = 
+			TimeOut_1(
+				ErrorMode::entered -> Clock_CLID_ErrorMode(0)
+				[]
+				get_CLID_ErrorMode!x__ -> Clock_CLID_ErrorMode(x__)
+				[]
+				terminate -> SKIP,Clock_CLID_ErrorMode(Plus(x__,1,CLID_ErrorMode_clock_type)))
+		Clock_CLID_ClosedLoop(x__) = 
+			TimeOut_1(
+				ClosedLoop::entered -> Clock_CLID_ClosedLoop(0)
+				[]
+				get_CLID_ClosedLoop!x__ -> Clock_CLID_ClosedLoop(x__)
+				[]
+				terminate -> SKIP,Clock_CLID_ClosedLoop(Plus(x__,1,CLID_ClosedLoop_clock_type)))
+		Clock_CLID_Wait24Vpower(x__) = 
+			TimeOut_1(
+				Wait24Vpower::entered -> Clock_CLID_Wait24Vpower(0)
+				[]
+				get_CLID_Wait24Vpower!x__ -> Clock_CLID_Wait24Vpower(x__)
+				[]
+				terminate -> SKIP,Clock_CLID_Wait24Vpower(Plus(x__,1,CLID_Wait24Vpower_clock_type)))
+		
+		StateClocks = dbisim(Clock_CLID_Init(0))
+		[| { terminate } |] (
+		dbisim(Clock_CLID_ErrorMode(0))
+		[| { terminate } |] (
+		dbisim(Clock_CLID_ClosedLoop(0))
+		[| { terminate } |] (
+		dbisim(Clock_CLID_Wait24Vpower(0))
+		)
+		)
+		)
+		
+		stateClockSync = {|get_CLID_Init,Init::entered,get_CLID_ErrorMode,ErrorMode::entered,get_CLID_ClosedLoop,ClosedLoop::entered,get_CLID_Wait24Vpower,Wait24Vpower::entered|}
+		
+		-- Shared memory
+		-- Shared memory variables
+		Memory_overLimit(overLimit) =
+			get_overLimit!overLimit -> Memory_overLimit(overLimit)
+			[]
+			set_overLimit?x__ -> Memory_overLimit(x__)
+			[]
+			set_EXT_overLimit?x__ -> Memory_overLimit(x__)
+			[]
+			terminate -> SKIP
+		Memory_underLimit(underLimit) =
+			get_underLimit!underLimit -> Memory_underLimit(underLimit)
+			[]
+			set_underLimit?x__ -> Memory_underLimit(x__)
+			[]
+			set_EXT_underLimit?x__ -> Memory_underLimit(x__)
+			[]
+			terminate -> SKIP
+		Memory_currentState(currentState) =
+			get_currentState!currentState -> Memory_currentState(currentState)
+			[]
+			set_currentState?x__ -> Memory_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_currentState(x__)
+			[]
+			terminate -> SKIP
+		Memory_HVEnabled(HVEnabled) =
+			get_HVEnabled!HVEnabled -> Memory_HVEnabled(HVEnabled)
+			[]
+			set_HVEnabled?x__ -> Memory_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_HVEnabled(x__)
+			[]
+			terminate -> SKIP
+		Memory_pow24VStatus(pow24VStatus) =
+			get_pow24VStatus!pow24VStatus -> Memory_pow24VStatus(pow24VStatus)
+			[]
+			set_pow24VStatus?x__ -> Memory_pow24VStatus(x__)
+			[]
+			set_EXT_pow24VStatus?x__ -> Memory_pow24VStatus(x__)
+			[]
+			terminate -> SKIP
+		Memory_mSetPoint(mSetPoint) =
+			get_mSetPoint!mSetPoint -> Memory_mSetPoint(mSetPoint)
+			[]
+			set_mSetPoint?x__ -> Memory_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_mSetPoint(x__)
+			[]
+			terminate -> SKIP
+		Memory_dutyCyclePWM1(dutyCyclePWM1) =
+			get_dutyCyclePWM1!dutyCyclePWM1 -> Memory_dutyCyclePWM1(dutyCyclePWM1)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			terminate -> SKIP
+		
+		-- sharedVarMemory process
+		sharedVarMemory(id__,
+				    const_State_machine_cycleTime) = Memory_overLimit(0)
+		[| { terminate } |] (
+		Memory_underLimit(0)
+		[| { terminate } |] (
+		Memory_currentState(State_Wait24Vpower)
+		[| { terminate } |] (
+		Memory_HVEnabled(true)
+		[| { terminate } |] (
+		Memory_pow24VStatus(Power_On)
+		[| { terminate } |] (
+		Memory_mSetPoint(0)
+		[| { terminate } |] (
+		Memory_dutyCyclePWM1(0)
+		)
+		)
+		)
+		)
+		)
+		)
+		
+		sharedVarSync = {|get_overLimit,set_overLimit,set_EXT_overLimit,get_underLimit,set_underLimit,set_EXT_underLimit,get_currentState,set_currentState,set_EXT_currentState,get_HVEnabled,set_HVEnabled,set_EXT_HVEnabled,get_pow24VStatus,set_pow24VStatus,set_EXT_pow24VStatus,get_mSetPoint,set_mSetPoint,set_EXT_mSetPoint,get_dutyCyclePWM1,set_dutyCyclePWM1,set_EXT_dutyCyclePWM1|}
+		
+		sharedVarHide = {|get_overLimit,get_underLimit,get_currentState,get_HVEnabled,get_pow24VStatus,get_mSetPoint,get_dutyCyclePWM1|}
+		}
+endmodule

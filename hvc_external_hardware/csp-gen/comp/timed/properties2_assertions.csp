@@ -1,0 +1,112 @@
+
+
+
+
+
+
+
+
+-- A4 - timed deadlock free
+assert prioritise(let 
+	id__ = 0
+	
+	
+	
+	const_State_machine_cycleTime = ms(10)
+		
+	const_setPointRamping_rampStep = 1
+within
+	mod_sys::O__(id__,
+			    const_ctrl0_stm_ref0_cycleTime,
+			   	const_setPointRamping_rampStep)[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- A6 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	const_State_machine_cycleTime = ms(10)
+	
+within
+	State_machine::VS_O__(id__,
+			    const_State_machine_cycleTime) |\ {|State_machine::Init::entered|}
+
+-- A8 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	const_State_machine_cycleTime = ms(10)
+	
+within
+	State_machine::VS_O__(id__,
+			    const_State_machine_cycleTime) |\ {|State_machine::ClosedLoop::entered|}
+
+include "defs/state_timed_defs.csp"
+include "defs/robochart_defs.csp"
+include "defs/core_defs.csp"
+include "defs/mod_sys.csp"
+include "defs/core_timed_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/State_machine.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations_defs.csp"
+
+channel r__
+
+-- generate nat
+nametype core_nat = {0..2}
+
+-- generate string
+nametype core_string = LSeq({'a'},1)
+
+REAL_MAX = 2
+REAL_MIN = 0
+
+-- generate real
+nametype core_real = { REAL_MIN..REAL_MAX}
+
+-- BASIC FUNCTIONS
+
+-- generate int
+nametype core_int = { 0..2}
+
+-- generate -- OPERATION BOUNDS
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate Div
+Div(e1,e2,T) = if member(e1/e2,T) then e1/e2 else e1
+
+-- generate Neg
+Neg(e1,T) = if member(-e1,T) then -e1 else e1
+
+-- generate boolean
+nametype core_boolean = Bool
+
+-- generate Mult
+Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1
+
+-- generate Modulus
+Modulus(e1,e2,T) = if member(e1%e2,T) then e1%e2 else e1
+
+-- generate Plus
+Plus(e1,e2,T) = if member(e1+e2,T) then e1+e2 else e1
+
+-- generate Minus
+Minus(e1,e2,T) = if member(e1-e2,T) then e1-e2 else e1
+
+overLimitMax(x) = if x > REAL_MAX then REAL_MAX else x
+underLimitMin(x) = if x < REAL_MIN then REAL_MIN else x
+
+overLimitF(x) = overLimitMax(x+2)
+underLimitF(x) = underLimitMin(x-2)

@@ -1,0 +1,14 @@
+[
+{ "name": "mod_sys is deadlock free (A4) [failures divergences model]",
+  "type": "deadlock-free",
+  "negated": false 
+},
+{ "name": "State_machine::Init is reachable in State_machine (A6)",
+  "type": "reachable",
+  "negated": false 
+},
+{ "name": "State_machine::ClosedLoop is reachable in State_machine (A8)",
+  "type": "reachable",
+  "negated": false 
+}
+			]

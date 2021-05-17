@@ -1,0 +1,86 @@
+-- generate --
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate nat
+nametype core_nat = {calc_type_min(Union(
+			{{0..2},{0..2},{ms(10)},{0..2},{0},{0},{10},{8},{4},{2}}))..calc_type_max(Union({{0..2},{0..2},{ms(10)},{0..2},{0},{0},{10},{8},{4},{2}}))} --{0..2}
+
+-- generate string
+nametype core_string = LSeq(Char,2)
+
+-- generate ms
+ms(t) = 0
+
+-- generate increaseduty
+increaseduty(x) = 0
+
+-- generate real
+nametype core_real = {calc_type_min(Union(
+			{{0},{overLimitF(Plus(mSetPoint, 2, { -2..2}))|mSetPoint <- { -2..2}},{underLimitF(Minus(mSetPoint, 2, { -2..2}))|mSetPoint <- { -2..2}},{0},{Minus(mSetPoint, rampStep, { -2..2})|mSetPoint <- { -2..2},rampStep <- { -2..2}},{newSetPoint|newSetPoint <- { -2..2}},{Plus(mSetPoint, rampStep, { -2..2})|mSetPoint <- { -2..2},rampStep <- { -2..2}},{newSetPoint|newSetPoint <- { -2..2}},{0},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{1},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{0..2},{0..2},{ms(10)},{0..2},{Minus(mSetPoint, 2, { -2..2})|mSetPoint <- { -2..2}},{Plus(mSetPoint, 2, { -2..2})|mSetPoint <- { -2..2}},{0},{setPoint|setPoint <- { -2..2}},{0},{10},{8},{4},{2}}))..calc_type_max(Union({{0},{overLimitF(Plus(mSetPoint, 2, { -2..2}))|mSetPoint <- { -2..2}},{underLimitF(Minus(mSetPoint, 2, { -2..2}))|mSetPoint <- { -2..2}},{0},{Minus(mSetPoint, rampStep, { -2..2})|mSetPoint <- { -2..2},rampStep <- { -2..2}},{newSetPoint|newSetPoint <- { -2..2}},{Plus(mSetPoint, rampStep, { -2..2})|mSetPoint <- { -2..2},rampStep <- { -2..2}},{newSetPoint|newSetPoint <- { -2..2}},{0},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{1},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{0..2},{0..2},{ms(10)},{0..2},{Minus(mSetPoint, 2, { -2..2})|mSetPoint <- { -2..2}},{Plus(mSetPoint, 2, { -2..2})|mSetPoint <- { -2..2}},{0},{setPoint|setPoint <- { -2..2}},{0},{10},{8},{4},{2}}))} -- { -2..2}
+
+-- BASIC FUNCTIONS
+
+-- generate real2duty
+real2duty(x) = 0
+
+-- generate int
+nametype core_int = {calc_type_min(Union(
+			{{0..2},{0..2},{ms(10)},{0..2},{0},{0},{10},{8},{4},{2}}))..calc_type_max(Union({{0..2},{0..2},{ms(10)},{0..2},{0},{0},{10},{8},{4},{2}}))} --{ -2..2}
+
+-- generate -- OPERATION BOUNDS
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate Div
+Div(e1,e2,T) = if member(e1/e2,T) then e1/e2 else e1
+
+-- generate Neg
+Neg(e1,T) = if member(-e1,T) then -e1 else e1
+
+-- generate boolean
+nametype core_boolean = Bool
+
+-- generate s
+s(t) = 0
+
+-- generate Mult
+Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1
+
+-- generate overLimitF
+overLimitF(x) = 0
+
+-- generate underLimitF
+underLimitF(x) = 0
+
+-- generate Modulus
+Modulus(e1,e2,T) = if member(e1%e2,T) then e1%e2 else e1
+
+-- generate duty
+nametype duty = {0,1}
+
+-- generate decreaseduty
+decreaseduty(x) = 0
+
+-- generate Plus
+Plus(e1,e2,T) = if member(e1+e2,T) then e1+e2 else e1
+
+-- generate Minus
+Minus(e1,e2,T) = if member(e1-e2,T) then e1-e2 else e1
+

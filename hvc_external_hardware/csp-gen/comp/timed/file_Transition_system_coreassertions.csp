@@ -1,0 +1,189 @@
+include "file_Transition_system.csp"
+
+
+
+-- generate ctrl0
+P_ctrl0 = let
+	id__ = 0
+	const_State_machine_cycleTime = ms(10)
+	const_setPointRamping_rampStep = 1
+within
+	ctrl0::O__(id__,
+			    const_ctrl0_stm_ref0_cycleTime,
+			   	const_setPointRamping_rampStep)
+
+assert P_ctrl0 :[deadlock-free]	
+assert P_ctrl0;RUN({r__}) :[deadlock-free]
+assert P_ctrl0 :[deterministic]
+assert P_ctrl0 :[divergence-free]
+
+-- generate ctrl0_stm_ref0
+P_ctrl0_stm_ref0 = let
+	id = 0
+	const_State_machine_cycleTime = ms(10)
+	const_setPointRamping_rampStep = 1
+within
+	ctrl0::stm_ref0::O__(
+		id,
+		const_State_machine_cycleTime,
+		const_setPointRamping_rampStep
+	)
+assert P_ctrl0_stm_ref0 :[deadlock-free]	
+assert P_ctrl0_stm_ref0;RUN({r__}) :[deadlock-free]
+assert P_ctrl0_stm_ref0 :[deterministic]
+assert P_ctrl0_stm_ref0 :[divergence-free]
+-- generate ctrl1
+P_ctrl1 = let
+	id__ = 0
+within
+	ctrl1::O__(id__)
+
+assert P_ctrl1 :[deadlock-free]	
+assert P_ctrl1;RUN({r__}) :[deadlock-free]
+assert P_ctrl1 :[deterministic]
+assert P_ctrl1 :[divergence-free]
+
+-- generate ctrl1_stm_ref0
+P_ctrl1_stm_ref0 = let
+	id = 0
+within
+	ctrl1::stm_ref0::O__(
+		id
+	)
+assert P_ctrl1_stm_ref0 :[deadlock-free]	
+assert P_ctrl1_stm_ref0;RUN({r__}) :[deadlock-free]
+assert P_ctrl1_stm_ref0 :[deterministic]
+assert P_ctrl1_stm_ref0 :[divergence-free]
+-- generate ctrl2
+P_ctrl2 = let
+	id__ = 0
+within
+	ctrl2::O__(id__)
+
+assert P_ctrl2 :[deadlock-free]	
+assert P_ctrl2;RUN({r__}) :[deadlock-free]
+assert P_ctrl2 :[deterministic]
+assert P_ctrl2 :[divergence-free]
+
+-- generate ctrl2_stm0
+P_ctrl2_stm0 = let
+	id = 0
+within
+	ctrl2::stm0::O__(
+		id
+	)
+assert P_ctrl2_stm0 :[deadlock-free]	
+assert P_ctrl2_stm0;RUN({r__}) :[deadlock-free]
+assert P_ctrl2_stm0 :[deterministic]
+assert P_ctrl2_stm0 :[divergence-free]
+-- generate ctrl4
+P_ctrl4 = let
+	id__ = 0
+within
+	ctrl4::O__(id__)
+
+assert P_ctrl4 :[deadlock-free]	
+assert P_ctrl4;RUN({r__}) :[deadlock-free]
+assert P_ctrl4 :[deterministic]
+assert P_ctrl4 :[divergence-free]
+
+-- generate ctrl4_stm0
+P_ctrl4_stm0 = let
+	id = 0
+within
+	ctrl4::stm0::O__(
+		id
+	)
+assert P_ctrl4_stm0 :[deadlock-free]	
+assert P_ctrl4_stm0;RUN({r__}) :[deadlock-free]
+assert P_ctrl4_stm0 :[deterministic]
+assert P_ctrl4_stm0 :[divergence-free]
+-- generate ctrl3
+P_ctrl3 = let
+	id__ = 0
+within
+	ctrl3::O__(id__)
+
+assert P_ctrl3 :[deadlock-free]	
+assert P_ctrl3;RUN({r__}) :[deadlock-free]
+assert P_ctrl3 :[deterministic]
+assert P_ctrl3 :[divergence-free]
+
+-- generate ctrl3_stm0
+P_ctrl3_stm0 = let
+	id = 0
+within
+	ctrl3::stm0::O__(
+		id
+	)
+assert P_ctrl3_stm0 :[deadlock-free]	
+assert P_ctrl3_stm0;RUN({r__}) :[deadlock-free]
+assert P_ctrl3_stm0 :[deterministic]
+assert P_ctrl3_stm0 :[divergence-free]
+
+-- generate mod_sys
+P_mod_sys = let
+	id__ = 0
+
+
+	const_State_machine_cycleTime = ms(10)
+	
+	const_setPointRamping_rampStep = 1
+	
+within
+	mod_sys::O__(id__,
+			    const_ctrl0_stm_ref0_cycleTime,
+			   	const_setPointRamping_rampStep)
+assert P_mod_sys :[deadlock-free]	
+assert P_mod_sys;RUN({r__}) :[deadlock-free]
+assert P_mod_sys :[deterministic]
+assert P_mod_sys :[divergence-free]
+
+-- generate mod_sys_ctrl_ref0
+P_mod_sys_ctrl_ref0 = let
+	id__ = 0
+	const_State_machine_cycleTime = ms(10)
+	const_setPointRamping_rampStep = 1
+within
+	mod_sys::ctrl_ref0::O__(id__,
+			    const_ctrl0_stm_ref0_cycleTime,
+			   	const_setPointRamping_rampStep)
+
+assert P_mod_sys_ctrl_ref0 :[deadlock-free]	
+assert P_mod_sys_ctrl_ref0;RUN({r__}) :[deadlock-free]
+assert P_mod_sys_ctrl_ref0 :[deterministic]
+assert P_mod_sys_ctrl_ref0 :[divergence-free]
+
+-- generate mod_sys_ctrl_ref1
+P_mod_sys_ctrl_ref1 = let
+	id__ = 0
+within
+	mod_sys::ctrl_ref1::O__(id__)
+
+assert P_mod_sys_ctrl_ref1 :[deadlock-free]	
+assert P_mod_sys_ctrl_ref1;RUN({r__}) :[deadlock-free]
+assert P_mod_sys_ctrl_ref1 :[deterministic]
+assert P_mod_sys_ctrl_ref1 :[divergence-free]
+
+-- generate mod_sys_ctrl_ref2
+P_mod_sys_ctrl_ref2 = let
+	id__ = 0
+within
+	mod_sys::ctrl_ref2::O__(id__)
+
+assert P_mod_sys_ctrl_ref2 :[deadlock-free]	
+assert P_mod_sys_ctrl_ref2;RUN({r__}) :[deadlock-free]
+assert P_mod_sys_ctrl_ref2 :[deterministic]
+assert P_mod_sys_ctrl_ref2 :[divergence-free]
+
+-- generate mod_sys_ctrl_ref3
+P_mod_sys_ctrl_ref3 = let
+	id__ = 0
+within
+	mod_sys::ctrl_ref3::O__(id__)
+
+assert P_mod_sys_ctrl_ref3 :[deadlock-free]	
+assert P_mod_sys_ctrl_ref3;RUN({r__}) :[deadlock-free]
+assert P_mod_sys_ctrl_ref3 :[deterministic]
+assert P_mod_sys_ctrl_ref3 :[divergence-free]
+

@@ -1,0 +1,424 @@
+//package Declarations
+diagram Declarations 
+enumeration State {   Wait24Vpower ClosedLoop ErrorMode }
+ enumeration Power { On Off } 
+ 
+type duty
+
+interface IVars_seqSM {
+	var setPoint : real
+	//var ErrorShutdown : boolean
+	var newSetPoint : real
+	var ActualHV : real
+	//var dutyCyclePWM1 : duty
+	//var mSetPoint : real
+}
+
+interface IEvents_ext {
+
+	
+	event ext_pow24VStatus : Power
+}
+
+interface IOps {
+disableHV ( arg : boolean )
+checkLimits ( )
+supplyVoltCheck ( )
+PID_Control ( )
+AdjustLimits ( )
+setPointRamping(newSetPoint: real)
+enableHV ( )
+}
+
+interface IEvents {
+	event int_pwmSignal : Power
+	event ext_ActualHV : real 
+}
+
+interface IEvents_RP1 {
+	event ext_ActualHV : real
+	event ext_pow24VStatus : Power
+
+	event ext_errorAck
+event ext_setPoint : real
+
+	event int_dutyCyclePWM1 : duty
+
+	event int_enablePWM : boolean
+}
+
+interface IEvents_ctrl0 {
+	event ext_ActualHV : real
+	event ext_pow24VStatus : Power
+
+	event ext_errorAck
+	event ext_setPoint : real
+
+	event int_dutyCyclePWM1 : duty
+
+	event int_enablePWM : boolean
+}
+interface IEvents_ctrl1 {
+	event ext_pow24VStatus : Power
+	event int_dutyCyclePWM1 : duty
+
+	event int_enablePWM : boolean	
+}
+
+interface IEvents_ctrl2 {
+	event ext_pow24VStatus : Power
+	event ext_pow24_1 : Power
+	event ext_pow24_2 : Power
+
+}
+
+
+
+interface IEvents_ctrl3 {
+	event ext_ActualHV : real
+	event ActualHV_1 : real
+	event ActualHV_2 : real
+}
+
+
+interface IVars_disableHV {
+	//var ErrorShutdown : boolean
+	var HVEnabled : boolean
+	var currentState : State
+
+	var dutyCyclePWM1 : duty
+var mSetPoint : real
+}
+
+interface IOps_disableHV {
+	disableHV ( arg : boolean )
+}
+
+interface IVars_adjustLimits {
+	var overLimit : real
+	var underLimit : real
+var mSetPoint : real
+}
+
+interface IVars_ctrl1 {
+	var HVEnabled : boolean
+	var pow24VStatus : Power
+	var currentState : State
+	var overLimit : real
+	var underLimit : real
+	var mSetPoint : real
+	var dutyCyclePWM1 : duty
+}
+
+interface IVars_checkLimits {
+	var ActualHV : real
+	var overLimit : real 
+	var underLimit : real  
+}
+
+interface IVars_seqSM_shared {
+
+
+	var overLimit : real
+	var underLimit : real
+	var currentState : State
+	var HVEnabled : boolean
+	var pow24VStatus : Power
+
+var mSetPoint : real
+var dutyCyclePWM1 : duty
+}
+
+interface SharedVars_all {
+	var overLimit : real
+	var underLimit : real
+
+	var currentState : State
+	var HVEnabled : boolean
+	var pow24VStatus : Power
+	var dutyCyclePWM1 : duty
+var mSetPoint : real
+}
+
+interface IEvents_disableHV {
+	event int_enablePWM : boolean
+	event int_dutyCyclePWM1 : duty
+}
+
+interface IVars_supplyVoltCheck {
+	var pow24VStatus : Power
+
+}
+
+interface IVars_PID {
+	var ActualHV : real
+
+	var dutyCyclePWM1 : duty
+var mSetPoint : real
+}
+
+interface IEvents_PID {
+	event ext_ActualHV : real
+
+	event int_dutyCyclePWM1 : duty
+}
+
+interface IEvents_ctrl4 {
+	event int_pwmSignal : Power
+	event pwmSignal1 : Power
+	event pwmSignal2 : Power
+}
+
+interface IOps_ctrl1 {
+	AdjustLimits ( )
+	supplyVoltCheck ( )
+}
+
+interface IEvents_enableHV {
+	event int_enablePWM : boolean
+	event int_dutyCyclePWM1 : duty
+}
+
+interface IVars_enableHV {
+	var dutyCyclePWM1 : duty
+}
+
+interface IEvents_supplyVoltCheck {
+	event int_enablePWM : boolean
+	event int_dutyCyclePWM1 : duty
+}
+
+robotic platform RP1 {
+	uses IEvents_RP1  
+	
+provides SharedVars_all }
+
+//enumeration State { Ramp Init Wait24Vpower ClosedLoop ErrorMode } 
+
+operation disableHV ( 
+arg : boolean
+) {
+	requires IVars_disableHV
+	initial i0
+
+	final f0
+	transition t0 {
+		from j0
+		to f0
+		condition arg == false
+	}
+	junction j0
+	transition t1 {
+		from j0
+		to f0
+		condition arg == true
+		action 
+	currentState = State :: ErrorMode
+	}
+	 uses IEvents_disableHV
+transition t2 {
+		from i0
+		to j0
+	action int_enablePWM ! false <{ 0 } ; dutyCyclePWM1 = real2duty ( 0 ) ; int_dutyCyclePWM1 ! dutyCyclePWM1 <{ 0 } ; HVEnabled = false ; mSetPoint = 0
+	}
+	}
+ 
+operation checkLimits ( ) {
+	requires IVars_checkLimits initial i0
+
+	final f0
+	transition t0 {
+		from i0
+		to j0
+	}
+
+	transition t1 {
+		from j0
+		to f0
+		condition ActualHV <= overLimit /\ ActualHV >= underLimit
+	}
+	transition t2 {
+		from j0
+		to f0
+		condition ActualHV < underLimit \/ ActualHV > overLimit
+				// ActualHV = underLimit
+				// underLimit <= overLimit
+		action disableHV ( true )
+	}
+requires IOps_disableHV requires IVars_disableHV  uses IEvents_disableHV junction j0
+}
+
+operation supplyVoltCheck ( ) {
+	requires IVars_supplyVoltCheck
+	
+	event ext_pow24VStatus : Power
+	initial i0 
+
+	final f0
+	transition t0 {
+		from i0
+		to j0
+	action ext_pow24VStatus ? pow24VStatus <{ 0 }
+	}
+	transition t5 {
+		from j0
+		to f0
+		condition pow24VStatus == Power :: Off
+		action disableHV ( true )
+	}
+	transition t2 {
+		from j0
+		to f0
+		condition pow24VStatus == Power :: On
+	}
+	requires IOps_disableHV uses IEvents_supplyVoltCheck
+junction j0
+requires IVars_disableHV }
+
+operation AdjustLimits ( ) {
+	requires IVars_adjustLimits initial i0
+	final f0
+
+	transition t1 {
+		from i0
+		to f0
+	action overLimit = overLimitF ( mSetPoint + 2 ) ; underLimit = underLimitF ( mSetPoint - 2 )
+	}
+}
+
+operation setPointRamping ( newSetPoint : real
+) {
+	requires IOps_disableHV
+	const rampStep : real = 1
+	requires IVars_disableHV uses IEvents_disableHV
+	initial i0
+
+	final f0
+	junction j0
+	junction j1
+	junction j2
+	junction j3
+	junction j4
+	transition t0 {
+		from i0  
+		to j5
+		}
+	transition t1 {
+		from j5 
+		to f0
+		condition newSetPoint <= 0
+		action 
+	mSetPoint = 0 ; disableHV ( false )
+	}
+	transition t2 {
+		from j5
+		to j0
+		condition newSetPoint > 0
+	}
+	transition t3 {
+		from j0
+		to j1
+		condition mSetPoint > newSetPoint
+		action mSetPoint = mSetPoint - rampStep
+	}
+	
+	transition t4 {
+		from j1
+		to j2
+		condition mSetPoint < newSetPoint
+		action mSetPoint = newSetPoint
+	}
+transition t5 {
+		from j1
+		to j2
+		condition mSetPoint >= newSetPoint
+	}
+	transition t6 {
+		from j2
+		to f0
+		}
+	transition t7 {
+		from j0
+		to j3
+		condition mSetPoint < newSetPoint
+		action mSetPoint = mSetPoint + rampStep
+	}
+transition t8 {
+		from j4
+		to f0
+		}
+	transition t9 {
+		from j3
+		to j4
+		condition mSetPoint > newSetPoint
+		action mSetPoint = newSetPoint
+	}
+	transition t10 {
+		from j3
+		to j4
+		condition mSetPoint <= newSetPoint
+	}
+transition t11 {
+		from j0
+		to f0
+		condition mSetPoint == newSetPoint
+
+	}
+junction j5
+}
+
+operation PID_Control ( ) {
+	uses IEvents_PID requires IVars_PID initial i0
+
+	junction j1
+
+	junction j3
+
+	final f0
+
+	transition t2 {
+		from i0
+		to j1
+		action ext_ActualHV ? ActualHV <{ 0 }
+	}
+	transition t3 {
+		from j1
+		to j3
+		condition ActualHV < mSetPoint
+		action dutyCyclePWM1 = increaseduty ( dutyCyclePWM1 ) // +1
+	}
+	transition t4 {
+		from j1
+		to j3
+		condition ActualHV > mSetPoint
+		action dutyCyclePWM1 = decreaseduty(dutyCyclePWM1) // -1
+	}
+	transition t5 {
+		from j3
+		to f0
+		action int_dutyCyclePWM1 ! dutyCyclePWM1 <{ 0 }
+	}
+	transition t6 {
+		from j1
+		to j3
+		condition ActualHV == mSetPoint
+	}
+}
+
+operation enableHV ( ) {
+	uses IEvents_enableHV requires IVars_enableHV initial i0
+
+	final f0
+
+	transition t1 {
+		from i0
+		to f0
+	action int_enablePWM ! true <{ 0 } ; dutyCyclePWM1 = real2duty ( 0 ) ; int_dutyCyclePWM1 ! dutyCyclePWM1 <{ 0 }
+	}
+}
+function underLimitF ( x : real ) : real { } function overLimitF ( x : real ) : real { }
+function real2duty ( x : real ) : duty {}
+function increaseduty ( x : duty ) : duty {}
+function decreaseduty ( x : duty ) : duty {}
+function ms( t: nat) : nat {}
+function s( t: nat) : nat {}

@@ -1,0 +1,3794 @@
+
+
+
+
+module OP_disableHV
+exports
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	external prioritise
+	transparent wbisim
+	transparent dbisim
+	transparent sbisim
+	
+	Timed(OneStep) {
+		-- flow channels
+		channel internal__ : TIDS
+		channel enteredV, enterV, exitV, exitedV : SIDS
+		channel enter, entered: SIDS.SIDS
+		channel exit,exited: SIDS.SIDS
+		channel terminate
+		
+		-- variable channels
+		channel get_arg, set_arg: core_boolean
+		channel get_HVEnabled, set_HVEnabled: core_boolean
+		channel get_currentState, set_currentState: State
+		channel get_dutyCyclePWM1, set_dutyCyclePWM1: duty
+		channel get_mSetPoint, set_mSetPoint: core_real
+				
+		-- shared variable channels
+		channel set_EXT_HVEnabled: core_boolean
+		channel set_EXT_currentState: State
+		channel set_EXT_dutyCyclePWM1: duty
+		channel set_EXT_mSetPoint: core_real
+		
+		-- local variable channels for defined operations that are required by the state machine
+		
+		-- declaring state machine events
+		channel int_enablePWM__: TIDS.InOut.core_boolean
+		channel int_enablePWM: InOut.core_boolean
+		channel int_dutyCyclePWM1__: TIDS.InOut.duty
+		channel int_dutyCyclePWM1: InOut.duty
+		
+		-- declaring call and ret events for undefined operations
+		
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		
+		
+		-- definition of functions used to expose flow channels
+		ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+						   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+						   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+						   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+							 
+		ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+					[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		
+		-- declaring identifiers of state and final states
+		datatype SIDS = SID_disableHV
+		              | SID_disableHV_f0
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_disableHV_t0
+		              | TID_disableHV_t1
+		              | TID_disableHV_t2
+		
+		-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+		
+		ITIDS = {
+		}
+		
+		int_int = {|
+		|}
+			
+		
+		internal_events = {|enter,entered,exit,exited|}
+		shared_variable_events = {|
+			set_EXT_HVEnabled,
+			set_EXT_currentState,
+			set_EXT_dutyCyclePWM1,
+			set_EXT_mSetPoint
+		|}
+				
+		
+		-- declaring all states
+		CS_disableHV_f0_sync = {|
+			enter.y____.x____, 
+			entered.y____.x____, 
+			exit.y____.x____, 
+			exited.y____.x____,
+			enter.x____.y____, 
+			entered.x____.y____, 
+			exit.x____.y____, 
+			exited.x____.y____ |
+			x____ <- {SID_disableHV_f0},
+			y____ <- {SID_disableHV_f0}
+		|}
+		
+		
+		disableHV_f0_triggers = {|
+		|}
+		
+		State_disableHV_f0(id__) = let
+			State_disableHV_f0_execute(id__,o____) = SKIP; 
+				entered!o____!SID_disableHV_f0 ->
+				terminate -> SKIP
+		within
+			enter?x____:diff(SIDS,{SID_disableHV_f0})!SID_disableHV_f0 -> (State_disableHV_f0_execute(id__,x____))
+		
+		
+		I_disableHV_i0(id__) = let
+			J_disableHV_j0(id__) = (
+						(internal__!TID_disableHV_t0 -> enter!SID_disableHV!SID_disableHV_f0 -> entered!SID_disableHV!SID_disableHV_f0 ->
+						SKIP
+						)[]
+						(internal__!TID_disableHV_t1 -> true & (set_currentState!State_ErrorMode -> SKIP);enter!SID_disableHV!SID_disableHV_f0 -> entered!SID_disableHV!SID_disableHV_f0 ->
+						SKIP
+						)
+						)
+			T_disableHV_t2(id__) = internal__!TID_disableHV_t2 -> Deadline(true&(int_enablePWM.out!false -> SKIP),0);true & (set_dutyCyclePWM1!real2duty(0) -> SKIP);Deadline(get_dutyCyclePWM1?dutyCyclePWM1 -> true&(int_dutyCyclePWM1.out!dutyCyclePWM1 -> SKIP),0);true & (set_HVEnabled!false -> SKIP);true & (set_mSetPoint!0 -> SKIP);J_disableHV_j0(id__)
+		within
+			T_disableHV_t2(id__)
+		
+		
+		State_disableHV_f0_R(id__) = 
+			State_disableHV_f0(id__)
+				[|diff(int_int,disableHV_f0_triggers)|]
+			SKIP
+				 		
+			
+		STM(id__) = (
+			I_disableHV_i0(id__)
+				[|
+					{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+						x____ <- diff(SIDS,{SID_disableHV_f0}),
+						y____ <- {SID_disableHV_f0}
+				|}|]
+			State_disableHV_f0_R(id__)
+		)
+		
+		-- optimized memory process
+		channel getV_arg: core_boolean
+		channel getV_HVEnabled: core_boolean
+		channel getV_currentState: State
+		channel getV_dutyCyclePWM1: duty
+		channel getV_mSetPoint: core_real
+		
+		-- individual memory processes
+		Memory_arg(x__) = ( 
+			get_arg!x__ -> Memory_arg(x__)
+			[]
+			getV_arg!x__ -> Memory_arg(x__)
+			[]
+			set_arg?x__ -> Memory_arg(x__)
+		)
+		Memory_HVEnabled(x__) = ( 
+			get_HVEnabled!x__ -> Memory_HVEnabled(x__)
+			[]
+			getV_HVEnabled!x__ -> Memory_HVEnabled(x__)
+			[]
+			set_HVEnabled?x__ -> Memory_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_HVEnabled(x__)
+		)
+		Memory_currentState(x__) = ( 
+			get_currentState!x__ -> Memory_currentState(x__)
+			[]
+			getV_currentState!x__ -> Memory_currentState(x__)
+			[]
+			set_currentState?x__ -> Memory_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_currentState(x__)
+		)
+		Memory_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			getV_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+		)
+		Memory_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			getV_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_mSetPoint(x__)
+		)
+		
+		-- processes that read variables and offer transitions
+		MemoryTransitions(id__,
+			 arg,
+			 HVEnabled,
+			 currentState,
+			 dutyCyclePWM1,
+			 mSetPoint) = (
+			((arg==false))&internal__!TID_disableHV_t0 -> SKIP
+			[]
+			((arg==true))&internal__!TID_disableHV_t1 -> SKIP
+			[]
+			internal__!TID_disableHV_t2 -> SKIP
+		
+			[]
+				set_arg?x__ -> SKIP
+		 	)
+		MemoryTransitions_disableHV(id__) =
+			(
+			OP_disableHV::getV_arg?arg ->	
+			OP_disableHV::getV_HVEnabled?HVEnabled ->	
+			OP_disableHV::getV_currentState?currentState ->	
+			OP_disableHV::getV_dutyCyclePWM1?dutyCyclePWM1 ->	
+			OP_disableHV::getV_mSetPoint?mSetPoint ->
+			 MemoryTransitions(id__,
+			 	 arg,
+			 	 HVEnabled,
+			 	 currentState,
+			 	 dutyCyclePWM1,
+			 	 mSetPoint);
+			 MemoryTransitions_disableHV(id__)
+			)
+		
+		-- synchronisation, hiding and process sets 
+		MemoryVariablesProcesses_disableHV = Union(
+			{
+				{
+					Memory_arg(true),
+					Memory_HVEnabled(true),
+					Memory_currentState(State_Wait24Vpower),
+					Memory_dutyCyclePWM1(0),
+					Memory_mSetPoint(0)
+				}
+			}
+		)
+		
+		MemoryVariablesSyncSet = Union({
+			{|
+				getV_currentState,
+				set_EXT_currentState,
+				set_mSetPoint,
+				set_EXT_mSetPoint,
+				setWC,
+				set_arg,
+				set_currentState,
+				set_dutyCyclePWM1,
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				set_HVEnabled,
+				set_EXT_HVEnabled,
+				set_EXT_dutyCyclePWM1,
+				getV_HVEnabled,
+				getV_arg
+			|}	
+		})
+		
+		MemoryVariablesHideSet = Union({
+			{|
+				getV_currentState,
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				getWC,
+				getV_HVEnabled,
+				getV_arg
+			|}
+		})
+		
+		-- combined individual memory processes
+		MemoryVariables = ||| P : MemoryVariablesProcesses_disableHV @ P
+		
+		-- complete memory process
+		MemoryN(id__) = (MemoryVariables [| MemoryVariablesSyncSet |] MemoryTransitions_disableHV(id__)) \ MemoryVariablesHideSet
+		
+		-- optimised memory
+		-- Sets of named elements identified according to transition conditions:
+		-- {}
+		-- {OP_disableHV::arg}
+		-- Summary of all identified named elements:
+		-- {
+		-- OP_disableHV::currentState
+		-- OP_disableHV::HVEnabled
+		-- OP_disableHV::arg
+		-- OP_disableHV::dutyCyclePWM1
+		-- OP_disableHV::mSetPoint
+		-- }
+		
+		-- Allocation plan:
+		-- 0:{}
+		--	=> {
+		--		TID_disableHV_t2}
+		-- 1:{OP_disableHV::arg}
+		--	=> {
+		--		TID_disableHV_t1,
+		--		TID_disableHV_t0}
+		
+		-- Memory transition processes
+		MemoryTransitions_opt_0(id__) =
+		(
+			let
+				Update = Current(id__)
+				Current(id__)
+				 	   = 
+				 	   internal__!TID_disableHV_t2 -> Update
+			within
+				Update
+		)
+		MemoryTransitions_opt_1(id__) =
+		(
+			let
+				Update = 
+				get_arg?arg ->
+				Current(id__,
+					 arg)
+				Current(id__,
+					 arg)
+				 	   = 
+				 	   ((arg==true))&(internal__!TID_disableHV_t1 -> Update)
+				 	   []
+				 	   ((arg==false))&(internal__!TID_disableHV_t0 -> Update)
+				 	   	 
+				 	   	 []
+				 	   	 set_arg?x__ -> Update
+			within
+				Update
+		)
+		
+		-- Memory cell processes
+		Memory_opt_currentState(x__) = ( 
+			get_currentState!x__ -> Memory_opt_currentState(x__)
+			[]
+			set_currentState?x__ -> Memory_opt_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_opt_currentState(x__)
+		)
+		Memory_opt_HVEnabled(x__) = ( 
+			get_HVEnabled!x__ -> Memory_opt_HVEnabled(x__)
+			[]
+			set_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+		)
+		Memory_opt_arg(x__) = ( 
+			get_arg!x__ -> Memory_opt_arg(x__)
+			[]
+			set_arg?x__ -> Memory_opt_arg(x__)
+		)
+		Memory_opt_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+		)
+		Memory_opt_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+		)
+		
+		-- Composition of memory, StateMachine and Memory transition processes
+		
+		MemorySTM_opt(id__, arg) =
+			dbisim(
+			  sbisim(Memory_opt_arg(true)
+			      	[| {|get_arg,set_arg|} |] 
+			      	sbisim(	
+			      	  dbisim(
+			      	    sbisim(sbisim(	
+			      	      dbisim(
+			      	        sbisim(dbisim(sbisim(Memory_opt_currentState(State_Wait24Vpower)
+			      	              	[| {|get_currentState,set_currentState|} |] 
+			      	              	dbisim(sbisim(Memory_opt_HVEnabled(true)
+			      	              	      	[| {|set_HVEnabled,get_HVEnabled|} |] 
+			      	              	      	dbisim(sbisim(Memory_opt_dutyCyclePWM1(0)
+			      	              	      	      	[| {|set_dutyCyclePWM1,get_dutyCyclePWM1|} |] 
+			      	              	      	      	dbisim(sbisim(Memory_opt_mSetPoint(0)
+			      	              	      	      	      	[| {|set_mSetPoint,get_mSetPoint|} |] 
+			      	              	      	      	      	STM_core(id__, arg)
+			      	              	      	      	      	)\ {|get_mSetPoint|}
+			      	              	      	      	      )
+			      	              	      	      	)\ {|get_dutyCyclePWM1|}
+			      	              	      	      )
+			      	              	      	)\ {|get_HVEnabled|}
+			      	              	      )
+			      	              	)\ {|get_currentState|}
+			      	              )
+			      	          	  [| {|internal__.TID_disableHV_t2|} |]
+			      	          	  MemoryTransitions_opt_0(id__)
+			      	          	  )\{|internal__.TID_disableHV_t2|})
+			      	          )
+			      	      	  [| {|internal__.TID_disableHV_t0,internal__.TID_disableHV_t1,set_arg|} |]
+			      	      	  MemoryTransitions_opt_1(id__)
+			      	      	  )\{|internal__.TID_disableHV_t0,internal__.TID_disableHV_t1|})
+			      	      )
+			      	) \ {|get_arg,set_arg|}
+			      )
+		
+		-- main process
+		
+		MachineMemorySyncSet = Union({
+			union(
+				union(
+					{|get_arg,set_arg|},
+					{||}
+				)
+					
+				,
+				{|internal__.TID_disableHV_t0,
+				internal__.TID_disableHV_t1,
+				internal__.TID_disableHV_t2|}
+			),
+			{|deadline|},
+			WCresets
+		})
+		
+		MachineMemoryHidingSet = Union({
+			union(
+				{|get_arg,set_arg|},
+				{||}
+			)
+			,
+			{|deadline|}
+		})
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+		-- main process
+		AUX(id__,
+					arg) = prioritise((((
+			wbisim(set_arg!arg -> STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		[[
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP\MachineInternalEvents)
+		,<Union({internal_events,ClockResets,{|terminate|}}),{tock}>)
+		
+		STM_core(id__,
+					arg) = 
+			dbisim(
+				sbisim((set_arg!arg -> STM(id__))
+			 			[| union(WCsync,WCresets) |]
+			 			Clocks(id__)
+			 		  )\WCresets
+				  )
+			
+		AUX_opt(id__,
+					arg) = 
+			(MemorySTM_opt(id__,
+						arg)
+			)[[
+				int_enablePWM__.x____ <- int_enablePWM,
+				int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+				| x____ <- TIDS
+			]]
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		internal_(id__,
+					arg) = prioritise((((
+			wbisim(set_arg!arg -> STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP)
+		,<Union({internal_events,ClockResets,{|internal__,terminate|}}),{tock}>)		
+				
+		-- declare clocks
+		datatype ClockSet = dummyC
+		channel clockReset 		-- no clocks declared
+		
+		-- declare trigger deadlines channel
+		channel deadline : TIDS.deadlineSignal
+		
+		-- compile clocks process
+		
+		-- set of strings that uniquely identify the waiting conditions, each of which is 
+		-- used to synchronise with the Memory process to set the correspoding variable in
+		-- the memory process.
+		datatype setWC_identifierSet = dummyWC
+		
+		-- declaring getWC and setWC channel for updating memory variables related to clocks
+		channel setWC : setWC_identifierSet.Bool
+		channel getWC : setWC_identifierSet.Bool
+		
+		-- Set of pairs capturing waiting condition processes and their alphabet.
+		-- It includes the corresponding set of the defined operations.
+		WCset(id__) = Union({
+			{
+			}
+			})
+		
+		-- Auxiliary function to rename the channel set for required clocks.
+		
+		-- Set of transition events for which synchronisation is required between Clocks and the Memory process.
+		-- It includes the corresponding set of the defined operations.
+		WCsync = Union({
+			{||}
+			})
+		-- Set of all clock resets, including 'clockReset.C' events and 'entered.x.y' events where x is drawn
+		-- from the set of all state machine state identifiers. It includes the corresponding set of the defined operations.
+		WCresets = Union({
+			{| | x <- SIDS |}
+			})
+		-- Set of all waiting condition set events. It includes the corresponding set of the defined operations.
+		WCsets = Union({
+			{|setWC|}
+			})
+		
+		
+		
+		-- Clocks process
+		Clocks(id__) = || (alpha, P) : WCset(id__) @ [alpha] wbisim(P)
+		-- collects all clockResets
+		ClockResets = {|clockReset|}
+		
+		-- With no internal events visible
+		
+		-- Original D__ process using the unoptimised memory process
+		Dunopt__(id__,
+					arg) = timed_priority(AUX(id__,
+					arg) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		D__(id__,
+					arg) = timed_priority(AUX_opt(id__,
+					arg) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		O__(id__,
+					arg) = D__(id__,
+					arg)
+		
+		-- With enter/entered/exit/exited events visible
+		FVS__(id__,
+					arg) = timed_priority(AUX_opt(id__,
+					arg) \ union(ClockResets,{|terminate|}))
+		
+		-- With enterV/enteredV/exitV/exitedV events visible
+		VS__(id__,
+					arg) = ShowV(timed_priority(AUX_opt(id__,
+					arg) \ union(ClockResets,{|terminate|})))
+		
+		-- With clock resets visible
+		FVS_C__(id__,
+					arg) = AUX_opt(id__,
+					arg)\{|terminate|}
+	}
+endmodule
+module OP_checkLimits
+exports
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	external prioritise
+	transparent wbisim
+	transparent dbisim
+	transparent sbisim
+	
+	Timed(OneStep) {
+		-- flow channels
+		channel internal__ : TIDS
+		channel enteredV, enterV, exitV, exitedV : SIDS
+		channel enter, entered: SIDS.SIDS
+		channel exit,exited: SIDS.SIDS
+		channel terminate
+		
+		-- variable channels
+		channel get_ActualHV, set_ActualHV: core_real
+		channel get_overLimit, set_overLimit: core_real
+		channel get_underLimit, set_underLimit: core_real
+		channel get_HVEnabled, set_HVEnabled: core_boolean
+		channel get_currentState, set_currentState: State
+		channel get_dutyCyclePWM1, set_dutyCyclePWM1: duty
+		channel get_mSetPoint, set_mSetPoint: core_real
+				
+		-- shared variable channels
+		channel set_EXT_ActualHV: core_real
+		channel set_EXT_overLimit: core_real
+		channel set_EXT_underLimit: core_real
+		channel set_EXT_HVEnabled: core_boolean
+		channel set_EXT_currentState: State
+		channel set_EXT_dutyCyclePWM1: duty
+		channel set_EXT_mSetPoint: core_real
+		
+		-- local variable channels for defined operations that are required by the state machine
+		
+		-- declaring state machine events
+		channel int_enablePWM__: TIDS.InOut.core_boolean
+		channel int_enablePWM: InOut.core_boolean
+		channel int_dutyCyclePWM1__: TIDS.InOut.duty
+		channel int_dutyCyclePWM1: InOut.duty
+		
+		-- declaring call and ret events for undefined operations
+		channel disableHVCall: core_boolean
+		
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		CALL__disableHV(id__,
+				    arg) =  EDeadline(disableHVCall.arg,0)		
+		
+		
+		-- definition of functions used to expose flow channels
+		ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+						   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+						   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+						   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+							 
+		ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+					[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		
+		-- declaring identifiers of state and final states
+		datatype SIDS = SID_checkLimits
+		              | SID_checkLimits_f0
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_checkLimits_t0
+		              | TID_checkLimits_t1
+		              | TID_checkLimits_t2
+		
+		-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+		
+		ITIDS = {
+		}
+		
+		int_int = {|
+		|}
+			
+		
+		internal_events = {|enter,entered,exit,exited|}
+		shared_variable_events = {|
+			set_EXT_ActualHV,
+			set_EXT_overLimit,
+			set_EXT_underLimit,
+			set_EXT_HVEnabled,
+			set_EXT_currentState,
+			set_EXT_dutyCyclePWM1,
+			set_EXT_mSetPoint
+		|}
+				
+		
+		-- declaring all states
+		CS_checkLimits_f0_sync = {|
+			enter.y____.x____, 
+			entered.y____.x____, 
+			exit.y____.x____, 
+			exited.y____.x____,
+			enter.x____.y____, 
+			entered.x____.y____, 
+			exit.x____.y____, 
+			exited.x____.y____ |
+			x____ <- {SID_checkLimits_f0},
+			y____ <- {SID_checkLimits_f0}
+		|}
+		
+		
+		checkLimits_f0_triggers = {|
+		|}
+		
+		State_checkLimits_f0(id__) = let
+			State_checkLimits_f0_execute(id__,o____) = SKIP; 
+				entered!o____!SID_checkLimits_f0 ->
+				terminate -> SKIP
+		within
+			enter?x____:diff(SIDS,{SID_checkLimits_f0})!SID_checkLimits_f0 -> (State_checkLimits_f0_execute(id__,x____))
+		
+		
+		I_checkLimits_i0(id__) = let
+			J_checkLimits_j0(id__) = (
+						(internal__!TID_checkLimits_t1 -> enter!SID_checkLimits!SID_checkLimits_f0 -> entered!SID_checkLimits!SID_checkLimits_f0 ->
+						SKIP
+						)[]
+						(internal__!TID_checkLimits_t2 -> true&CALL__disableHV(
+									id__,
+									true
+								);enter!SID_checkLimits!SID_checkLimits_f0 -> entered!SID_checkLimits!SID_checkLimits_f0 ->
+						SKIP
+						)
+						)
+			T_checkLimits_t0(id__) = internal__!TID_checkLimits_t0 -> J_checkLimits_j0(id__)
+		within
+			T_checkLimits_t0(id__)
+		
+		
+		State_checkLimits_f0_R(id__) = 
+			State_checkLimits_f0(id__)
+				[|diff(int_int,checkLimits_f0_triggers)|]
+			SKIP
+				 		
+			
+		STM(id__) = (
+			I_checkLimits_i0(id__)
+				[|
+					{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+						x____ <- diff(SIDS,{SID_checkLimits_f0}),
+						y____ <- {SID_checkLimits_f0}
+				|}|]
+			State_checkLimits_f0_R(id__)
+		)
+		
+		-- optimized memory process
+		channel getV_ActualHV: core_real
+		channel getV_overLimit: core_real
+		channel getV_underLimit: core_real
+		channel getV_HVEnabled: core_boolean
+		channel getV_currentState: State
+		channel getV_dutyCyclePWM1: duty
+		channel getV_mSetPoint: core_real
+		
+		-- individual memory processes
+		Memory_ActualHV(x__) = ( 
+			get_ActualHV!x__ -> Memory_ActualHV(x__)
+			[]
+			getV_ActualHV!x__ -> Memory_ActualHV(x__)
+			[]
+			set_ActualHV?x__ -> Memory_ActualHV(x__)
+			[]
+			set_EXT_ActualHV?x__ -> Memory_ActualHV(x__)
+		)
+		Memory_overLimit(x__) = ( 
+			get_overLimit!x__ -> Memory_overLimit(x__)
+			[]
+			getV_overLimit!x__ -> Memory_overLimit(x__)
+			[]
+			set_overLimit?x__ -> Memory_overLimit(x__)
+			[]
+			set_EXT_overLimit?x__ -> Memory_overLimit(x__)
+		)
+		Memory_underLimit(x__) = ( 
+			get_underLimit!x__ -> Memory_underLimit(x__)
+			[]
+			getV_underLimit!x__ -> Memory_underLimit(x__)
+			[]
+			set_underLimit?x__ -> Memory_underLimit(x__)
+			[]
+			set_EXT_underLimit?x__ -> Memory_underLimit(x__)
+		)
+		Memory_HVEnabled(x__) = ( 
+			get_HVEnabled!x__ -> Memory_HVEnabled(x__)
+			[]
+			getV_HVEnabled!x__ -> Memory_HVEnabled(x__)
+			[]
+			set_HVEnabled?x__ -> Memory_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_HVEnabled(x__)
+		)
+		Memory_currentState(x__) = ( 
+			get_currentState!x__ -> Memory_currentState(x__)
+			[]
+			getV_currentState!x__ -> Memory_currentState(x__)
+			[]
+			set_currentState?x__ -> Memory_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_currentState(x__)
+		)
+		Memory_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			getV_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+		)
+		Memory_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			getV_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_mSetPoint(x__)
+		)
+		
+		-- processes that read variables and offer transitions
+		MemoryTransitions(id__,
+			 ActualHV,
+			 overLimit,
+			 underLimit,
+			 HVEnabled,
+			 currentState,
+			 dutyCyclePWM1,
+			 mSetPoint) = (
+			internal__!TID_checkLimits_t0 -> SKIP
+			[]
+			(((ActualHV<=overLimit) and (ActualHV>=underLimit)))&internal__!TID_checkLimits_t1 -> SKIP
+			[]
+			(((ActualHV<underLimit) or (ActualHV>overLimit)))&internal__!TID_checkLimits_t2 -> SKIP
+		 	)
+		MemoryTransitions_checkLimits(id__) =
+			(
+			OP_checkLimits::getV_ActualHV?ActualHV ->	
+			OP_checkLimits::getV_overLimit?overLimit ->	
+			OP_checkLimits::getV_underLimit?underLimit ->	
+			OP_checkLimits::getV_HVEnabled?HVEnabled ->	
+			OP_checkLimits::getV_currentState?currentState ->	
+			OP_checkLimits::getV_dutyCyclePWM1?dutyCyclePWM1 ->	
+			OP_checkLimits::getV_mSetPoint?mSetPoint ->
+			 MemoryTransitions(id__,
+			 	 ActualHV,
+			 	 overLimit,
+			 	 underLimit,
+			 	 HVEnabled,
+			 	 currentState,
+			 	 dutyCyclePWM1,
+			 	 mSetPoint);
+			 MemoryTransitions_checkLimits(id__)
+			)
+		
+		-- synchronisation, hiding and process sets 
+		MemoryVariablesProcesses_checkLimits = Union(
+			{
+				{
+					Memory_ActualHV(0),
+					Memory_overLimit(0),
+					Memory_underLimit(0),
+					Memory_HVEnabled(true),
+					Memory_currentState(State_Wait24Vpower),
+					Memory_dutyCyclePWM1(0),
+					Memory_mSetPoint(0)
+				}
+			}
+		)
+		
+		MemoryVariablesSyncSet = Union({
+			{|
+				getV_currentState,
+				set_ActualHV,
+				set_overLimit,
+				set_EXT_currentState,
+				set_mSetPoint,
+				set_EXT_underLimit,
+				set_EXT_mSetPoint,
+				setWC,
+				set_EXT_ActualHV,
+				set_currentState,
+				set_dutyCyclePWM1,
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				set_HVEnabled,
+				set_EXT_HVEnabled,
+				set_EXT_dutyCyclePWM1,
+				getV_HVEnabled,
+				set_EXT_overLimit,
+				set_underLimit,
+				getV_underLimit,
+				getV_ActualHV,
+				getV_overLimit
+			|}	
+		})
+		
+		MemoryVariablesHideSet = Union({
+			{|
+				getV_currentState,
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				getWC,
+				getV_HVEnabled,
+				getV_underLimit,
+				getV_ActualHV,
+				getV_overLimit
+			|}
+		})
+		
+		-- combined individual memory processes
+		MemoryVariables = ||| P : MemoryVariablesProcesses_checkLimits @ P
+		
+		-- complete memory process
+		MemoryN(id__) = (MemoryVariables [| MemoryVariablesSyncSet |] MemoryTransitions_checkLimits(id__)) \ MemoryVariablesHideSet
+		
+		-- optimised memory
+		-- Sets of named elements identified according to transition conditions:
+		-- {}
+		-- {OP_checkLimits::overLimit,OP_checkLimits::underLimit,OP_checkLimits::ActualHV}
+		-- Summary of all identified named elements:
+		-- {
+		-- OP_checkLimits::mSetPoint
+		-- OP_checkLimits::HVEnabled
+		-- OP_checkLimits::currentState
+		-- OP_checkLimits::dutyCyclePWM1
+		-- OP_checkLimits::overLimit
+		-- OP_checkLimits::underLimit
+		-- OP_checkLimits::ActualHV
+		-- }
+		
+		-- Allocation plan:
+		-- 0:{}
+		--	=> {
+		--		TID_checkLimits_t0}
+		-- 1:{OP_checkLimits::overLimit,OP_checkLimits::underLimit,OP_checkLimits::ActualHV}
+		--	=> {
+		--		TID_checkLimits_t2,
+		--		TID_checkLimits_t1}
+		
+		-- Memory transition processes
+		MemoryTransitions_opt_0(id__) =
+		(
+			let
+				Update = Current(id__)
+				Current(id__)
+				 	   = 
+				 	   internal__!TID_checkLimits_t0 -> Update
+			within
+				Update
+		)
+		MemoryTransitions_opt_1(id__) =
+		(
+			let
+				Update = 
+				get_overLimit?overLimit ->
+				get_underLimit?underLimit ->
+				get_ActualHV?ActualHV ->
+				Current(id__,
+					 overLimit,
+					 underLimit,
+					 ActualHV)
+				Current(id__,
+					 overLimit,
+					 underLimit,
+					 ActualHV)
+				 	   = 
+				 	   (((ActualHV<underLimit) or (ActualHV>overLimit)))&(internal__!TID_checkLimits_t2 -> Update)
+				 	   []
+				 	   (((ActualHV<=overLimit) and (ActualHV>=underLimit)))&(internal__!TID_checkLimits_t1 -> Update)
+				 	   	 
+				 	   	 []
+				 	   	 set_overLimit?x__ -> Update
+				 	   	 []
+				 	   	 set_EXT_overLimit?x__ -> Update
+				 	   	 []
+				 	   	 
+				 	   	 set_underLimit?x__ -> Update
+				 	   	 []
+				 	   	 set_EXT_underLimit?x__ -> Update
+				 	   	 []
+				 	   	 
+				 	   	 set_ActualHV?x__ -> Update
+				 	   	 []
+				 	   	 set_EXT_ActualHV?x__ -> Update
+			within
+				Update
+		)
+		
+		-- Memory cell processes
+		Memory_opt_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+		)
+		Memory_opt_HVEnabled(x__) = ( 
+			get_HVEnabled!x__ -> Memory_opt_HVEnabled(x__)
+			[]
+			set_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+		)
+		Memory_opt_currentState(x__) = ( 
+			get_currentState!x__ -> Memory_opt_currentState(x__)
+			[]
+			set_currentState?x__ -> Memory_opt_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_opt_currentState(x__)
+		)
+		Memory_opt_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+		)
+		Memory_opt_overLimit(x__) = ( 
+			get_overLimit!x__ -> Memory_opt_overLimit(x__)
+			[]
+			set_overLimit?x__ -> Memory_opt_overLimit(x__)
+			[]
+			set_EXT_overLimit?x__ -> Memory_opt_overLimit(x__)
+		)
+		Memory_opt_underLimit(x__) = ( 
+			get_underLimit!x__ -> Memory_opt_underLimit(x__)
+			[]
+			set_underLimit?x__ -> Memory_opt_underLimit(x__)
+			[]
+			set_EXT_underLimit?x__ -> Memory_opt_underLimit(x__)
+		)
+		Memory_opt_ActualHV(x__) = ( 
+			get_ActualHV!x__ -> Memory_opt_ActualHV(x__)
+			[]
+			set_ActualHV?x__ -> Memory_opt_ActualHV(x__)
+			[]
+			set_EXT_ActualHV?x__ -> Memory_opt_ActualHV(x__)
+		)
+		
+		-- Composition of memory, StateMachine and Memory transition processes
+		
+		MemorySTM_opt(id__) =
+			dbisim(
+			  sbisim(Memory_opt_overLimit(0)
+			      	[| {|set_overLimit,get_overLimit,set_EXT_overLimit|} |] 
+			      	dbisim(
+			      	  sbisim(Memory_opt_underLimit(0)
+			      	      	[| {|set_EXT_underLimit,get_underLimit,set_underLimit|} |] 
+			      	      	dbisim(
+			      	      	  sbisim(Memory_opt_ActualHV(0)
+			      	      	      	[| {|set_ActualHV,get_ActualHV,set_EXT_ActualHV|} |] 
+			      	      	      	sbisim(	
+			      	      	      	  dbisim(
+			      	      	      	    sbisim(sbisim(	
+			      	      	      	      dbisim(
+			      	      	      	        sbisim(dbisim(sbisim(Memory_opt_mSetPoint(0)
+			      	      	      	              	[| {|set_mSetPoint,get_mSetPoint|} |] 
+			      	      	      	              	dbisim(sbisim(Memory_opt_HVEnabled(true)
+			      	      	      	              	      	[| {|set_HVEnabled,get_HVEnabled|} |] 
+			      	      	      	              	      	dbisim(sbisim(Memory_opt_currentState(State_Wait24Vpower)
+			      	      	      	              	      	      	[| {|get_currentState,set_currentState|} |] 
+			      	      	      	              	      	      	dbisim(sbisim(Memory_opt_dutyCyclePWM1(0)
+			      	      	      	              	      	      	      	[| {|set_dutyCyclePWM1,get_dutyCyclePWM1|} |] 
+			      	      	      	              	      	      	      	STM_core(id__)
+			      	      	      	              	      	      	      	)\ {|get_dutyCyclePWM1|}
+			      	      	      	              	      	      	      )
+			      	      	      	              	      	      	)\ {|get_currentState|}
+			      	      	      	              	      	      )
+			      	      	      	              	      	)\ {|get_HVEnabled|}
+			      	      	      	              	      )
+			      	      	      	              	)\ {|get_mSetPoint|}
+			      	      	      	              )
+			      	      	      	          	  [| {|internal__.TID_checkLimits_t0|} |]
+			      	      	      	          	  MemoryTransitions_opt_0(id__)
+			      	      	      	          	  )\{|internal__.TID_checkLimits_t0|})
+			      	      	      	          )
+			      	      	      	      	  [| {|internal__.TID_checkLimits_t1,set_overLimit,set_ActualHV,internal__.TID_checkLimits_t2,set_underLimit|} |]
+			      	      	      	      	  MemoryTransitions_opt_1(id__)
+			      	      	      	      	  )\{|internal__.TID_checkLimits_t1,internal__.TID_checkLimits_t2|})
+			      	      	      	      )
+			      	      	      	) \ {|get_ActualHV|}
+			      	      	      )
+			      	      	) \ {|get_underLimit|}
+			      	      )
+			      	) \ {|get_overLimit|}
+			      )
+		
+		-- main process
+		
+		MachineMemorySyncSet = Union({
+			union(
+				union(
+					{||},
+					{||}
+				)
+					
+				,
+				{|internal__.TID_checkLimits_t0,
+				internal__.TID_checkLimits_t1,
+				internal__.TID_checkLimits_t2|}
+			),
+			{|deadline|},
+			WCresets
+		})
+		
+		MachineMemoryHidingSet = Union({
+			union(
+				{||},
+				{||}
+			)
+			,
+			{|deadline|}
+		})
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+		-- main process
+		AUX(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		[[
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP\MachineInternalEvents)
+		,<Union({internal_events,ClockResets,{|terminate|}}),{tock}>)
+		
+		STM_core(id__) = 
+			dbisim(
+				sbisim((STM(id__))
+			 			[| union(WCsync,WCresets) |]
+			 			Clocks(id__)
+			 		  )\WCresets
+				  )
+			
+		AUX_opt(id__) = 
+			(MemorySTM_opt(id__)
+			)[[
+				int_enablePWM__.x____ <- int_enablePWM,
+				int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+				| x____ <- TIDS
+			]]
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		internal_(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP)
+		,<Union({internal_events,ClockResets,{|internal__,terminate|}}),{tock}>)		
+				
+		-- declare clocks
+		datatype ClockSet = dummyC
+		channel clockReset 		-- no clocks declared
+		
+		-- declare trigger deadlines channel
+		channel deadline : TIDS.deadlineSignal
+		
+		-- compile clocks process
+		
+		-- set of strings that uniquely identify the waiting conditions, each of which is 
+		-- used to synchronise with the Memory process to set the correspoding variable in
+		-- the memory process.
+		datatype setWC_identifierSet = dummyWC
+		
+		-- declaring getWC and setWC channel for updating memory variables related to clocks
+		channel setWC : setWC_identifierSet.Bool
+		channel getWC : setWC_identifierSet.Bool
+		
+		-- Set of pairs capturing waiting condition processes and their alphabet.
+		-- It includes the corresponding set of the defined operations.
+		WCset(id__) = Union({
+			{
+			}
+			})
+		
+		-- Auxiliary function to rename the channel set for required clocks.
+		
+		-- Set of transition events for which synchronisation is required between Clocks and the Memory process.
+		-- It includes the corresponding set of the defined operations.
+		WCsync = Union({
+			{||}
+			})
+		-- Set of all clock resets, including 'clockReset.C' events and 'entered.x.y' events where x is drawn
+		-- from the set of all state machine state identifiers. It includes the corresponding set of the defined operations.
+		WCresets = Union({
+			{| | x <- SIDS |}
+			})
+		-- Set of all waiting condition set events. It includes the corresponding set of the defined operations.
+		WCsets = Union({
+			{|setWC|}
+			})
+		
+		
+		
+		-- Clocks process
+		Clocks(id__) = || (alpha, P) : WCset(id__) @ [alpha] wbisim(P)
+		-- collects all clockResets
+		ClockResets = {|clockReset|}
+		
+		-- With no internal events visible
+		
+		-- Original D__ process using the unoptimised memory process
+		Dunopt__(id__) = timed_priority(AUX(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		D__(id__) = timed_priority(AUX_opt(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		O__(id__) = D__(id__)
+		
+		-- With enter/entered/exit/exited events visible
+		FVS__(id__) = timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|}))
+		
+		-- With enterV/enteredV/exitV/exitedV events visible
+		VS__(id__) = ShowV(timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|})))
+		
+		-- With clock resets visible
+		FVS_C__(id__) = AUX_opt(id__)\{|terminate|}
+	}
+endmodule
+module OP_supplyVoltCheck
+exports
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	external prioritise
+	transparent wbisim
+	transparent dbisim
+	transparent sbisim
+	
+	Timed(OneStep) {
+		-- flow channels
+		channel internal__ : TIDS
+		channel enteredV, enterV, exitV, exitedV : SIDS
+		channel enter, entered: SIDS.SIDS
+		channel exit,exited: SIDS.SIDS
+		channel terminate
+		
+		-- variable channels
+		channel get_pow24VStatus, set_pow24VStatus: Power
+		channel get_HVEnabled, set_HVEnabled: core_boolean
+		channel get_currentState, set_currentState: State
+		channel get_dutyCyclePWM1, set_dutyCyclePWM1: duty
+		channel get_mSetPoint, set_mSetPoint: core_real
+				
+		-- shared variable channels
+		channel set_EXT_pow24VStatus: Power
+		channel set_EXT_HVEnabled: core_boolean
+		channel set_EXT_currentState: State
+		channel set_EXT_dutyCyclePWM1: duty
+		channel set_EXT_mSetPoint: core_real
+		
+		-- local variable channels for defined operations that are required by the state machine
+		
+		-- declaring state machine events
+		channel ext_pow24VStatus__: TIDS.InOut.Power
+		channel ext_pow24VStatus: InOut.Power
+		channel int_enablePWM__: TIDS.InOut.core_boolean
+		channel int_enablePWM: InOut.core_boolean
+		channel int_dutyCyclePWM1__: TIDS.InOut.duty
+		channel int_dutyCyclePWM1: InOut.duty
+		
+		-- declaring call and ret events for undefined operations
+		channel disableHVCall: core_boolean
+		
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		CALL__disableHV(id__,
+				    arg) =  EDeadline(disableHVCall.arg,0)		
+		
+		
+		-- definition of functions used to expose flow channels
+		ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+						   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+						   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+						   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+							 
+		ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+					[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		
+		-- declaring identifiers of state and final states
+		datatype SIDS = SID_supplyVoltCheck
+		              | SID_supplyVoltCheck_f0
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_supplyVoltCheck_t0
+		              | TID_supplyVoltCheck_t5
+		              | TID_supplyVoltCheck_t2
+		
+		-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+		
+		ITIDS = {
+		}
+		
+		int_int = {|
+		|}
+			
+		
+		internal_events = {|enter,entered,exit,exited|}
+		shared_variable_events = {|
+			set_EXT_pow24VStatus,
+			set_EXT_HVEnabled,
+			set_EXT_currentState,
+			set_EXT_dutyCyclePWM1,
+			set_EXT_mSetPoint
+		|}
+				
+		
+		-- declaring all states
+		CS_supplyVoltCheck_f0_sync = {|
+			enter.y____.x____, 
+			entered.y____.x____, 
+			exit.y____.x____, 
+			exited.y____.x____,
+			enter.x____.y____, 
+			entered.x____.y____, 
+			exit.x____.y____, 
+			exited.x____.y____ |
+			x____ <- {SID_supplyVoltCheck_f0},
+			y____ <- {SID_supplyVoltCheck_f0}
+		|}
+		
+		
+		supplyVoltCheck_f0_triggers = {|
+		|}
+		
+		State_supplyVoltCheck_f0(id__) = let
+			State_supplyVoltCheck_f0_execute(id__,o____) = SKIP; 
+				entered!o____!SID_supplyVoltCheck_f0 ->
+				terminate -> SKIP
+		within
+			enter?x____:diff(SIDS,{SID_supplyVoltCheck_f0})!SID_supplyVoltCheck_f0 -> (State_supplyVoltCheck_f0_execute(id__,x____))
+		
+		
+		I_supplyVoltCheck_i0(id__) = let
+			J_supplyVoltCheck_j0(id__) = (
+						(internal__!TID_supplyVoltCheck_t5 -> true&CALL__disableHV(
+									id__,
+									true
+								);enter!SID_supplyVoltCheck!SID_supplyVoltCheck_f0 -> entered!SID_supplyVoltCheck!SID_supplyVoltCheck_f0 ->
+						SKIP
+						)[]
+						(internal__!TID_supplyVoltCheck_t2 -> enter!SID_supplyVoltCheck!SID_supplyVoltCheck_f0 -> entered!SID_supplyVoltCheck!SID_supplyVoltCheck_f0 ->
+						SKIP
+						)
+						)
+			T_supplyVoltCheck_t0(id__) = internal__!TID_supplyVoltCheck_t0 -> Deadline(true&(ext_pow24VStatus.in?pow24VStatus -> set_pow24VStatus!pow24VStatus -> SKIP),0);J_supplyVoltCheck_j0(id__)
+		within
+			T_supplyVoltCheck_t0(id__)
+		
+		
+		State_supplyVoltCheck_f0_R(id__) = 
+			State_supplyVoltCheck_f0(id__)
+				[|diff(int_int,supplyVoltCheck_f0_triggers)|]
+			SKIP
+				 		
+			
+		STM(id__) = (
+			I_supplyVoltCheck_i0(id__)
+				[|
+					{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+						x____ <- diff(SIDS,{SID_supplyVoltCheck_f0}),
+						y____ <- {SID_supplyVoltCheck_f0}
+				|}|]
+			State_supplyVoltCheck_f0_R(id__)
+		)
+		
+		-- optimized memory process
+		channel getV_pow24VStatus: Power
+		channel getV_HVEnabled: core_boolean
+		channel getV_currentState: State
+		channel getV_dutyCyclePWM1: duty
+		channel getV_mSetPoint: core_real
+		
+		-- individual memory processes
+		Memory_pow24VStatus(x__) = ( 
+			get_pow24VStatus!x__ -> Memory_pow24VStatus(x__)
+			[]
+			getV_pow24VStatus!x__ -> Memory_pow24VStatus(x__)
+			[]
+			set_pow24VStatus?x__ -> Memory_pow24VStatus(x__)
+			[]
+			set_EXT_pow24VStatus?x__ -> Memory_pow24VStatus(x__)
+		)
+		Memory_HVEnabled(x__) = ( 
+			get_HVEnabled!x__ -> Memory_HVEnabled(x__)
+			[]
+			getV_HVEnabled!x__ -> Memory_HVEnabled(x__)
+			[]
+			set_HVEnabled?x__ -> Memory_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_HVEnabled(x__)
+		)
+		Memory_currentState(x__) = ( 
+			get_currentState!x__ -> Memory_currentState(x__)
+			[]
+			getV_currentState!x__ -> Memory_currentState(x__)
+			[]
+			set_currentState?x__ -> Memory_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_currentState(x__)
+		)
+		Memory_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			getV_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+		)
+		Memory_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			getV_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_mSetPoint(x__)
+		)
+		
+		-- processes that read variables and offer transitions
+		MemoryTransitions(id__,
+			 pow24VStatus,
+			 HVEnabled,
+			 currentState,
+			 dutyCyclePWM1,
+			 mSetPoint) = (
+			internal__!TID_supplyVoltCheck_t0 -> SKIP
+			[]
+			((pow24VStatus==Power_Off))&internal__!TID_supplyVoltCheck_t5 -> SKIP
+			[]
+			((pow24VStatus==Power_On))&internal__!TID_supplyVoltCheck_t2 -> SKIP
+		 	)
+		MemoryTransitions_supplyVoltCheck(id__) =
+			(
+			OP_supplyVoltCheck::getV_pow24VStatus?pow24VStatus ->	
+			OP_supplyVoltCheck::getV_HVEnabled?HVEnabled ->	
+			OP_supplyVoltCheck::getV_currentState?currentState ->	
+			OP_supplyVoltCheck::getV_dutyCyclePWM1?dutyCyclePWM1 ->	
+			OP_supplyVoltCheck::getV_mSetPoint?mSetPoint ->
+			 MemoryTransitions(id__,
+			 	 pow24VStatus,
+			 	 HVEnabled,
+			 	 currentState,
+			 	 dutyCyclePWM1,
+			 	 mSetPoint);
+			 MemoryTransitions_supplyVoltCheck(id__)
+			)
+		
+		-- synchronisation, hiding and process sets 
+		MemoryVariablesProcesses_supplyVoltCheck = Union(
+			{
+				{
+					Memory_pow24VStatus(Power_On),
+					Memory_HVEnabled(true),
+					Memory_currentState(State_Wait24Vpower),
+					Memory_dutyCyclePWM1(0),
+					Memory_mSetPoint(0)
+				}
+			}
+		)
+		
+		MemoryVariablesSyncSet = Union({
+			{|
+				getV_currentState,
+				set_EXT_currentState,
+				set_mSetPoint,
+				set_pow24VStatus,
+				set_EXT_mSetPoint,
+				setWC,
+				set_currentState,
+				getV_pow24VStatus,
+				set_dutyCyclePWM1,
+				set_EXT_pow24VStatus,
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				set_HVEnabled,
+				set_EXT_HVEnabled,
+				set_EXT_dutyCyclePWM1,
+				getV_HVEnabled
+			|}	
+		})
+		
+		MemoryVariablesHideSet = Union({
+			{|
+				getV_pow24VStatus,
+				getV_currentState,
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				getWC,
+				getV_HVEnabled
+			|}
+		})
+		
+		-- combined individual memory processes
+		MemoryVariables = ||| P : MemoryVariablesProcesses_supplyVoltCheck @ P
+		
+		-- complete memory process
+		MemoryN(id__) = (MemoryVariables [| MemoryVariablesSyncSet |] MemoryTransitions_supplyVoltCheck(id__)) \ MemoryVariablesHideSet
+		
+		-- optimised memory
+		-- Sets of named elements identified according to transition conditions:
+		-- {}
+		-- {OP_supplyVoltCheck::pow24VStatus}
+		-- Summary of all identified named elements:
+		-- {
+		-- OP_supplyVoltCheck::mSetPoint
+		-- OP_supplyVoltCheck::HVEnabled
+		-- OP_supplyVoltCheck::currentState
+		-- OP_supplyVoltCheck::dutyCyclePWM1
+		-- OP_supplyVoltCheck::pow24VStatus
+		-- }
+		
+		-- Allocation plan:
+		-- 0:{}
+		--	=> {
+		--		TID_supplyVoltCheck_t0}
+		-- 1:{OP_supplyVoltCheck::pow24VStatus}
+		--	=> {
+		--		TID_supplyVoltCheck_t5,
+		--		TID_supplyVoltCheck_t2}
+		
+		-- Memory transition processes
+		MemoryTransitions_opt_0(id__) =
+		(
+			let
+				Update = Current(id__)
+				Current(id__)
+				 	   = 
+				 	   internal__!TID_supplyVoltCheck_t0 -> Update
+			within
+				Update
+		)
+		MemoryTransitions_opt_1(id__) =
+		(
+			let
+				Update = 
+				get_pow24VStatus?pow24VStatus ->
+				Current(id__,
+					 pow24VStatus)
+				Current(id__,
+					 pow24VStatus)
+				 	   = 
+				 	   ((pow24VStatus==Power_Off))&(internal__!TID_supplyVoltCheck_t5 -> Update)
+				 	   []
+				 	   ((pow24VStatus==Power_On))&(internal__!TID_supplyVoltCheck_t2 -> Update)
+				 	   	 
+				 	   	 []
+				 	   	 set_pow24VStatus?x__ -> Update
+				 	   	 []
+				 	   	 set_EXT_pow24VStatus?x__ -> Update
+			within
+				Update
+		)
+		
+		-- Memory cell processes
+		Memory_opt_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+		)
+		Memory_opt_HVEnabled(x__) = ( 
+			get_HVEnabled!x__ -> Memory_opt_HVEnabled(x__)
+			[]
+			set_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+		)
+		Memory_opt_currentState(x__) = ( 
+			get_currentState!x__ -> Memory_opt_currentState(x__)
+			[]
+			set_currentState?x__ -> Memory_opt_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_opt_currentState(x__)
+		)
+		Memory_opt_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+		)
+		Memory_opt_pow24VStatus(x__) = ( 
+			get_pow24VStatus!x__ -> Memory_opt_pow24VStatus(x__)
+			[]
+			set_pow24VStatus?x__ -> Memory_opt_pow24VStatus(x__)
+			[]
+			set_EXT_pow24VStatus?x__ -> Memory_opt_pow24VStatus(x__)
+		)
+		
+		-- Composition of memory, StateMachine and Memory transition processes
+		
+		MemorySTM_opt(id__) =
+			dbisim(
+			  sbisim(Memory_opt_pow24VStatus(Power_On)
+			      	[| {|set_EXT_pow24VStatus,set_pow24VStatus,get_pow24VStatus|} |] 
+			      	sbisim(	
+			      	  dbisim(
+			      	    sbisim(sbisim(	
+			      	      dbisim(
+			      	        sbisim(dbisim(sbisim(Memory_opt_mSetPoint(0)
+			      	              	[| {|set_mSetPoint,get_mSetPoint|} |] 
+			      	              	dbisim(sbisim(Memory_opt_HVEnabled(true)
+			      	              	      	[| {|set_HVEnabled,get_HVEnabled|} |] 
+			      	              	      	dbisim(sbisim(Memory_opt_currentState(State_Wait24Vpower)
+			      	              	      	      	[| {|get_currentState,set_currentState|} |] 
+			      	              	      	      	dbisim(sbisim(Memory_opt_dutyCyclePWM1(0)
+			      	              	      	      	      	[| {|set_dutyCyclePWM1,get_dutyCyclePWM1|} |] 
+			      	              	      	      	      	STM_core(id__)
+			      	              	      	      	      	)\ {|get_dutyCyclePWM1|}
+			      	              	      	      	      )
+			      	              	      	      	)\ {|get_currentState|}
+			      	              	      	      )
+			      	              	      	)\ {|get_HVEnabled|}
+			      	              	      )
+			      	              	)\ {|get_mSetPoint|}
+			      	              )
+			      	          	  [| {|internal__.TID_supplyVoltCheck_t0|} |]
+			      	          	  MemoryTransitions_opt_0(id__)
+			      	          	  )\{|internal__.TID_supplyVoltCheck_t0|})
+			      	          )
+			      	      	  [| {|internal__.TID_supplyVoltCheck_t2,set_pow24VStatus,internal__.TID_supplyVoltCheck_t5|} |]
+			      	      	  MemoryTransitions_opt_1(id__)
+			      	      	  )\{|internal__.TID_supplyVoltCheck_t2,internal__.TID_supplyVoltCheck_t5|})
+			      	      )
+			      	) \ {|get_pow24VStatus|}
+			      )
+		
+		-- main process
+		
+		MachineMemorySyncSet = Union({
+			union(
+				union(
+					{||},
+					{||}
+				)
+					
+				,
+				{|internal__.TID_supplyVoltCheck_t0,
+				internal__.TID_supplyVoltCheck_t5,
+				internal__.TID_supplyVoltCheck_t2|}
+			),
+			{|deadline|},
+			WCresets
+		})
+		
+		MachineMemoryHidingSet = Union({
+			union(
+				{||},
+				{||}
+			)
+			,
+			{|deadline|}
+		})
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+		-- main process
+		AUX(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		[[
+			ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP\MachineInternalEvents)
+		,<Union({internal_events,ClockResets,{|terminate|}}),{tock}>)
+		
+		STM_core(id__) = 
+			dbisim(
+				sbisim((STM(id__))
+			 			[| union(WCsync,WCresets) |]
+			 			Clocks(id__)
+			 		  )\WCresets
+				  )
+			
+		AUX_opt(id__) = 
+			(MemorySTM_opt(id__)
+			)[[
+				ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+				int_enablePWM__.x____ <- int_enablePWM,
+				int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+				| x____ <- TIDS
+			]]
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		internal_(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP)
+		,<Union({internal_events,ClockResets,{|internal__,terminate|}}),{tock}>)		
+				
+		-- declare clocks
+		datatype ClockSet = dummyC
+		channel clockReset 		-- no clocks declared
+		
+		-- declare trigger deadlines channel
+		channel deadline : TIDS.deadlineSignal
+		
+		-- compile clocks process
+		
+		-- set of strings that uniquely identify the waiting conditions, each of which is 
+		-- used to synchronise with the Memory process to set the correspoding variable in
+		-- the memory process.
+		datatype setWC_identifierSet = dummyWC
+		
+		-- declaring getWC and setWC channel for updating memory variables related to clocks
+		channel setWC : setWC_identifierSet.Bool
+		channel getWC : setWC_identifierSet.Bool
+		
+		-- Set of pairs capturing waiting condition processes and their alphabet.
+		-- It includes the corresponding set of the defined operations.
+		WCset(id__) = Union({
+			{
+			}
+			})
+		
+		-- Auxiliary function to rename the channel set for required clocks.
+		
+		-- Set of transition events for which synchronisation is required between Clocks and the Memory process.
+		-- It includes the corresponding set of the defined operations.
+		WCsync = Union({
+			{||}
+			})
+		-- Set of all clock resets, including 'clockReset.C' events and 'entered.x.y' events where x is drawn
+		-- from the set of all state machine state identifiers. It includes the corresponding set of the defined operations.
+		WCresets = Union({
+			{| | x <- SIDS |}
+			})
+		-- Set of all waiting condition set events. It includes the corresponding set of the defined operations.
+		WCsets = Union({
+			{|setWC|}
+			})
+		
+		
+		
+		-- Clocks process
+		Clocks(id__) = || (alpha, P) : WCset(id__) @ [alpha] wbisim(P)
+		-- collects all clockResets
+		ClockResets = {|clockReset|}
+		
+		-- With no internal events visible
+		
+		-- Original D__ process using the unoptimised memory process
+		Dunopt__(id__) = timed_priority(AUX(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		D__(id__) = timed_priority(AUX_opt(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		O__(id__) = D__(id__)
+		
+		-- With enter/entered/exit/exited events visible
+		FVS__(id__) = timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|}))
+		
+		-- With enterV/enteredV/exitV/exitedV events visible
+		VS__(id__) = ShowV(timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|})))
+		
+		-- With clock resets visible
+		FVS_C__(id__) = AUX_opt(id__)\{|terminate|}
+	}
+endmodule
+module OP_AdjustLimits
+exports
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	external prioritise
+	transparent wbisim
+	transparent dbisim
+	transparent sbisim
+	
+	Timed(OneStep) {
+		-- flow channels
+		channel internal__ : TIDS
+		channel enteredV, enterV, exitV, exitedV : SIDS
+		channel enter, entered: SIDS.SIDS
+		channel exit,exited: SIDS.SIDS
+		channel terminate
+		
+		-- variable channels
+		channel get_overLimit, set_overLimit: core_real
+		channel get_underLimit, set_underLimit: core_real
+		channel get_mSetPoint, set_mSetPoint: core_real
+				
+		-- shared variable channels
+		channel set_EXT_overLimit: core_real
+		channel set_EXT_underLimit: core_real
+		channel set_EXT_mSetPoint: core_real
+		
+		-- local variable channels for defined operations that are required by the state machine
+		
+		-- declaring state machine events
+		
+		-- declaring call and ret events for undefined operations
+		
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		
+		
+		-- definition of functions used to expose flow channels
+		ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+						   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+						   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+						   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+							 
+		ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+					[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		
+		-- declaring identifiers of state and final states
+		datatype SIDS = SID_AdjustLimits
+		              | SID_AdjustLimits_f0
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_AdjustLimits_t1
+		
+		-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+		
+		ITIDS = {
+		}
+		
+		int_int = {|
+		|}
+			
+		
+		internal_events = {|enter,entered,exit,exited|}
+		shared_variable_events = {|
+			set_EXT_overLimit,
+			set_EXT_underLimit,
+			set_EXT_mSetPoint
+		|}
+				
+		
+		-- declaring all states
+		CS_AdjustLimits_f0_sync = {|
+			enter.y____.x____, 
+			entered.y____.x____, 
+			exit.y____.x____, 
+			exited.y____.x____,
+			enter.x____.y____, 
+			entered.x____.y____, 
+			exit.x____.y____, 
+			exited.x____.y____ |
+			x____ <- {SID_AdjustLimits_f0},
+			y____ <- {SID_AdjustLimits_f0}
+		|}
+		
+		
+		AdjustLimits_f0_triggers = {|
+		|}
+		
+		State_AdjustLimits_f0(id__) = let
+			State_AdjustLimits_f0_execute(id__,o____) = SKIP; 
+				entered!o____!SID_AdjustLimits_f0 ->
+				terminate -> SKIP
+		within
+			enter?x____:diff(SIDS,{SID_AdjustLimits_f0})!SID_AdjustLimits_f0 -> (State_AdjustLimits_f0_execute(id__,x____))
+		
+		
+		I_AdjustLimits_i0(id__) = let
+			T_AdjustLimits_t1(id__) = internal__!TID_AdjustLimits_t1 -> get_mSetPoint?mSetPoint -> true & (set_overLimit!overLimitF(Plus(mSetPoint, 2, core_real)) -> SKIP);get_mSetPoint?mSetPoint -> true & (set_underLimit!underLimitF(Minus(mSetPoint, 2, core_real)) -> SKIP);enter!SID_AdjustLimits!SID_AdjustLimits_f0 -> entered!SID_AdjustLimits!SID_AdjustLimits_f0 ->
+			SKIP
+		within
+			T_AdjustLimits_t1(id__)
+		
+		
+		State_AdjustLimits_f0_R(id__) = 
+			State_AdjustLimits_f0(id__)
+				[|diff(int_int,AdjustLimits_f0_triggers)|]
+			SKIP
+				 		
+			
+		STM(id__) = (
+			I_AdjustLimits_i0(id__)
+				[|
+					{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+						x____ <- diff(SIDS,{SID_AdjustLimits_f0}),
+						y____ <- {SID_AdjustLimits_f0}
+				|}|]
+			State_AdjustLimits_f0_R(id__)
+		)
+		
+		-- optimized memory process
+		channel getV_overLimit: core_real
+		channel getV_underLimit: core_real
+		channel getV_mSetPoint: core_real
+		
+		-- individual memory processes
+		Memory_overLimit(x__) = ( 
+			get_overLimit!x__ -> Memory_overLimit(x__)
+			[]
+			getV_overLimit!x__ -> Memory_overLimit(x__)
+			[]
+			set_overLimit?x__ -> Memory_overLimit(x__)
+			[]
+			set_EXT_overLimit?x__ -> Memory_overLimit(x__)
+		)
+		Memory_underLimit(x__) = ( 
+			get_underLimit!x__ -> Memory_underLimit(x__)
+			[]
+			getV_underLimit!x__ -> Memory_underLimit(x__)
+			[]
+			set_underLimit?x__ -> Memory_underLimit(x__)
+			[]
+			set_EXT_underLimit?x__ -> Memory_underLimit(x__)
+		)
+		Memory_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			getV_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_mSetPoint(x__)
+		)
+		
+		-- processes that read variables and offer transitions
+		MemoryTransitions(id__,
+			 overLimit,
+			 underLimit,
+			 mSetPoint) = (
+			internal__!TID_AdjustLimits_t1 -> SKIP
+		 	)
+		MemoryTransitions_AdjustLimits(id__) =
+			(
+			OP_AdjustLimits::getV_overLimit?overLimit ->	
+			OP_AdjustLimits::getV_underLimit?underLimit ->	
+			OP_AdjustLimits::getV_mSetPoint?mSetPoint ->
+			 MemoryTransitions(id__,
+			 	 overLimit,
+			 	 underLimit,
+			 	 mSetPoint);
+			 MemoryTransitions_AdjustLimits(id__)
+			)
+		
+		-- synchronisation, hiding and process sets 
+		MemoryVariablesProcesses_AdjustLimits = Union(
+			{
+				{
+					Memory_overLimit(0),
+					Memory_underLimit(0),
+					Memory_mSetPoint(0)
+				}
+			}
+		)
+		
+		MemoryVariablesSyncSet = Union({
+			{|
+				set_overLimit,
+				set_mSetPoint,
+				getV_mSetPoint,
+				set_EXT_underLimit,
+				set_EXT_mSetPoint,
+				setWC,
+				set_EXT_overLimit,
+				set_underLimit,
+				getV_underLimit,
+				getV_overLimit
+			|}	
+		})
+		
+		MemoryVariablesHideSet = Union({
+			{|
+				getV_mSetPoint,
+				getWC,
+				getV_underLimit,
+				getV_overLimit
+			|}
+		})
+		
+		-- combined individual memory processes
+		MemoryVariables = ||| P : MemoryVariablesProcesses_AdjustLimits @ P
+		
+		-- complete memory process
+		MemoryN(id__) = (MemoryVariables [| MemoryVariablesSyncSet |] MemoryTransitions_AdjustLimits(id__)) \ MemoryVariablesHideSet
+		
+		-- optimised memory
+		-- Sets of named elements identified according to transition conditions:
+		-- {}
+		-- Summary of all identified named elements:
+		-- {
+		-- OP_AdjustLimits::overLimit
+		-- OP_AdjustLimits::underLimit
+		-- OP_AdjustLimits::mSetPoint
+		-- }
+		
+		-- Allocation plan:
+		-- 0:{}
+		--	=> {
+		--		TID_AdjustLimits_t1}
+		
+		-- Memory transition processes
+		MemoryTransitions_opt_0(id__) =
+		(
+			let
+				Update = Current(id__)
+				Current(id__)
+				 	   = 
+				 	   internal__!TID_AdjustLimits_t1 -> Update
+			within
+				Update
+		)
+		
+		-- Memory cell processes
+		Memory_opt_overLimit(x__) = ( 
+			get_overLimit!x__ -> Memory_opt_overLimit(x__)
+			[]
+			set_overLimit?x__ -> Memory_opt_overLimit(x__)
+			[]
+			set_EXT_overLimit?x__ -> Memory_opt_overLimit(x__)
+		)
+		Memory_opt_underLimit(x__) = ( 
+			get_underLimit!x__ -> Memory_opt_underLimit(x__)
+			[]
+			set_underLimit?x__ -> Memory_opt_underLimit(x__)
+			[]
+			set_EXT_underLimit?x__ -> Memory_opt_underLimit(x__)
+		)
+		Memory_opt_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+		)
+		
+		-- Composition of memory, StateMachine and Memory transition processes
+		
+		MemorySTM_opt(id__) =
+			sbisim(	
+			  dbisim(
+			    sbisim(dbisim(sbisim(Memory_opt_overLimit(0)
+			          	[| {|set_overLimit,get_overLimit|} |] 
+			          	dbisim(sbisim(Memory_opt_underLimit(0)
+			          	      	[| {|get_underLimit,set_underLimit|} |] 
+			          	      	dbisim(sbisim(Memory_opt_mSetPoint(0)
+			          	      	      	[| {|set_mSetPoint,get_mSetPoint|} |] 
+			          	      	      	STM_core(id__)
+			          	      	      	)\ {|get_mSetPoint|}
+			          	      	      )
+			          	      	)\ {|get_underLimit|}
+			          	      )
+			          	)\ {|get_overLimit|}
+			          )
+			      	  [| {|internal__.TID_AdjustLimits_t1|} |]
+			      	  MemoryTransitions_opt_0(id__)
+			      	  )\{|internal__.TID_AdjustLimits_t1|})
+			      )
+		
+		-- main process
+		
+		MachineMemorySyncSet = Union({
+			union(
+				union(
+					{||},
+					{||}
+				)
+					
+				,
+				{|internal__.TID_AdjustLimits_t1|}
+			),
+			{|deadline|},
+			WCresets
+		})
+		
+		MachineMemoryHidingSet = Union({
+			union(
+				{||},
+				{||}
+			)
+			,
+			{|deadline|}
+		})
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+		-- main process
+		AUX(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP\MachineInternalEvents)
+		,<Union({internal_events,ClockResets,{|terminate|}}),{tock}>)
+		
+		STM_core(id__) = 
+			dbisim(
+				sbisim((STM(id__))
+			 			[| union(WCsync,WCresets) |]
+			 			Clocks(id__)
+			 		  )\WCresets
+				  )
+			
+		AUX_opt(id__) = 
+			(MemorySTM_opt(id__)
+			)
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		internal_(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP)
+		,<Union({internal_events,ClockResets,{|internal__,terminate|}}),{tock}>)		
+				
+		-- declare clocks
+		datatype ClockSet = dummyC
+		channel clockReset 		-- no clocks declared
+		
+		-- declare trigger deadlines channel
+		channel deadline : TIDS.deadlineSignal
+		
+		-- compile clocks process
+		
+		-- set of strings that uniquely identify the waiting conditions, each of which is 
+		-- used to synchronise with the Memory process to set the correspoding variable in
+		-- the memory process.
+		datatype setWC_identifierSet = dummyWC
+		
+		-- declaring getWC and setWC channel for updating memory variables related to clocks
+		channel setWC : setWC_identifierSet.Bool
+		channel getWC : setWC_identifierSet.Bool
+		
+		-- Set of pairs capturing waiting condition processes and their alphabet.
+		-- It includes the corresponding set of the defined operations.
+		WCset(id__) = Union({
+			{
+			}
+			})
+		
+		-- Auxiliary function to rename the channel set for required clocks.
+		
+		-- Set of transition events for which synchronisation is required between Clocks and the Memory process.
+		-- It includes the corresponding set of the defined operations.
+		WCsync = Union({
+			{||}
+			})
+		-- Set of all clock resets, including 'clockReset.C' events and 'entered.x.y' events where x is drawn
+		-- from the set of all state machine state identifiers. It includes the corresponding set of the defined operations.
+		WCresets = Union({
+			{| | x <- SIDS |}
+			})
+		-- Set of all waiting condition set events. It includes the corresponding set of the defined operations.
+		WCsets = Union({
+			{|setWC|}
+			})
+		
+		
+		
+		-- Clocks process
+		Clocks(id__) = || (alpha, P) : WCset(id__) @ [alpha] wbisim(P)
+		-- collects all clockResets
+		ClockResets = {|clockReset|}
+		
+		-- With no internal events visible
+		
+		-- Original D__ process using the unoptimised memory process
+		Dunopt__(id__) = timed_priority(AUX(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		D__(id__) = timed_priority(AUX_opt(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		O__(id__) = D__(id__)
+		
+		-- With enter/entered/exit/exited events visible
+		FVS__(id__) = timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|}))
+		
+		-- With enterV/enteredV/exitV/exitedV events visible
+		VS__(id__) = ShowV(timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|})))
+		
+		-- With clock resets visible
+		FVS_C__(id__) = AUX_opt(id__)\{|terminate|}
+	}
+endmodule
+module OP_setPointRamping
+exports
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	external prioritise
+	transparent wbisim
+	transparent dbisim
+	transparent sbisim
+	
+	Timed(OneStep) {
+		-- flow channels
+		channel internal__ : TIDS
+		channel enteredV, enterV, exitV, exitedV : SIDS
+		channel enter, entered: SIDS.SIDS
+		channel exit,exited: SIDS.SIDS
+		channel terminate
+		
+		-- variable channels
+		channel get_newSetPoint, set_newSetPoint: core_real
+		channel get_HVEnabled, set_HVEnabled: core_boolean
+		channel get_currentState, set_currentState: State
+		channel get_dutyCyclePWM1, set_dutyCyclePWM1: duty
+		channel get_mSetPoint, set_mSetPoint: core_real
+				
+		-- shared variable channels
+		channel set_EXT_HVEnabled: core_boolean
+		channel set_EXT_currentState: State
+		channel set_EXT_dutyCyclePWM1: duty
+		channel set_EXT_mSetPoint: core_real
+		
+		-- local variable channels for defined operations that are required by the state machine
+		
+		-- declaring state machine events
+		channel int_enablePWM__: TIDS.InOut.core_boolean
+		channel int_enablePWM: InOut.core_boolean
+		channel int_dutyCyclePWM1__: TIDS.InOut.duty
+		channel int_dutyCyclePWM1: InOut.duty
+		
+		-- declaring call and ret events for undefined operations
+		channel disableHVCall: core_boolean
+		
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		CALL__disableHV(id__,
+				    arg) =  EDeadline(disableHVCall.arg,0)		
+		
+		
+		-- definition of functions used to expose flow channels
+		ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+						   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+						   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+						   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+							 
+		ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+					[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		
+		-- declaring identifiers of state and final states
+		datatype SIDS = SID_setPointRamping
+		              | SID_setPointRamping_f0
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_setPointRamping_t0
+		              | TID_setPointRamping_t1
+		              | TID_setPointRamping_t2
+		              | TID_setPointRamping_t3
+		              | TID_setPointRamping_t4
+		              | TID_setPointRamping_t5
+		              | TID_setPointRamping_t6
+		              | TID_setPointRamping_t7
+		              | TID_setPointRamping_t8
+		              | TID_setPointRamping_t9
+		              | TID_setPointRamping_t10
+		              | TID_setPointRamping_t11
+		
+		-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+		
+		ITIDS = {
+		}
+		
+		int_int = {|
+		|}
+			
+		
+		internal_events = {|enter,entered,exit,exited|}
+		shared_variable_events = {|
+			set_EXT_HVEnabled,
+			set_EXT_currentState,
+			set_EXT_dutyCyclePWM1,
+			set_EXT_mSetPoint
+		|}
+				
+		
+		-- declaring all states
+		CS_setPointRamping_f0_sync = {|
+			enter.y____.x____, 
+			entered.y____.x____, 
+			exit.y____.x____, 
+			exited.y____.x____,
+			enter.x____.y____, 
+			entered.x____.y____, 
+			exit.x____.y____, 
+			exited.x____.y____ |
+			x____ <- {SID_setPointRamping_f0},
+			y____ <- {SID_setPointRamping_f0}
+		|}
+		
+		
+		setPointRamping_f0_triggers = {|
+		|}
+		
+		State_setPointRamping_f0(id__,
+				    const_setPointRamping_rampStep) = let
+			State_setPointRamping_f0_execute(id__,o____) = SKIP; 
+				entered!o____!SID_setPointRamping_f0 ->
+				terminate -> SKIP
+		within
+			enter?x____:diff(SIDS,{SID_setPointRamping_f0})!SID_setPointRamping_f0 -> (State_setPointRamping_f0_execute(id__,x____))
+		
+		
+		I_setPointRamping_i0(id__,
+				    const_setPointRamping_rampStep) = let
+			J_setPointRamping_j5(id__,
+					    const_setPointRamping_rampStep) = (
+						(internal__!TID_setPointRamping_t1 -> true & (set_mSetPoint!0 -> SKIP);true&CALL__disableHV(
+									id__,
+									false
+								);enter!SID_setPointRamping!SID_setPointRamping_f0 -> entered!SID_setPointRamping!SID_setPointRamping_f0 ->
+						SKIP
+						)[]
+						(internal__!TID_setPointRamping_t2 -> J_setPointRamping_j0(id__,
+								    const_setPointRamping_rampStep))
+						)
+			J_setPointRamping_j3(id__,
+					    const_setPointRamping_rampStep) = (
+						(internal__!TID_setPointRamping_t9 -> get_newSetPoint?newSetPoint -> true & (set_mSetPoint!newSetPoint -> SKIP);J_setPointRamping_j4(id__,
+								    const_setPointRamping_rampStep))[]
+						(internal__!TID_setPointRamping_t10 -> J_setPointRamping_j4(id__,
+								    const_setPointRamping_rampStep))
+						)
+			J_setPointRamping_j4(id__,
+					    const_setPointRamping_rampStep) = (
+						(internal__!TID_setPointRamping_t8 -> enter!SID_setPointRamping!SID_setPointRamping_f0 -> entered!SID_setPointRamping!SID_setPointRamping_f0 ->
+						SKIP
+						)
+						)
+			J_setPointRamping_j0(id__,
+					    const_setPointRamping_rampStep) = (
+						(internal__!TID_setPointRamping_t3 -> get_mSetPoint?mSetPoint -> true & (set_mSetPoint!Minus(mSetPoint, const_setPointRamping_rampStep, core_real) -> SKIP);J_setPointRamping_j1(id__,
+								    const_setPointRamping_rampStep))[]
+						(internal__!TID_setPointRamping_t7 -> get_mSetPoint?mSetPoint -> true & (set_mSetPoint!Plus(mSetPoint, const_setPointRamping_rampStep, core_real) -> SKIP);J_setPointRamping_j3(id__,
+								    const_setPointRamping_rampStep))[]
+						(internal__!TID_setPointRamping_t11 -> enter!SID_setPointRamping!SID_setPointRamping_f0 -> entered!SID_setPointRamping!SID_setPointRamping_f0 ->
+						SKIP
+						)
+						)
+			J_setPointRamping_j2(id__,
+					    const_setPointRamping_rampStep) = (
+						(internal__!TID_setPointRamping_t6 -> enter!SID_setPointRamping!SID_setPointRamping_f0 -> entered!SID_setPointRamping!SID_setPointRamping_f0 ->
+						SKIP
+						)
+						)
+			J_setPointRamping_j1(id__,
+					    const_setPointRamping_rampStep) = (
+						(internal__!TID_setPointRamping_t4 -> get_newSetPoint?newSetPoint -> true & (set_mSetPoint!newSetPoint -> SKIP);J_setPointRamping_j2(id__,
+								    const_setPointRamping_rampStep))[]
+						(internal__!TID_setPointRamping_t5 -> J_setPointRamping_j2(id__,
+								    const_setPointRamping_rampStep))
+						)
+			T_setPointRamping_t0(id__,
+					    const_setPointRamping_rampStep) = internal__!TID_setPointRamping_t0 -> J_setPointRamping_j5(id__,
+					    const_setPointRamping_rampStep)
+		within
+			T_setPointRamping_t0(id__,
+					    const_setPointRamping_rampStep)
+		
+		
+		State_setPointRamping_f0_R(id__,
+				    const_setPointRamping_rampStep) = 
+			State_setPointRamping_f0(id__,
+					    const_setPointRamping_rampStep)
+				[|diff(int_int,setPointRamping_f0_triggers)|]
+			SKIP
+				 		
+			
+		STM(id__,
+				    const_setPointRamping_rampStep) = (
+			I_setPointRamping_i0(id__,
+					    const_setPointRamping_rampStep)
+				[|
+					{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+						x____ <- diff(SIDS,{SID_setPointRamping_f0}),
+						y____ <- {SID_setPointRamping_f0}
+				|}|]
+			State_setPointRamping_f0_R(id__,
+					    const_setPointRamping_rampStep)
+		)
+		
+		-- optimized memory process
+		channel getV_newSetPoint: core_real
+		channel getV_HVEnabled: core_boolean
+		channel getV_currentState: State
+		channel getV_dutyCyclePWM1: duty
+		channel getV_mSetPoint: core_real
+		
+		-- individual memory processes
+		Memory_newSetPoint(x__) = ( 
+			get_newSetPoint!x__ -> Memory_newSetPoint(x__)
+			[]
+			getV_newSetPoint!x__ -> Memory_newSetPoint(x__)
+			[]
+			set_newSetPoint?x__ -> Memory_newSetPoint(x__)
+		)
+		Memory_HVEnabled(x__) = ( 
+			get_HVEnabled!x__ -> Memory_HVEnabled(x__)
+			[]
+			getV_HVEnabled!x__ -> Memory_HVEnabled(x__)
+			[]
+			set_HVEnabled?x__ -> Memory_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_HVEnabled(x__)
+		)
+		Memory_currentState(x__) = ( 
+			get_currentState!x__ -> Memory_currentState(x__)
+			[]
+			getV_currentState!x__ -> Memory_currentState(x__)
+			[]
+			set_currentState?x__ -> Memory_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_currentState(x__)
+		)
+		Memory_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			getV_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+		)
+		Memory_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			getV_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_mSetPoint(x__)
+		)
+		
+		-- processes that read variables and offer transitions
+		MemoryTransitions(id__,
+			 newSetPoint,
+			 HVEnabled,
+			 currentState,
+			 dutyCyclePWM1,
+			 mSetPoint,
+			 const_setPointRamping_rampStep) = (
+			internal__!TID_setPointRamping_t0 -> SKIP
+			[]
+			((newSetPoint<=0))&internal__!TID_setPointRamping_t1 -> SKIP
+			[]
+			((newSetPoint>0))&internal__!TID_setPointRamping_t2 -> SKIP
+			[]
+			((mSetPoint>newSetPoint))&internal__!TID_setPointRamping_t3 -> SKIP
+			[]
+			((mSetPoint<newSetPoint))&internal__!TID_setPointRamping_t4 -> SKIP
+			[]
+			((mSetPoint>=newSetPoint))&internal__!TID_setPointRamping_t5 -> SKIP
+			[]
+			internal__!TID_setPointRamping_t6 -> SKIP
+			[]
+			((mSetPoint<newSetPoint))&internal__!TID_setPointRamping_t7 -> SKIP
+			[]
+			internal__!TID_setPointRamping_t8 -> SKIP
+			[]
+			((mSetPoint>newSetPoint))&internal__!TID_setPointRamping_t9 -> SKIP
+			[]
+			((mSetPoint<=newSetPoint))&internal__!TID_setPointRamping_t10 -> SKIP
+			[]
+			((mSetPoint==newSetPoint))&internal__!TID_setPointRamping_t11 -> SKIP
+		
+			[]
+				set_newSetPoint?x__ -> SKIP
+		 	)
+		MemoryTransitions_setPointRamping(id__,
+			 const_setPointRamping_rampStep) =
+			(
+			OP_setPointRamping::getV_newSetPoint?newSetPoint ->	
+			OP_setPointRamping::getV_HVEnabled?HVEnabled ->	
+			OP_setPointRamping::getV_currentState?currentState ->	
+			OP_setPointRamping::getV_dutyCyclePWM1?dutyCyclePWM1 ->	
+			OP_setPointRamping::getV_mSetPoint?mSetPoint ->
+			 MemoryTransitions(id__,
+			 	 newSetPoint,
+			 	 HVEnabled,
+			 	 currentState,
+			 	 dutyCyclePWM1,
+			 	 mSetPoint,
+			 	 const_setPointRamping_rampStep);
+			 MemoryTransitions_setPointRamping(id__,
+			 	 const_setPointRamping_rampStep)
+			)
+		
+		-- synchronisation, hiding and process sets 
+		MemoryVariablesProcesses_setPointRamping = Union(
+			{
+				{
+					Memory_newSetPoint(0),
+					Memory_HVEnabled(true),
+					Memory_currentState(State_Wait24Vpower),
+					Memory_dutyCyclePWM1(0),
+					Memory_mSetPoint(0)
+				}
+			}
+		)
+		
+		MemoryVariablesSyncSet = Union({
+			{|
+				getV_currentState,
+				set_EXT_currentState,
+				set_mSetPoint,
+				set_EXT_mSetPoint,
+				setWC,
+				getV_newSetPoint,
+				set_currentState,
+				set_dutyCyclePWM1,
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				set_HVEnabled,
+				set_EXT_HVEnabled,
+				set_EXT_dutyCyclePWM1,
+				getV_HVEnabled,
+				set_newSetPoint
+			|}	
+		})
+		
+		MemoryVariablesHideSet = Union({
+			{|
+				getV_currentState,
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				getWC,
+				getV_HVEnabled,
+				getV_newSetPoint
+			|}
+		})
+		
+		-- combined individual memory processes
+		MemoryVariables = ||| P : MemoryVariablesProcesses_setPointRamping @ P
+		
+		-- complete memory process
+		MemoryN(id__,
+			 const_setPointRamping_rampStep) = (MemoryVariables [| MemoryVariablesSyncSet |] MemoryTransitions_setPointRamping(id__,
+			 const_setPointRamping_rampStep)) \ MemoryVariablesHideSet
+		
+		-- optimised memory
+		-- Sets of named elements identified according to transition conditions:
+		-- {}
+		-- {OP_setPointRamping::mSetPoint,OP_setPointRamping::newSetPoint}
+		-- Summary of all identified named elements:
+		-- {
+		-- OP_setPointRamping::dutyCyclePWM1
+		-- OP_setPointRamping::mSetPoint
+		-- OP_setPointRamping::newSetPoint
+		-- OP_setPointRamping::HVEnabled
+		-- OP_setPointRamping::currentState
+		-- }
+		
+		-- Allocation plan:
+		-- 0:{}
+		--	=> {
+		--		TID_setPointRamping_t8,
+		--		TID_setPointRamping_t6,
+		--		TID_setPointRamping_t0}
+		-- 1:{OP_setPointRamping::mSetPoint,OP_setPointRamping::newSetPoint}
+		--	=> {
+		--		TID_setPointRamping_t11,
+		--		TID_setPointRamping_t5,
+		--		TID_setPointRamping_t9,
+		--		TID_setPointRamping_t2,
+		--		TID_setPointRamping_t10,
+		--		TID_setPointRamping_t4,
+		--		TID_setPointRamping_t1,
+		--		TID_setPointRamping_t3,
+		--		TID_setPointRamping_t7}
+		
+		-- Memory transition processes
+		MemoryTransitions_opt_0(id__) =
+		(
+			let
+				Update = Current(id__)
+				Current(id__)
+				 	   = 
+				 	   internal__!TID_setPointRamping_t8 -> Update
+				 	   []
+				 	   internal__!TID_setPointRamping_t6 -> Update
+				 	   []
+				 	   internal__!TID_setPointRamping_t0 -> Update
+			within
+				Update
+		)
+		MemoryTransitions_opt_1(id__) =
+		(
+			let
+				Update = 
+				get_mSetPoint?mSetPoint ->
+				get_newSetPoint?newSetPoint ->
+				Current(id__,
+					 mSetPoint,
+					 newSetPoint)
+				Current(id__,
+					 mSetPoint,
+					 newSetPoint)
+				 	   = 
+				 	   ((mSetPoint==newSetPoint))&(internal__!TID_setPointRamping_t11 -> Update)
+				 	   []
+				 	   ((mSetPoint>=newSetPoint))&(internal__!TID_setPointRamping_t5 -> Update)
+				 	   []
+				 	   ((mSetPoint>newSetPoint))&(internal__!TID_setPointRamping_t9 -> Update)
+				 	   []
+				 	   ((newSetPoint>0))&(internal__!TID_setPointRamping_t2 -> Update)
+				 	   []
+				 	   ((mSetPoint<=newSetPoint))&(internal__!TID_setPointRamping_t10 -> Update)
+				 	   []
+				 	   ((mSetPoint<newSetPoint))&(internal__!TID_setPointRamping_t4 -> Update)
+				 	   []
+				 	   ((newSetPoint<=0))&(internal__!TID_setPointRamping_t1 -> Update)
+				 	   []
+				 	   ((mSetPoint>newSetPoint))&(internal__!TID_setPointRamping_t3 -> Update)
+				 	   []
+				 	   ((mSetPoint<newSetPoint))&(internal__!TID_setPointRamping_t7 -> Update)
+				 	   	 
+				 	   	 []
+				 	   	 set_mSetPoint?x__ -> Update
+				 	   	 []
+				 	   	 set_EXT_mSetPoint?x__ -> Update
+				 	   	 []
+				 	   	 
+				 	   	 set_newSetPoint?x__ -> Update
+			within
+				Update
+		)
+		
+		-- Memory cell processes
+		Memory_opt_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+		)
+		Memory_opt_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+		)
+		Memory_opt_newSetPoint(x__) = ( 
+			get_newSetPoint!x__ -> Memory_opt_newSetPoint(x__)
+			[]
+			set_newSetPoint?x__ -> Memory_opt_newSetPoint(x__)
+		)
+		Memory_opt_HVEnabled(x__) = ( 
+			get_HVEnabled!x__ -> Memory_opt_HVEnabled(x__)
+			[]
+			set_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+			[]
+			set_EXT_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+		)
+		Memory_opt_currentState(x__) = ( 
+			get_currentState!x__ -> Memory_opt_currentState(x__)
+			[]
+			set_currentState?x__ -> Memory_opt_currentState(x__)
+			[]
+			set_EXT_currentState?x__ -> Memory_opt_currentState(x__)
+		)
+		
+		-- Composition of memory, StateMachine and Memory transition processes
+		
+		MemorySTM_opt(id__, newSetPoint, const_setPointRamping_rampStep) =
+			dbisim(
+			  sbisim(Memory_opt_mSetPoint(0)
+			      	[| {|set_mSetPoint,get_mSetPoint,set_EXT_mSetPoint|} |] 
+			      	dbisim(
+			      	  sbisim(Memory_opt_newSetPoint(0)
+			      	      	[| {|get_newSetPoint,set_newSetPoint|} |] 
+			      	      	sbisim(	
+			      	      	  dbisim(
+			      	      	    sbisim(sbisim(	
+			      	      	      dbisim(
+			      	      	        sbisim(dbisim(sbisim(Memory_opt_dutyCyclePWM1(0)
+			      	      	              	[| {|set_dutyCyclePWM1,get_dutyCyclePWM1|} |] 
+			      	      	              	dbisim(sbisim(Memory_opt_HVEnabled(true)
+			      	      	              	      	[| {|set_HVEnabled,get_HVEnabled|} |] 
+			      	      	              	      	dbisim(sbisim(Memory_opt_currentState(State_Wait24Vpower)
+			      	      	              	      	      	[| {|get_currentState,set_currentState|} |] 
+			      	      	              	      	      	STM_core(id__, newSetPoint, const_setPointRamping_rampStep)
+			      	      	              	      	      	)\ {|get_currentState|}
+			      	      	              	      	      )
+			      	      	              	      	)\ {|get_HVEnabled|}
+			      	      	              	      )
+			      	      	              	)\ {|get_dutyCyclePWM1|}
+			      	      	              )
+			      	      	          	  [| {|internal__.TID_setPointRamping_t0,internal__.TID_setPointRamping_t6,internal__.TID_setPointRamping_t8|} |]
+			      	      	          	  MemoryTransitions_opt_0(id__)
+			      	      	          	  )\{|internal__.TID_setPointRamping_t0,internal__.TID_setPointRamping_t6,internal__.TID_setPointRamping_t8|})
+			      	      	          )
+			      	      	      	  [| {|internal__.TID_setPointRamping_t2,internal__.TID_setPointRamping_t10,internal__.TID_setPointRamping_t3,internal__.TID_setPointRamping_t11,internal__.TID_setPointRamping_t4,internal__.TID_setPointRamping_t5,set_mSetPoint,internal__.TID_setPointRamping_t1,internal__.TID_setPointRamping_t7,set_newSetPoint,internal__.TID_setPointRamping_t9|} |]
+			      	      	      	  MemoryTransitions_opt_1(id__)
+			      	      	      	  )\{|internal__.TID_setPointRamping_t2,internal__.TID_setPointRamping_t10,internal__.TID_setPointRamping_t3,internal__.TID_setPointRamping_t11,internal__.TID_setPointRamping_t4,internal__.TID_setPointRamping_t5,internal__.TID_setPointRamping_t1,internal__.TID_setPointRamping_t7,internal__.TID_setPointRamping_t9|})
+			      	      	      )
+			      	      	) \ {|get_newSetPoint,set_newSetPoint|}
+			      	      )
+			      	) \ {|get_mSetPoint|}
+			      )
+		
+		-- main process
+		
+		MachineMemorySyncSet = Union({
+			union(
+				union(
+					{|get_newSetPoint,set_newSetPoint|},
+					{||}
+				)
+					
+				,
+				{|internal__.TID_setPointRamping_t0,
+				internal__.TID_setPointRamping_t1,
+				internal__.TID_setPointRamping_t2,
+				internal__.TID_setPointRamping_t3,
+				internal__.TID_setPointRamping_t4,
+				internal__.TID_setPointRamping_t5,
+				internal__.TID_setPointRamping_t6,
+				internal__.TID_setPointRamping_t7,
+				internal__.TID_setPointRamping_t8,
+				internal__.TID_setPointRamping_t9,
+				internal__.TID_setPointRamping_t10,
+				internal__.TID_setPointRamping_t11|}
+			),
+			{|deadline|},
+			WCresets
+		})
+		
+		MachineMemoryHidingSet = Union({
+			union(
+				{|get_newSetPoint,set_newSetPoint|},
+				{||}
+			)
+			,
+			{|deadline|}
+		})
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+		-- main process
+		AUX(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = prioritise((((
+			wbisim(set_newSetPoint!newSetPoint -> STM(id__,
+					    const_setPointRamping_rampStep))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__,
+				 const_setPointRamping_rampStep)) [| union(WCsets,WCsync) |] Clocks(id__,
+					    const_setPointRamping_rampStep))\WCsets
+		)
+		[[
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP\MachineInternalEvents)
+		,<Union({internal_events,ClockResets,{|terminate|}}),{tock}>)
+		
+		STM_core(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = 
+			dbisim(
+				sbisim((set_newSetPoint!newSetPoint -> STM(id__,
+						    const_setPointRamping_rampStep))
+			 			[| union(WCsync,WCresets) |]
+			 			Clocks(id__,
+			 					    const_setPointRamping_rampStep)
+			 		  )\WCresets
+				  )
+			
+		AUX_opt(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = 
+			(MemorySTM_opt(id__,
+						newSetPoint,
+					    const_setPointRamping_rampStep)
+			)[[
+				int_enablePWM__.x____ <- int_enablePWM,
+				int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+				| x____ <- TIDS
+			]]
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		internal_(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = prioritise((((
+			wbisim(set_newSetPoint!newSetPoint -> STM(id__,
+					    const_setPointRamping_rampStep))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__,
+				 const_setPointRamping_rampStep)) [| union(WCsets,WCsync) |] Clocks(id__,
+					    const_setPointRamping_rampStep))\WCsets
+		)
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP)
+		,<Union({internal_events,ClockResets,{|internal__,terminate|}}),{tock}>)		
+				
+		-- declare clocks
+		datatype ClockSet = dummyC
+		channel clockReset 		-- no clocks declared
+		
+		-- declare trigger deadlines channel
+		channel deadline : TIDS.deadlineSignal
+		
+		-- compile clocks process
+		
+		-- set of strings that uniquely identify the waiting conditions, each of which is 
+		-- used to synchronise with the Memory process to set the correspoding variable in
+		-- the memory process.
+		datatype setWC_identifierSet = dummyWC
+		
+		-- declaring getWC and setWC channel for updating memory variables related to clocks
+		channel setWC : setWC_identifierSet.Bool
+		channel getWC : setWC_identifierSet.Bool
+		
+		-- Set of pairs capturing waiting condition processes and their alphabet.
+		-- It includes the corresponding set of the defined operations.
+		WCset(id__,
+				    const_setPointRamping_rampStep) = Union({
+			{
+			}
+			})
+		
+		-- Auxiliary function to rename the channel set for required clocks.
+		
+		-- Set of transition events for which synchronisation is required between Clocks and the Memory process.
+		-- It includes the corresponding set of the defined operations.
+		WCsync = Union({
+			{||}
+			})
+		-- Set of all clock resets, including 'clockReset.C' events and 'entered.x.y' events where x is drawn
+		-- from the set of all state machine state identifiers. It includes the corresponding set of the defined operations.
+		WCresets = Union({
+			{| | x <- SIDS |}
+			})
+		-- Set of all waiting condition set events. It includes the corresponding set of the defined operations.
+		WCsets = Union({
+			{|setWC|}
+			})
+		
+		
+		
+		-- Clocks process
+		Clocks(id__,
+				    const_setPointRamping_rampStep) = || (alpha, P) : WCset(id__,
+				    const_setPointRamping_rampStep) @ [alpha] wbisim(P)
+		-- collects all clockResets
+		ClockResets = {|clockReset|}
+		
+		-- With no internal events visible
+		
+		-- Original D__ process using the unoptimised memory process
+		Dunopt__(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = timed_priority(AUX(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		D__(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = timed_priority(AUX_opt(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		O__(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = D__(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep)
+		
+		-- With enter/entered/exit/exited events visible
+		FVS__(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = timed_priority(AUX_opt(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) \ union(ClockResets,{|terminate|}))
+		
+		-- With enterV/enteredV/exitV/exitedV events visible
+		VS__(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = ShowV(timed_priority(AUX_opt(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) \ union(ClockResets,{|terminate|})))
+		
+		-- With clock resets visible
+		FVS_C__(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep) = AUX_opt(id__,
+					newSetPoint,
+				    const_setPointRamping_rampStep)\{|terminate|}
+	}
+endmodule
+module OP_PID_Control
+exports
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	external prioritise
+	transparent wbisim
+	transparent dbisim
+	transparent sbisim
+	
+	Timed(OneStep) {
+		-- flow channels
+		channel internal__ : TIDS
+		channel enteredV, enterV, exitV, exitedV : SIDS
+		channel enter, entered: SIDS.SIDS
+		channel exit,exited: SIDS.SIDS
+		channel terminate
+		
+		-- variable channels
+		channel get_ActualHV, set_ActualHV: core_real
+		channel get_dutyCyclePWM1, set_dutyCyclePWM1: duty
+		channel get_mSetPoint, set_mSetPoint: core_real
+				
+		-- shared variable channels
+		channel set_EXT_ActualHV: core_real
+		channel set_EXT_dutyCyclePWM1: duty
+		channel set_EXT_mSetPoint: core_real
+		
+		-- local variable channels for defined operations that are required by the state machine
+		
+		-- declaring state machine events
+		channel ext_ActualHV__: TIDS.InOut.core_real
+		channel ext_ActualHV: InOut.core_real
+		channel int_dutyCyclePWM1__: TIDS.InOut.duty
+		channel int_dutyCyclePWM1: InOut.duty
+		
+		-- declaring call and ret events for undefined operations
+		
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		
+		
+		-- definition of functions used to expose flow channels
+		ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+						   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+						   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+						   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+							 
+		ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+					[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		
+		-- declaring identifiers of state and final states
+		datatype SIDS = SID_PID_Control
+		              | SID_PID_Control_f0
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_PID_Control_t2
+		              | TID_PID_Control_t3
+		              | TID_PID_Control_t4
+		              | TID_PID_Control_t5
+		              | TID_PID_Control_t6
+		
+		-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+		
+		ITIDS = {
+		}
+		
+		int_int = {|
+		|}
+			
+		
+		internal_events = {|enter,entered,exit,exited|}
+		shared_variable_events = {|
+			set_EXT_ActualHV,
+			set_EXT_dutyCyclePWM1,
+			set_EXT_mSetPoint
+		|}
+				
+		
+		-- declaring all states
+		CS_PID_Control_f0_sync = {|
+			enter.y____.x____, 
+			entered.y____.x____, 
+			exit.y____.x____, 
+			exited.y____.x____,
+			enter.x____.y____, 
+			entered.x____.y____, 
+			exit.x____.y____, 
+			exited.x____.y____ |
+			x____ <- {SID_PID_Control_f0},
+			y____ <- {SID_PID_Control_f0}
+		|}
+		
+		
+		PID_Control_f0_triggers = {|
+		|}
+		
+		State_PID_Control_f0(id__) = let
+			State_PID_Control_f0_execute(id__,o____) = SKIP; 
+				entered!o____!SID_PID_Control_f0 ->
+				terminate -> SKIP
+		within
+			enter?x____:diff(SIDS,{SID_PID_Control_f0})!SID_PID_Control_f0 -> (State_PID_Control_f0_execute(id__,x____))
+		
+		
+		I_PID_Control_i0(id__) = let
+			J_PID_Control_j3(id__) = (
+						(internal__!TID_PID_Control_t5 -> Deadline(get_dutyCyclePWM1?dutyCyclePWM1 -> true&(int_dutyCyclePWM1.out!dutyCyclePWM1 -> SKIP),0);enter!SID_PID_Control!SID_PID_Control_f0 -> entered!SID_PID_Control!SID_PID_Control_f0 ->
+						SKIP
+						)
+						)
+			J_PID_Control_j1(id__) = (
+						(internal__!TID_PID_Control_t3 -> get_dutyCyclePWM1?dutyCyclePWM1 -> true & (set_dutyCyclePWM1!increaseduty(dutyCyclePWM1) -> SKIP);J_PID_Control_j3(id__))[]
+						(internal__!TID_PID_Control_t4 -> get_dutyCyclePWM1?dutyCyclePWM1 -> true & (set_dutyCyclePWM1!decreaseduty(dutyCyclePWM1) -> SKIP);J_PID_Control_j3(id__))[]
+						(internal__!TID_PID_Control_t6 -> J_PID_Control_j3(id__))
+						)
+			T_PID_Control_t2(id__) = internal__!TID_PID_Control_t2 -> Deadline(true&(ext_ActualHV.in?ActualHV -> set_ActualHV!ActualHV -> SKIP),0);J_PID_Control_j1(id__)
+		within
+			T_PID_Control_t2(id__)
+		
+		
+		State_PID_Control_f0_R(id__) = 
+			State_PID_Control_f0(id__)
+				[|diff(int_int,PID_Control_f0_triggers)|]
+			SKIP
+				 		
+			
+		STM(id__) = (
+			I_PID_Control_i0(id__)
+				[|
+					{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+						x____ <- diff(SIDS,{SID_PID_Control_f0}),
+						y____ <- {SID_PID_Control_f0}
+				|}|]
+			State_PID_Control_f0_R(id__)
+		)
+		
+		-- optimized memory process
+		channel getV_ActualHV: core_real
+		channel getV_dutyCyclePWM1: duty
+		channel getV_mSetPoint: core_real
+		
+		-- individual memory processes
+		Memory_ActualHV(x__) = ( 
+			get_ActualHV!x__ -> Memory_ActualHV(x__)
+			[]
+			getV_ActualHV!x__ -> Memory_ActualHV(x__)
+			[]
+			set_ActualHV?x__ -> Memory_ActualHV(x__)
+			[]
+			set_EXT_ActualHV?x__ -> Memory_ActualHV(x__)
+		)
+		Memory_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			getV_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+		)
+		Memory_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			getV_mSetPoint!x__ -> Memory_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_mSetPoint(x__)
+		)
+		
+		-- processes that read variables and offer transitions
+		MemoryTransitions(id__,
+			 ActualHV,
+			 dutyCyclePWM1,
+			 mSetPoint) = (
+			internal__!TID_PID_Control_t2 -> SKIP
+			[]
+			((ActualHV<mSetPoint))&internal__!TID_PID_Control_t3 -> SKIP
+			[]
+			((ActualHV>mSetPoint))&internal__!TID_PID_Control_t4 -> SKIP
+			[]
+			internal__!TID_PID_Control_t5 -> SKIP
+			[]
+			((ActualHV==mSetPoint))&internal__!TID_PID_Control_t6 -> SKIP
+		 	)
+		MemoryTransitions_PID_Control(id__) =
+			(
+			OP_PID_Control::getV_ActualHV?ActualHV ->	
+			OP_PID_Control::getV_dutyCyclePWM1?dutyCyclePWM1 ->	
+			OP_PID_Control::getV_mSetPoint?mSetPoint ->
+			 MemoryTransitions(id__,
+			 	 ActualHV,
+			 	 dutyCyclePWM1,
+			 	 mSetPoint);
+			 MemoryTransitions_PID_Control(id__)
+			)
+		
+		-- synchronisation, hiding and process sets 
+		MemoryVariablesProcesses_PID_Control = Union(
+			{
+				{
+					Memory_ActualHV(0),
+					Memory_dutyCyclePWM1(0),
+					Memory_mSetPoint(0)
+				}
+			}
+		)
+		
+		MemoryVariablesSyncSet = Union({
+			{|
+				set_dutyCyclePWM1,
+				set_ActualHV,
+				getV_dutyCyclePWM1,
+				set_mSetPoint,
+				getV_mSetPoint,
+				set_EXT_dutyCyclePWM1,
+				set_EXT_mSetPoint,
+				setWC,
+				set_EXT_ActualHV,
+				getV_ActualHV
+			|}	
+		})
+		
+		MemoryVariablesHideSet = Union({
+			{|
+				getV_dutyCyclePWM1,
+				getV_mSetPoint,
+				getWC,
+				getV_ActualHV
+			|}
+		})
+		
+		-- combined individual memory processes
+		MemoryVariables = ||| P : MemoryVariablesProcesses_PID_Control @ P
+		
+		-- complete memory process
+		MemoryN(id__) = (MemoryVariables [| MemoryVariablesSyncSet |] MemoryTransitions_PID_Control(id__)) \ MemoryVariablesHideSet
+		
+		-- optimised memory
+		-- Sets of named elements identified according to transition conditions:
+		-- {}
+		-- {OP_PID_Control::mSetPoint,OP_PID_Control::ActualHV}
+		-- Summary of all identified named elements:
+		-- {
+		-- OP_PID_Control::dutyCyclePWM1
+		-- OP_PID_Control::mSetPoint
+		-- OP_PID_Control::ActualHV
+		-- }
+		
+		-- Allocation plan:
+		-- 0:{}
+		--	=> {
+		--		TID_PID_Control_t5,
+		--		TID_PID_Control_t2}
+		-- 1:{OP_PID_Control::mSetPoint,OP_PID_Control::ActualHV}
+		--	=> {
+		--		TID_PID_Control_t4,
+		--		TID_PID_Control_t6,
+		--		TID_PID_Control_t3}
+		
+		-- Memory transition processes
+		MemoryTransitions_opt_0(id__) =
+		(
+			let
+				Update = Current(id__)
+				Current(id__)
+				 	   = 
+				 	   internal__!TID_PID_Control_t5 -> Update
+				 	   []
+				 	   internal__!TID_PID_Control_t2 -> Update
+			within
+				Update
+		)
+		MemoryTransitions_opt_1(id__) =
+		(
+			let
+				Update = 
+				get_mSetPoint?mSetPoint ->
+				get_ActualHV?ActualHV ->
+				Current(id__,
+					 mSetPoint,
+					 ActualHV)
+				Current(id__,
+					 mSetPoint,
+					 ActualHV)
+				 	   = 
+				 	   ((ActualHV>mSetPoint))&(internal__!TID_PID_Control_t4 -> Update)
+				 	   []
+				 	   ((ActualHV==mSetPoint))&(internal__!TID_PID_Control_t6 -> Update)
+				 	   []
+				 	   ((ActualHV<mSetPoint))&(internal__!TID_PID_Control_t3 -> Update)
+				 	   	 
+				 	   	 []
+				 	   	 set_mSetPoint?x__ -> Update
+				 	   	 []
+				 	   	 set_EXT_mSetPoint?x__ -> Update
+				 	   	 []
+				 	   	 
+				 	   	 set_ActualHV?x__ -> Update
+				 	   	 []
+				 	   	 set_EXT_ActualHV?x__ -> Update
+			within
+				Update
+		)
+		
+		-- Memory cell processes
+		Memory_opt_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+		)
+		Memory_opt_mSetPoint(x__) = ( 
+			get_mSetPoint!x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+			[]
+			set_EXT_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+		)
+		Memory_opt_ActualHV(x__) = ( 
+			get_ActualHV!x__ -> Memory_opt_ActualHV(x__)
+			[]
+			set_ActualHV?x__ -> Memory_opt_ActualHV(x__)
+			[]
+			set_EXT_ActualHV?x__ -> Memory_opt_ActualHV(x__)
+		)
+		
+		-- Composition of memory, StateMachine and Memory transition processes
+		
+		MemorySTM_opt(id__) =
+			dbisim(
+			  sbisim(Memory_opt_mSetPoint(0)
+			      	[| {|set_mSetPoint,get_mSetPoint,set_EXT_mSetPoint|} |] 
+			      	dbisim(
+			      	  sbisim(Memory_opt_ActualHV(0)
+			      	      	[| {|set_ActualHV,get_ActualHV,set_EXT_ActualHV|} |] 
+			      	      	sbisim(	
+			      	      	  dbisim(
+			      	      	    sbisim(sbisim(	
+			      	      	      dbisim(
+			      	      	        sbisim(dbisim(sbisim(Memory_opt_dutyCyclePWM1(0)
+			      	      	              	[| {|set_dutyCyclePWM1,get_dutyCyclePWM1|} |] 
+			      	      	              	STM_core(id__)
+			      	      	              	)\ {|get_dutyCyclePWM1|}
+			      	      	              )
+			      	      	          	  [| {|internal__.TID_PID_Control_t2,internal__.TID_PID_Control_t5|} |]
+			      	      	          	  MemoryTransitions_opt_0(id__)
+			      	      	          	  )\{|internal__.TID_PID_Control_t2,internal__.TID_PID_Control_t5|})
+			      	      	          )
+			      	      	      	  [| {|internal__.TID_PID_Control_t3,internal__.TID_PID_Control_t4,set_ActualHV,set_mSetPoint,internal__.TID_PID_Control_t6|} |]
+			      	      	      	  MemoryTransitions_opt_1(id__)
+			      	      	      	  )\{|internal__.TID_PID_Control_t3,internal__.TID_PID_Control_t4,internal__.TID_PID_Control_t6|})
+			      	      	      )
+			      	      	) \ {|get_ActualHV|}
+			      	      )
+			      	) \ {|get_mSetPoint|}
+			      )
+		
+		-- main process
+		
+		MachineMemorySyncSet = Union({
+			union(
+				union(
+					{||},
+					{||}
+				)
+					
+				,
+				{|internal__.TID_PID_Control_t2,
+				internal__.TID_PID_Control_t3,
+				internal__.TID_PID_Control_t4,
+				internal__.TID_PID_Control_t5,
+				internal__.TID_PID_Control_t6|}
+			),
+			{|deadline|},
+			WCresets
+		})
+		
+		MachineMemoryHidingSet = Union({
+			union(
+				{||},
+				{||}
+			)
+			,
+			{|deadline|}
+		})
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+		-- main process
+		AUX(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		[[
+			ext_ActualHV__.x____ <- ext_ActualHV,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP\MachineInternalEvents)
+		,<Union({internal_events,ClockResets,{|terminate|}}),{tock}>)
+		
+		STM_core(id__) = 
+			dbisim(
+				sbisim((STM(id__))
+			 			[| union(WCsync,WCresets) |]
+			 			Clocks(id__)
+			 		  )\WCresets
+				  )
+			
+		AUX_opt(id__) = 
+			(MemorySTM_opt(id__)
+			)[[
+				ext_ActualHV__.x____ <- ext_ActualHV,
+				int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+				| x____ <- TIDS
+			]]
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		internal_(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP)
+		,<Union({internal_events,ClockResets,{|internal__,terminate|}}),{tock}>)		
+				
+		-- declare clocks
+		datatype ClockSet = dummyC
+		channel clockReset 		-- no clocks declared
+		
+		-- declare trigger deadlines channel
+		channel deadline : TIDS.deadlineSignal
+		
+		-- compile clocks process
+		
+		-- set of strings that uniquely identify the waiting conditions, each of which is 
+		-- used to synchronise with the Memory process to set the correspoding variable in
+		-- the memory process.
+		datatype setWC_identifierSet = dummyWC
+		
+		-- declaring getWC and setWC channel for updating memory variables related to clocks
+		channel setWC : setWC_identifierSet.Bool
+		channel getWC : setWC_identifierSet.Bool
+		
+		-- Set of pairs capturing waiting condition processes and their alphabet.
+		-- It includes the corresponding set of the defined operations.
+		WCset(id__) = Union({
+			{
+			}
+			})
+		
+		-- Auxiliary function to rename the channel set for required clocks.
+		
+		-- Set of transition events for which synchronisation is required between Clocks and the Memory process.
+		-- It includes the corresponding set of the defined operations.
+		WCsync = Union({
+			{||}
+			})
+		-- Set of all clock resets, including 'clockReset.C' events and 'entered.x.y' events where x is drawn
+		-- from the set of all state machine state identifiers. It includes the corresponding set of the defined operations.
+		WCresets = Union({
+			{| | x <- SIDS |}
+			})
+		-- Set of all waiting condition set events. It includes the corresponding set of the defined operations.
+		WCsets = Union({
+			{|setWC|}
+			})
+		
+		
+		
+		-- Clocks process
+		Clocks(id__) = || (alpha, P) : WCset(id__) @ [alpha] wbisim(P)
+		-- collects all clockResets
+		ClockResets = {|clockReset|}
+		
+		-- With no internal events visible
+		
+		-- Original D__ process using the unoptimised memory process
+		Dunopt__(id__) = timed_priority(AUX(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		D__(id__) = timed_priority(AUX_opt(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		O__(id__) = D__(id__)
+		
+		-- With enter/entered/exit/exited events visible
+		FVS__(id__) = timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|}))
+		
+		-- With enterV/enteredV/exitV/exitedV events visible
+		VS__(id__) = ShowV(timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|})))
+		
+		-- With clock resets visible
+		FVS_C__(id__) = AUX_opt(id__)\{|terminate|}
+	}
+endmodule
+module OP_enableHV
+exports
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	external prioritise
+	transparent wbisim
+	transparent dbisim
+	transparent sbisim
+	
+	Timed(OneStep) {
+		-- flow channels
+		channel internal__ : TIDS
+		channel enteredV, enterV, exitV, exitedV : SIDS
+		channel enter, entered: SIDS.SIDS
+		channel exit,exited: SIDS.SIDS
+		channel terminate
+		
+		-- variable channels
+		channel get_dutyCyclePWM1, set_dutyCyclePWM1: duty
+				
+		-- shared variable channels
+		channel set_EXT_dutyCyclePWM1: duty
+		
+		-- local variable channels for defined operations that are required by the state machine
+		
+		-- declaring state machine events
+		channel int_enablePWM__: TIDS.InOut.core_boolean
+		channel int_enablePWM: InOut.core_boolean
+		channel int_dutyCyclePWM1__: TIDS.InOut.duty
+		channel int_dutyCyclePWM1: InOut.duty
+		
+		-- declaring call and ret events for undefined operations
+		
+		-- Only the undefined operations are declared here.
+		-- If the state machine is in isolation, all required operations will be undefined.
+		-- If it is in the context of a controller, the required operations not provided by the
+		-- controller will be declared here, and the defined operations will be defined in the
+		-- context of the Controller module, and therefore within scope of the state machien module.
+		
+		
+		-- definition of functions used to expose flow channels
+		ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+						   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+						   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+						   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+							 
+		ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+					[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+					[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+		
+		-- declaring identifiers of state and final states
+		datatype SIDS = SID_enableHV
+		              | SID_enableHV_f0
+		
+		-- declaring identifiers of transitions
+		datatype TIDS = NULLTRANSITION__
+		              | TID_enableHV_t1
+		
+		-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+		
+		ITIDS = {
+		}
+		
+		int_int = {|
+		|}
+			
+		
+		internal_events = {|enter,entered,exit,exited|}
+		shared_variable_events = {|
+			set_EXT_dutyCyclePWM1
+		|}
+				
+		
+		-- declaring all states
+		CS_enableHV_f0_sync = {|
+			enter.y____.x____, 
+			entered.y____.x____, 
+			exit.y____.x____, 
+			exited.y____.x____,
+			enter.x____.y____, 
+			entered.x____.y____, 
+			exit.x____.y____, 
+			exited.x____.y____ |
+			x____ <- {SID_enableHV_f0},
+			y____ <- {SID_enableHV_f0}
+		|}
+		
+		
+		enableHV_f0_triggers = {|
+		|}
+		
+		State_enableHV_f0(id__) = let
+			State_enableHV_f0_execute(id__,o____) = SKIP; 
+				entered!o____!SID_enableHV_f0 ->
+				terminate -> SKIP
+		within
+			enter?x____:diff(SIDS,{SID_enableHV_f0})!SID_enableHV_f0 -> (State_enableHV_f0_execute(id__,x____))
+		
+		
+		I_enableHV_i0(id__) = let
+			T_enableHV_t1(id__) = internal__!TID_enableHV_t1 -> Deadline(true&(int_enablePWM.out!true -> SKIP),0);true & (set_dutyCyclePWM1!real2duty(0) -> SKIP);Deadline(get_dutyCyclePWM1?dutyCyclePWM1 -> true&(int_dutyCyclePWM1.out!dutyCyclePWM1 -> SKIP),0);enter!SID_enableHV!SID_enableHV_f0 -> entered!SID_enableHV!SID_enableHV_f0 ->
+			SKIP
+		within
+			T_enableHV_t1(id__)
+		
+		
+		State_enableHV_f0_R(id__) = 
+			State_enableHV_f0(id__)
+				[|diff(int_int,enableHV_f0_triggers)|]
+			SKIP
+				 		
+			
+		STM(id__) = (
+			I_enableHV_i0(id__)
+				[|
+					{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+						x____ <- diff(SIDS,{SID_enableHV_f0}),
+						y____ <- {SID_enableHV_f0}
+				|}|]
+			State_enableHV_f0_R(id__)
+		)
+		
+		-- optimized memory process
+		channel getV_dutyCyclePWM1: duty
+		
+		-- individual memory processes
+		Memory_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			getV_dutyCyclePWM1!x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+		)
+		
+		-- processes that read variables and offer transitions
+		MemoryTransitions(id__,
+			 dutyCyclePWM1) = (
+			internal__!TID_enableHV_t1 -> SKIP
+		 	)
+		MemoryTransitions_enableHV(id__) =
+			(
+			OP_enableHV::getV_dutyCyclePWM1?dutyCyclePWM1 ->
+			 MemoryTransitions(id__,
+			 	 dutyCyclePWM1);
+			 MemoryTransitions_enableHV(id__)
+			)
+		
+		-- synchronisation, hiding and process sets 
+		MemoryVariablesProcesses_enableHV = Union(
+			{
+				{
+					Memory_dutyCyclePWM1(0)
+				}
+			}
+		)
+		
+		MemoryVariablesSyncSet = Union({
+			{|
+				set_dutyCyclePWM1,
+				getV_dutyCyclePWM1,
+				set_EXT_dutyCyclePWM1,
+				setWC
+			|}	
+		})
+		
+		MemoryVariablesHideSet = Union({
+			{|
+				getV_dutyCyclePWM1,
+				getWC
+			|}
+		})
+		
+		-- combined individual memory processes
+		MemoryVariables = ||| P : MemoryVariablesProcesses_enableHV @ P
+		
+		-- complete memory process
+		MemoryN(id__) = (MemoryVariables [| MemoryVariablesSyncSet |] MemoryTransitions_enableHV(id__)) \ MemoryVariablesHideSet
+		
+		-- optimised memory
+		-- Sets of named elements identified according to transition conditions:
+		-- {}
+		-- Summary of all identified named elements:
+		-- {
+		-- OP_enableHV::dutyCyclePWM1
+		-- }
+		
+		-- Allocation plan:
+		-- 0:{}
+		--	=> {
+		--		TID_enableHV_t1}
+		
+		-- Memory transition processes
+		MemoryTransitions_opt_0(id__) =
+		(
+			let
+				Update = Current(id__)
+				Current(id__)
+				 	   = 
+				 	   internal__!TID_enableHV_t1 -> Update
+			within
+				Update
+		)
+		
+		-- Memory cell processes
+		Memory_opt_dutyCyclePWM1(x__) = ( 
+			get_dutyCyclePWM1!x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+			[]
+			set_EXT_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+		)
+		
+		-- Composition of memory, StateMachine and Memory transition processes
+		
+		MemorySTM_opt(id__) =
+			sbisim(	
+			  dbisim(
+			    sbisim(dbisim(sbisim(Memory_opt_dutyCyclePWM1(0)
+			          	[| {|set_dutyCyclePWM1,get_dutyCyclePWM1|} |] 
+			          	STM_core(id__)
+			          	)\ {|get_dutyCyclePWM1|}
+			          )
+			      	  [| {|internal__.TID_enableHV_t1|} |]
+			      	  MemoryTransitions_opt_0(id__)
+			      	  )\{|internal__.TID_enableHV_t1|})
+			      )
+		
+		-- main process
+		
+		MachineMemorySyncSet = Union({
+			union(
+				union(
+					{||},
+					{||}
+				)
+					
+				,
+				{|internal__.TID_enableHV_t1|}
+			),
+			{|deadline|},
+			WCresets
+		})
+		
+		MachineMemoryHidingSet = Union({
+			union(
+				{||},
+				{||}
+			)
+			,
+			{|deadline|}
+		})
+		
+		MachineInternalEvents = {|
+			internal__
+		|}
+		
+		-- main process
+		AUX(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		[[
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP\MachineInternalEvents)
+		,<Union({internal_events,ClockResets,{|terminate|}}),{tock}>)
+		
+		STM_core(id__) = 
+			dbisim(
+				sbisim((STM(id__))
+			 			[| union(WCsync,WCresets) |]
+			 			Clocks(id__)
+			 		  )\WCresets
+				  )
+			
+		AUX_opt(id__) = 
+			(MemorySTM_opt(id__)
+			)[[
+				int_enablePWM__.x____ <- int_enablePWM,
+				int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+				| x____ <- TIDS
+			]]
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+		internal_(id__) = prioritise((((
+			wbisim(STM(id__))
+				[|MachineMemorySyncSet|]
+			(wbisim(MemoryN(id__)) [| union(WCsets,WCsync) |] Clocks(id__))\WCsets
+		)
+		\MachineMemoryHidingSet)
+		[|{|terminate|}|>SKIP)
+		,<Union({internal_events,ClockResets,{|internal__,terminate|}}),{tock}>)		
+				
+		-- declare clocks
+		datatype ClockSet = dummyC
+		channel clockReset 		-- no clocks declared
+		
+		-- declare trigger deadlines channel
+		channel deadline : TIDS.deadlineSignal
+		
+		-- compile clocks process
+		
+		-- set of strings that uniquely identify the waiting conditions, each of which is 
+		-- used to synchronise with the Memory process to set the correspoding variable in
+		-- the memory process.
+		datatype setWC_identifierSet = dummyWC
+		
+		-- declaring getWC and setWC channel for updating memory variables related to clocks
+		channel setWC : setWC_identifierSet.Bool
+		channel getWC : setWC_identifierSet.Bool
+		
+		-- Set of pairs capturing waiting condition processes and their alphabet.
+		-- It includes the corresponding set of the defined operations.
+		WCset(id__) = Union({
+			{
+			}
+			})
+		
+		-- Auxiliary function to rename the channel set for required clocks.
+		
+		-- Set of transition events for which synchronisation is required between Clocks and the Memory process.
+		-- It includes the corresponding set of the defined operations.
+		WCsync = Union({
+			{||}
+			})
+		-- Set of all clock resets, including 'clockReset.C' events and 'entered.x.y' events where x is drawn
+		-- from the set of all state machine state identifiers. It includes the corresponding set of the defined operations.
+		WCresets = Union({
+			{| | x <- SIDS |}
+			})
+		-- Set of all waiting condition set events. It includes the corresponding set of the defined operations.
+		WCsets = Union({
+			{|setWC|}
+			})
+		
+		
+		
+		-- Clocks process
+		Clocks(id__) = || (alpha, P) : WCset(id__) @ [alpha] wbisim(P)
+		-- collects all clockResets
+		ClockResets = {|clockReset|}
+		
+		-- With no internal events visible
+		
+		-- Original D__ process using the unoptimised memory process
+		Dunopt__(id__) = timed_priority(AUX(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		D__(id__) = timed_priority(AUX_opt(id__) \ Union({internal_events,ClockResets,{|terminate|}}))
+		
+		O__(id__) = D__(id__)
+		
+		-- With enter/entered/exit/exited events visible
+		FVS__(id__) = timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|}))
+		
+		-- With enterV/enteredV/exitV/exitedV events visible
+		VS__(id__) = ShowV(timed_priority(AUX_opt(id__) \ union(ClockResets,{|terminate|})))
+		
+		-- With clock resets visible
+		FVS_C__(id__) = AUX_opt(id__)\{|terminate|}
+	}
+endmodule
+

@@ -1,0 +1,19 @@
+include "State_machine.csp"
+include "core_defs.csp"
+include "file_sequential_StateMachine_defs.csp"
+include "robochart_defs.csp"
+include "../instantiations.csp"
+channel r__
+-- generate State_machine
+P_State_machine = let
+	id = 0
+	const_State_machine_cycleTime = ms(10)
+within
+	State_machine::O__(
+		id,
+		const_State_machine_cycleTime
+	)
+assert P_State_machine :[deadlock-free]	
+assert P_State_machine;RUN({r__}) :[deadlock-free]
+assert P_State_machine :[deterministic]
+assert P_State_machine :[divergence-free]

@@ -1,0 +1,219 @@
+diagram sequential_StateMachine
+import Declarations::* 
+ stm State_machine {
+	uses IEvents_ext requires IOps uses IEvents uses IVars uses IConst state Ramping {
+		entry currentState ! State :: Ramp //<{0}
+	} 
+	state Init {
+		entry currentState ! State :: Init ; disableHV ( false )//<{0} ; disableHV ( false ) //VoltLimFac = mSetPoint * 0.1
+	initial i0
+
+		state si0 {
+			entry overLimit = overLimitF ( setPoint + 2 ) ; underLimit = underLimitF ( setPoint - 2 ) ; int_underLimit ! underLimit ; int_overLimit ! overLimit
+		}
+		transition t0 {
+			from i0
+			to si0
+			action ext_setPoint ? setPoint
+		}
+	}
+	state Wait24Vpower {
+		initial i0
+		state si0 {
+		entry supplyVoltCheck ( )
+		}
+		state s1 {
+			entry disableHV ( true )
+		}
+
+		transition t0 {
+			from i0
+			to si0
+			action ext_setPoint ? setPoint //<{0}
+		}
+		transition t1 {
+			from si0
+			to s1
+			condition setPoint != 0 \/ lim == true
+		}
+		entry currentState ! State :: Wait24Vpower ; disableHV ( false ) //<{0} ; disableHV ( false )
+	}
+	state ClosedLoop {
+		
+		initial i0
+
+		state s1 {
+			entry lim = false ; disableHV ( true )
+		}
+		state s2 {
+		initial i0
+			state s0 {
+				entry checkLimits ( )
+			}
+
+			transition t0 {
+				from i0
+				to s1
+			}
+			transition t1 {
+				from s0
+				to s1
+				condition sinceEntry ( ClosedLoop::s2::s0 ) > 0
+			}
+		state s1 {
+				entry ext_setPoint ? setPoint //<{0}
+			}
+
+			transition t5 {
+				from j0
+				to s0
+				action int_ActualHV ! ActualHV
+			}
+		junction j0
+
+			transition t2 {
+				from s1
+				to j0
+				action ActualHV = setPoint
+			}
+		}
+
+		transition t1 {
+			from s4
+			to s1
+			condition lim == true
+		}
+		transition t2 {
+			from s2
+			to s1
+			condition lim == true
+		}
+	state s3 {
+			entry checkLimits ( )
+		}
+		transition t3 {
+			from s4
+			to s3
+			condition lim == false
+			action int_pwmSignal ! Power :: On //<{0} //;wait(5)
+		}
+		transition t4 {
+			from s3
+			to s2
+			condition lim == false /\ sinceEntry ( ClosedLoop::s3 ) > 0
+		}
+		transition t5 {
+			from s3
+			to s1
+			condition lim == true
+		}
+		entry currentState ! State :: ClosedLoop
+	state s4 {
+			entry supplyVoltCheck ( )
+		}
+		transition t0 {
+			from i0
+			to s4
+		}
+	}
+	state ErrorMode {
+		entry currentState ! State :: ErrorMode;  disableHV ( false )
+
+		initial i0
+
+		final f0
+
+		transition t0 {
+			from s1
+			to s2
+			action ext_setPoint ! setPoint
+		}
+		transition t2 {
+			from i0
+			to s1
+			action errorAck = false
+		}
+		state s1 {
+			entry setPoint = 0
+		}
+
+		transition t4 {
+			from s2
+			to j0
+			action int_ActualHV ! ActualHV
+		}
+		state s2 {
+			entry ActualHV = 0
+		}
+	junction j0
+		transition t5 {
+			from j0
+			to f0
+			condition setPoint == 0 /\ ActualHV == 0
+			action errorAck = true
+		}
+		transition t1 {
+			from j0
+			to s1
+			condition setPoint != 0 \/ ActualHV != 0
+		}
+	}
+	initial i0
+	transition t0 {
+		from Ramping
+		to Init
+		condition sinceEntry ( Ramping ) >= 1
+	}
+	transition t1 {
+		from Init
+		to Wait24Vpower
+	}
+	transition t2 {
+		from Wait24Vpower
+		to ErrorMode
+		condition res == true
+		action res = false
+	}
+	transition t3 {
+		from Wait24Vpower
+		to ClosedLoop
+		//trigger ext_pow24VStatus.Power::On?x
+		condition setPoint == 0 /\ lim == false /\ res == false
+	}
+	transition t4 {
+		from ClosedLoop
+		to ErrorMode
+		condition res == true
+		action res = false
+	}
+	transition t5 {
+		from i0
+		to Ramping
+	}
+	transition t6 {
+		from ErrorMode
+		to Wait24Vpower
+		condition errorAck
+	}
+	clock Cl1
+
+	transition t8 {
+		from Wait24Vpower
+		to j0
+		trigger int_DisableHV
+	}
+	transition t11 {
+		from ClosedLoop
+		to j0
+		trigger int_DisableHV
+	}
+	transition t7 {
+		from j0
+		to ErrorMode
+		action disableHV ( true ) ; res = false
+	}
+junction j0
+var power : Power
+event currentState : State
+}
+

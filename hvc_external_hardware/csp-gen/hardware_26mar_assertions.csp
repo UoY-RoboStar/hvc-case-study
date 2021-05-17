@@ -1,0 +1,315 @@
+-- Eventually - refinement
+assert SetPoint_Error_Eventually_Zero [T= System_SetPoint_Eventually_Error
+
+-- Maintains - refinement
+assert SetPoint_Maintain_Error_Zero [FD= HV_Error_System
+
+-- A0 - not refinement
+assert not HV_Error_Zero [T= HV_Error_System_NonZero
+
+-- A1 - refinement
+assert HV_Error_Zero_Follow [T= HV_Error_System
+
+-- A2 - deadlock free
+assert let 
+	id__ = 0
+	
+	
+	
+	
+	const_State_machine_cycleTime = ms(10)
+		
+	const_setPointRamping_rampStep = 1
+within
+	mod_sys::O__(id__,
+			    const_ctrl0_stm_ref0_cycleTime,
+			   	const_setPointRamping_rampStep) :[deadlock free]
+
+include "defs/robochart_defs.csp"
+include "defs/core_defs.csp"
+include "defs/mod_sys.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations_defs.csp"
+
+channel r__
+
+-- generate nat
+nametype core_nat = {0..1}
+
+-- generate string
+nametype core_string = LSeq({'a'},1)
+
+REAL_MAX = 1
+REAL_MIN = 0
+
+-- generate real
+nametype core_real = { REAL_MIN..REAL_MAX}
+
+-- BASIC FUNCTIONS
+
+-- generate int
+nametype core_int = { 0..1}
+
+-- generate -- OPERATION BOUNDS
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate Div
+Div(e1,e2,T) = if member(e1/e2,T) then e1/e2 else e1
+
+-- generate Neg
+Neg(e1,T) = if member(-e1,T) then -e1 else e1
+
+-- generate boolean
+nametype core_boolean = Bool
+
+-- generate Mult
+Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1
+
+-- generate Modulus
+Modulus(e1,e2,T) = if member(e1%e2,T) then e1%e2 else e1
+
+-- generate Plus
+Plus(e1,e2,T) = if member(e1+e2,T) then e1+e2 else e1
+
+-- generate Minus
+Minus(e1,e2,T) = if member(e1-e2,T) then e1-e2 else e1
+
+overLimitMax(x) = if x > REAL_MAX then REAL_MAX else x
+underLimitMin(x) = if x < REAL_MIN then REAL_MIN else x
+
+overLimitF(x) = overLimitMax(x+2)
+underLimitF(x) = underLimitMin(x-2)
+
+const_State_machine_cycleTime = 10
+const_ctrl0_stm_ref0_cycleTime = 10
+const_State_machine_stepTime = 1
+const_setPointRamping_rampStep = 1
+
+Software = mod_sys::O__(0,1,10,1)
+
+channel RPActualHV_out, RPInputV_out, RPActualHV, RPActualHV_in : core_real
+ 
+ -- * receive a new RPInputV_out value
+ -- * output an RPActualHV_out value
+ 
+ -- * set_HV is used internally to this model
+ 
+ channel set_HV : core_real
+ 
+ Timed(OneStep) {
+	 Platform = PM1 [| {|RPActualHV_out|} |] PM2 
+	 
+	 -- Mapping between RPInputV_out and RPActual_HV_out
+	 PM1 = HV(0)
+	 HV(x) = RPActualHV_out?x__ -> HV(x__) 
+	 		 [] 
+	 		 RPActualHV!x -> HV(x)
+	 		 []
+	 		 RPActualHV_ext!x -> HV(x)
+	 
+	 -- Mapping between RPInputV_out and RPActual_HV_out
+	 PM2 = RPInputV_out?x__ -> (WAIT(4) ; RPActualHV_out!x__ -> PM2)
+ }
+
+channel RPpow24V_in : {0,24}
+ 
+ PlatformMapping = PWMBehaviour(0,false) ||| Pow24Behaviour
+ 
+ Timed(OneStep) {
+	 PWMBehaviour(duty,pwm) = 
+	 	(pwm)&RPInputV_out!duty -> PWMBehaviour(duty,pwm)
+	 	[]
+	 	(not pwm)&RPInputV_out!0 -> PWMBehaviour(duty,pwm)
+	 	[]
+	 	mod_sys::int_enablePWM.out?x__ -> PWMBehaviour(duty,x__)
+	 	[]
+	 	mod_sys::int_dutyCyclePWM1.out?x__ -> PWMBehaviour(x__,pwm)
+	 	
+	 Pow24Behaviour = 
+	 	RPpow24V_in?x__ -> 
+		   	((x__ == 24)&mod_sys::ext_pow24VStatus.in!Power_On -> Pow24Behaviour
+		     []
+		    (not x__ == 24)&mod_sys::ext_pow24VStatus.in!Power_Off -> Pow24Behaviour)
+
+ }
+
+channel RPpow24V : {0,24}
+ channel RPsetPoint_in, RPsetPoint : core_real
+ channel RPerrorAck_in, RPerrorAck
+ channel RPActualHV_ext : core_real -- Need a better name for this
+ 
+ Timed(OneStep) {
+ 	
+  MappedSystem = 
+ 	(
+ 		(
+ 			(
+	 			(Software[[ 
+	 			    mod_sys::ext_ActualHV.in <- RPActualHV_in,
+	 			    mod_sys::ext_errorAck.in <- RPerrorAck_in, 
+	 			    mod_sys::ext_setPoint.in <- RPsetPoint_in
+	 			 ]]
+	 	 		[| {|mod_sys::int_enablePWM.out,mod_sys::int_dutyCyclePWM1.out,mod_sys::ext_pow24VStatus|} |] 
+	 	 		PlatformMapping
+	 			) \{|mod_sys::int_enablePWM.out,mod_sys::int_dutyCyclePWM1.out,mod_sys::ext_pow24VStatus|}
+	 		)[[
+	 			RPActualHV_in <- RPActualHV,
+	 			RPerrorAck_in <- RPerrorAck,
+	 			RPsetPoint_in <- RPsetPoint,
+	 			RPpow24V_in <- RPpow24V
+	 		]]
+	 	)
+ 	[| {| RPInputV_out, RPActualHV |} |] 
+ 	Platform
+ 	) \{|RPInputV_out,RPActualHV,RPActualHV_out|}
+ 	-- RPActualHV is hidden here, with the assumption that RPActualHV_out = RPActualHV,
+ 	-- so we only see one event (RPActualHV_out).
+ 	--
+ 	-- Changed: RPActualHV_ext is visible so that we can actually query its value faster
+ 	-- 			than the software can issue 'RPActualHV outputs'.
+ }
+
+-- Composition of MappedSystem with assumptions about the inputs for verification of P1
+ 
+ Timed(OneStep) {
+ 	FullSystem = 
+ 		timed_priority(
+ 			(
+ 				-- The power is ok.
+ 				(MappedSystem [| {|RPpow24V|} |] OK_24VPower)\{|RPpow24V|}	
+ 			[| {| RPerrorAck |} |]
+ 			-- No error to be acknowledged
+ 			OK_no_errorAck
+ 			)
+ 		)
+ 		--[| {|RPsetPoint|} |]
+ 		--OK_setPoint)
+ 		
+ 	-- The power is 24V, and this sensor provides at most one sample per time unit.
+ 	OK_24VPower = RPpow24V!24 -> WAIT(1) ; OK_24VPower
+ 	
+ 	-- No error is to be acknowledged.
+ 	OK_no_errorAck = SKIP
+ 	
+ 	-- Initially the setPoint needs to be 0, and after two cycles (2*10 tocks), it may then change arbitrarily.
+ 	ReadSetPoint(x__) = RPsetPoint!x__ -> ReadSetPoint(x__)
+ 	
+ 	OK_setPoint = TimedInterrupt(ReadSetPoint(0),20) ; ArbitrarySetPoint
+ 	
+ 	-- How often can it change? The chosen value must not change within zero time, but it may
+ 	-- change every 10s. Since a tock = 1 milisecond, 10s = 1000*10, 10000 tocks. I think this
+ 	-- will explode the state space.
+ 	ArbitrarySetPoint = |~| e : core_real @ TimedInterrupt(ReadSetPoint(e),10) ; ArbitrarySetPoint
+ 	
+  }
+
+channel error : { -2..2}
+ 
+ Timed(OneStep) {
+ 	
+ 	HV_Error_System = 
+ 		timed_priority(
+ 			(FullSystem 
+ 			 [| {|RPsetPoint,RPActualHV_ext|} |] 
+ 			 (Error(0,0,false,false) [| {| RPActualHV_ext, error |} |] ErrorSampler)
+ 			)
+ 			\{|RPActualHV_ext|}
+ 			)
+ 	
+ 	Error(actualhv,setpoint,actualhv_read,setpoint_read) = 
+ 		RPsetPoint?x__ -> Error(actualhv,x__,actualhv_read,true)
+ 		[]
+ 		RPActualHV_ext?x__ -> Error(x__,setpoint,true,setpoint_read)
+ 		[]
+ 		error!Minus(actualhv,setpoint,{ -2..2}) -> Error(actualhv,setpoint,actualhv_read,setpoint_read)
+ 	
+ 	ErrorSampler =
+ 		Deadline(RPActualHV_ext?x__ -> error?x__ -> SKIP,0); WAIT(1); ErrorSampler
+ }
+
+Timed(OneStep) {
+  	HV_Error_System_NonZero =  
+  		timed_priority(HV_Error_System \{|error.x__ | x__ <- diff({ -2..2},{0})|})
+ }
+
+Timed(OneStep) {
+ 	HV_Error_Zero = STOP
+ }
+
+Timed(OneStep) {
+ 	HV_Error_Zero_Follow = 
+ 		error?x__:{x__ | x__ <- { -2..2}, x__ != 0} -> HV_Error_Zero_Follow
+ 		[] 
+ 		error!0 -> HV_Error_Always_zero
+ 	
+ 	HV_Error_Always_zero = error!0 -> HV_Error_Always_zero
+ }
+
+channel out_setPoint : core_real
+ 
+ Timed(OneStep) {
+ 
+ System_SetPoint_Eventually_Error = 
+ 	timed_priority(
+ 		(HV_Error_System 
+ 			[| {|RPsetPoint|} |] 
+ 			(TimedInterrupt(RUN({|RPsetPoint.0,tock|}),21);OutSetPoint(0))
+ 		)\{|RPsetPoint|})
+	
+ OutSetPoint(x__) = RPsetPoint!x__ -> OutSetPoint(x__) [] out_setPoint?x__ -> OutSetPoint(x__)
+}
+
+ADeadline(E,d) = ((RUN({|error|}) ||| wait(d)) [|E|> SKIP)
+	
+Timed(OneStep) {
+ 
+wait(d) = timed_priority(WAIT(d))
+ 
+SetPoint_Error_Eventually_Zero = 
+	timed_priority(
+		(TimedInterrupt(RUN({|error,tock|}),21) ; NewSetPoint) 
+		)
+
+ErrorWithinDeadline =
+	RUN({|error.0,tock|}) 
+	/\ 
+	out_setPoint?x__ -> NewSetPoint
+	
+NewSetPoint = 
+	((
+		error.0 -> SKIP
+		[]
+		error?x:{x__ | x__ <- { -2..2}, x__ != 0} -> ADeadline({|error.0|},5)
+	) 
+	/\ out_setPoint?x__ -> SKIP) ; NewSetPoint
+ 
+Error_0_deadline = ADeadline({|error.0|},1) /\ out_setPoint?x__ -> NewSetPoint
+
+}
+
+Timed(OneStep) {
+  	
+ SetPoint_Maintain_Error_Zero =
+ 	error.0 -> SetPoint_Maintain_Error_is_0
+ 	[]
+ 	error?x__:{x__ | x__ <- { -2..2}, x__ != 0} -> SetPoint_Maintain_Error_Zero
+ 	[]
+ 	RPsetPoint?x__ -> SetPoint_Maintain_Error_Zero
+ 	
+ SetPoint_Maintain_Error_is_0 =
+ 	error.0 -> SetPoint_Maintain_Error_is_0
+ 	[]
+ 	RPsetPoint?x__ -> SetPoint_Maintain_Error_Zero
+ 
+ }

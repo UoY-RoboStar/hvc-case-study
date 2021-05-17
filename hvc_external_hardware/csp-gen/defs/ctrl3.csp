@@ -1,0 +1,612 @@
+	module ctrl3
+		shared_variable_events = {|
+		|}		
+		
+	exports
+		transparent diamond
+		transparent sbisim
+		transparent chase
+
+	
+		-- declaring call and ret events for undefined operations
+	
+	
+	
+		module stm0
+		exports
+			-- flow channels
+			channel internal__ : TIDS
+			channel enteredV, enterV, exitV, exitedV : SIDS
+			channel enter, entered: SIDS.SIDS
+			channel exit,exited: SIDS.SIDS
+			channel terminate
+			
+			-- variable channels
+			channel get_duty, set_duty: duty
+			channel get_enabled, set_enabled: core_boolean
+					
+			-- shared variable channels
+			
+			-- local variable channels for defined operations that are required by the state machine
+			
+			-- declaring state machine events
+			channel int_dutyCyclePWM1__: TIDS.InOut.duty
+			channel int_dutyCyclePWM1: InOut.duty
+			channel int_enablePWM__: TIDS.InOut.core_boolean
+			channel int_enablePWM: InOut.core_boolean
+			channel ctrl0_dutyCyclePWM1__: TIDS.InOut.duty
+			channel ctrl0_dutyCyclePWM1: InOut.duty
+			channel ctrl1_dutyCyclePWM1__: TIDS.InOut.duty
+			channel ctrl1_dutyCyclePWM1: InOut.duty
+			channel ctrl0_enablePWM__: TIDS.InOut.core_boolean
+			channel ctrl0_enablePWM: InOut.core_boolean
+			channel ctrl1_enablePWM__: TIDS.InOut.core_boolean
+			channel ctrl1_enablePWM: InOut.core_boolean
+			
+			-- declaring call and ret events for undefined operations
+			
+			-- Only the undefined operations are declared here.
+			-- If the state machine is in isolation, all required operations will be undefined.
+			-- If it is in the context of a controller, the required operations not provided by the
+			-- controller will be declared here, and the defined operations will be defined in the
+			-- context of the Controller module, and therefore within scope of the state machien module.
+			
+			
+			-- definition of functions used to expose flow channels
+			ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+							   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+							   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+							   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+								 
+			ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+						[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+						[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+						[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			
+			-- declaring identifiers of state and final states
+			datatype SIDS = SID_stm0
+			              | SID_stm0_s0
+			
+			-- declaring identifiers of transitions
+			datatype TIDS = NULLTRANSITION__
+			              | TID_stm0_t0
+			              | TID_stm0_t1
+			              | TID_stm0_t2
+			              | TID_stm0_t3
+			              | TID_stm0_t4
+			
+			-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+			
+			ITIDS = {
+				TID_stm0_t1,	TID_stm0_t2,	TID_stm0_t3,	TID_stm0_t4
+			}
+			
+			int_int = {|
+				int_dutyCyclePWM1__.TID_stm0_t1,
+				int_enablePWM__.TID_stm0_t1,
+				ctrl0_dutyCyclePWM1__.TID_stm0_t1,
+				ctrl1_dutyCyclePWM1__.TID_stm0_t1,
+				ctrl0_enablePWM__.TID_stm0_t1,
+				ctrl1_enablePWM__.TID_stm0_t1,
+				internal__.TID_stm0_t1,
+				int_dutyCyclePWM1__.TID_stm0_t2,
+				int_enablePWM__.TID_stm0_t2,
+				ctrl0_dutyCyclePWM1__.TID_stm0_t2,
+				ctrl1_dutyCyclePWM1__.TID_stm0_t2,
+				ctrl0_enablePWM__.TID_stm0_t2,
+				ctrl1_enablePWM__.TID_stm0_t2,
+				internal__.TID_stm0_t2,
+				int_dutyCyclePWM1__.TID_stm0_t3,
+				int_enablePWM__.TID_stm0_t3,
+				ctrl0_dutyCyclePWM1__.TID_stm0_t3,
+				ctrl1_dutyCyclePWM1__.TID_stm0_t3,
+				ctrl0_enablePWM__.TID_stm0_t3,
+				ctrl1_enablePWM__.TID_stm0_t3,
+				internal__.TID_stm0_t3,
+				int_dutyCyclePWM1__.TID_stm0_t4,
+				int_enablePWM__.TID_stm0_t4,
+				ctrl0_dutyCyclePWM1__.TID_stm0_t4,
+				ctrl1_dutyCyclePWM1__.TID_stm0_t4,
+				ctrl0_enablePWM__.TID_stm0_t4,
+				ctrl1_enablePWM__.TID_stm0_t4,
+				internal__.TID_stm0_t4
+			|}
+				
+			
+			internal_events = {|enter,entered,exit,exited|}
+			shared_variable_events = {|
+			|}
+					
+			
+			-- declaring all states
+			CS_stm0_s0_sync = {|
+				enter.y____.x____, 
+				entered.y____.x____, 
+				exit.y____.x____, 
+				exited.y____.x____,
+				enter.x____.y____, 
+				entered.x____.y____, 
+				exit.x____.y____, 
+				exited.x____.y____ |
+				x____ <- {SID_stm0_s0},
+				y____ <- {SID_stm0_s0}
+			|}
+			
+			
+			stm0_s0_triggers = {|
+				ctrl0_dutyCyclePWM1__.TID_stm0_t4,
+				ctrl1_dutyCyclePWM1__.TID_stm0_t3,
+				ctrl1_enablePWM__.TID_stm0_t1,
+				ctrl0_enablePWM__.TID_stm0_t2
+			|}
+			
+			State_stm0_s0(id__) = let
+				T_stm0_t1(id__) = ctrl1_enablePWM__!TID_stm0_t1.in?enabled -> set_enabled!enabled ->  (exit.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									SKIP;exited.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									get_enabled?enabled -> true&(int_enablePWM.out!enabled -> SKIP);enter!SID_stm0_s0!SID_stm0_s0 -> State_stm0_s0_execute(id__,SID_stm0_s0)
+				)
+				T_stm0_t2(id__) = ctrl0_enablePWM__!TID_stm0_t2.in?enabled -> set_enabled!enabled ->  (exit.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									SKIP;exited.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									get_enabled?enabled -> true&(int_enablePWM.out!enabled -> SKIP);enter!SID_stm0_s0!SID_stm0_s0 -> State_stm0_s0_execute(id__,SID_stm0_s0)
+				)
+				T_stm0_t3(id__) = ctrl1_dutyCyclePWM1__!TID_stm0_t3.in?duty -> set_duty!duty ->  (exit.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									SKIP;exited.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									get_duty?duty -> true&(int_dutyCyclePWM1.out!duty -> SKIP);enter!SID_stm0_s0!SID_stm0_s0 -> State_stm0_s0_execute(id__,SID_stm0_s0)
+				)
+				T_stm0_t4(id__) = ctrl0_dutyCyclePWM1__!TID_stm0_t4.in?duty -> set_duty!duty ->  (exit.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									SKIP;exited.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									get_duty?duty -> true&(int_dutyCyclePWM1.out!duty -> SKIP);enter!SID_stm0_s0!SID_stm0_s0 -> State_stm0_s0_execute(id__,SID_stm0_s0)
+				)
+				State_stm0_s0_execute(id__,o____) = SKIP; 
+					entered!o____!SID_stm0_s0 ->
+					(SKIP; STOP /\ (
+						T_stm0_t1(id__)[]
+						T_stm0_t2(id__)[]
+						T_stm0_t3(id__)[]
+						T_stm0_t4(id__)
+						[]
+						internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t4,TID_stm0_t3,TID_stm0_t1,TID_stm0_t2}) -> exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] int_dutyCyclePWM1__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t4,TID_stm0_t3,TID_stm0_t1,TID_stm0_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] int_enablePWM__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t4,TID_stm0_t3,TID_stm0_t1,TID_stm0_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] ctrl0_dutyCyclePWM1__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t4,TID_stm0_t3,TID_stm0_t1,TID_stm0_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] ctrl1_dutyCyclePWM1__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t4,TID_stm0_t3,TID_stm0_t1,TID_stm0_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] ctrl0_enablePWM__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t4,TID_stm0_t3,TID_stm0_t1,TID_stm0_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] ctrl1_enablePWM__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t4,TID_stm0_t3,TID_stm0_t1,TID_stm0_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+					))
+			within
+				enter?x____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (State_stm0_s0_execute(id__,x____))
+			
+			
+			I_stm0_i0(id__) = let
+				T_stm0_t0(id__) = internal__!TID_stm0_t0 -> enter!SID_stm0!SID_stm0_s0 -> entered!SID_stm0!SID_stm0_s0 ->
+				SKIP
+			within
+				T_stm0_t0(id__)
+			
+			
+			State_stm0_s0_R(id__) = 
+				State_stm0_s0(id__)
+					[|diff(int_int,stm0_s0_triggers)|]
+				SKIP
+					 		
+				
+			STM(id__) = (
+				I_stm0_i0(id__)
+					[|
+						{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+							x____ <- diff(SIDS,{SID_stm0_s0}),
+							y____ <- {SID_stm0_s0}
+					|}|]
+				State_stm0_s0_R(id__)
+			)
+			
+			-- optimized memory process
+			channel getV_duty: duty
+			channel getV_enabled: core_boolean
+			
+			-- individual memory processes
+			Memory_duty(duty) = (
+				get_duty!duty -> Memory_duty(duty)
+				[]
+				getV_duty!duty -> Memory_duty(duty)
+				[]
+				set_duty?x__ -> Memory_duty(x__)
+				[]
+				ctrl1_dutyCyclePWM1__!TID_stm0_t3.in?duty -> Memory_duty(duty)
+				[]
+				ctrl0_dutyCyclePWM1__!TID_stm0_t4.in?duty -> Memory_duty(duty)
+			)
+			Memory_enabled(enabled) = (
+				get_enabled!enabled -> Memory_enabled(enabled)
+				[]
+				getV_enabled!enabled -> Memory_enabled(enabled)
+				[]
+				set_enabled?x__ -> Memory_enabled(x__)
+				[]
+				ctrl1_enablePWM__!TID_stm0_t1.in?enabled -> Memory_enabled(enabled)
+				[]
+				ctrl0_enablePWM__!TID_stm0_t2.in?enabled -> Memory_enabled(enabled)
+			)
+			
+			-- processes that read variables and offer transitions
+			MemoryTransitions(id__, duty, enabled) = 		
+			(internal__!TID_stm0_t0 -> SKIP
+			[]
+			ctrl1_enablePWM__!TID_stm0_t1.in?enabled -> SKIP
+			[]
+			ctrl0_enablePWM__!TID_stm0_t2.in?enabled -> SKIP
+			[]
+			ctrl1_dutyCyclePWM1__!TID_stm0_t3.in?duty -> SKIP
+			[]
+			ctrl0_dutyCyclePWM1__!TID_stm0_t4.in?duty -> SKIP[]
+			set_duty?x__ -> SKIP[]
+			set_enabled?x__ -> SKIP)
+			
+			MemoryTransitions_stm0(id__) = (getV_duty?duty ->
+			getV_enabled?enabled ->
+			MemoryTransitions(id__, duty, enabled)			
+			); MemoryTransitions_stm0(id__)
+					
+			
+			-- synchronisation, hiding and process sets 
+			MemoryVariablesProcesses_stm0 = Union(
+				{
+					{
+						(Memory_duty(0),{|get_duty,getV_duty,ctrl1_dutyCyclePWM1__.TID_stm0_t3,ctrl0_dutyCyclePWM1__.TID_stm0_t4,set_duty|}),
+						(Memory_enabled(true),{|ctrl1_enablePWM__.TID_stm0_t1,ctrl0_enablePWM__.TID_stm0_t2,set_enabled,getV_enabled,get_enabled|})
+					}
+				}
+			)
+			
+			MemoryVariablesSyncSet = Union({
+				{|
+					ctrl1_enablePWM__.TID_stm0_t1,
+					ctrl0_enablePWM__.TID_stm0_t2,
+					set_enabled,
+					getV_enabled,
+					getV_duty,
+					ctrl1_dutyCyclePWM1__.TID_stm0_t3,
+					ctrl0_dutyCyclePWM1__.TID_stm0_t4,
+					set_duty
+				|}	
+			})
+			
+			MemoryVariablesHideSet = Union({
+				{|
+					getV_enabled,
+					getV_duty
+				|}
+			})
+			
+			-- combined individual memory processes
+			MemoryVariables = ||| (P, alpha) : MemoryVariablesProcesses_stm0 @ P
+			
+			-- complete memory process	
+			MemoryN(id__) = sbisim(diamond((sbisim(diamond(MemoryVariables)) [| MemoryVariablesSyncSet |] sbisim(diamond(MemoryTransitions_stm0(id__)))) \ MemoryVariablesHideSet))
+			
+			-- optimised memory
+			-- Sets of named elements identified according to transition conditions:
+			-- {}
+			-- Summary of all identified named elements:
+			-- {
+			-- duty
+			-- enabled
+			-- }
+			
+			-- Allocation plan:
+			-- 0:{}
+			--	=> {
+			--		TID_stm0_t4,
+			--		TID_stm0_t0,
+			--		TID_stm0_t3,
+			--		TID_stm0_t1,
+			--		TID_stm0_t2}
+			
+			-- Memory transition processes
+			MemoryTransitions_opt_0(id__) =
+			(
+				let
+					Update = Current(id__)
+					Current(id__)
+					 	   = 
+					 	   ctrl0_dutyCyclePWM1__!TID_stm0_t4.in?duty -> Update
+					 	   []
+					 	   internal__!TID_stm0_t0 -> Update
+					 	   []
+					 	   ctrl1_dutyCyclePWM1__!TID_stm0_t3.in?duty -> Update
+					 	   []
+					 	   ctrl1_enablePWM__!TID_stm0_t1.in?enabled -> Update
+					 	   []
+					 	   ctrl0_enablePWM__!TID_stm0_t2.in?enabled -> Update
+				within
+					Update
+			)
+			
+			-- Memory cell processes
+			Memory_opt_duty(x__) = ( 
+				get_duty!x__ -> Memory_opt_duty(x__)
+				[]
+				set_duty?x__ -> Memory_opt_duty(x__)
+			)
+			Memory_opt_enabled(x__) = ( 
+				get_enabled!x__ -> Memory_opt_enabled(x__)
+				[]
+				set_enabled?x__ -> Memory_opt_enabled(x__)
+			)
+			
+			-- Composition of memory, StateMachine and Memory transition processes
+			
+			MemorySTM_opt(id__) =
+				sbisim(	
+				  dbisim(
+				    sbisim(dbisim(sbisim(Memory_opt_duty(0)
+				          	[| {|get_duty,set_duty|} |] 
+				          	dbisim(sbisim(Memory_opt_enabled(true)
+				          	      	[| {|set_enabled,get_enabled|} |] 
+				          	      	STM_core(id__)
+				          	      	)\ {|set_enabled,get_enabled|}
+				          	      )
+				          	)\ {|get_duty,set_duty|}
+				          )
+				      	  [| {|ctrl1_enablePWM__.TID_stm0_t1,ctrl0_enablePWM__.TID_stm0_t2,internal__.TID_stm0_t0,ctrl0_dutyCyclePWM1__.TID_stm0_t4,ctrl1_dutyCyclePWM1__.TID_stm0_t3|} |]
+				      	  MemoryTransitions_opt_0(id__)
+				      	  )\{|internal__.TID_stm0_t0|})
+				      )
+			
+			-- main process
+			
+			MachineMemorySyncSet = Union({
+				union(
+					union(
+						{|get_duty,set_duty,
+						get_enabled,set_enabled|},
+						{||}
+					)
+						
+					,
+					{|internal__.TID_stm0_t0,
+					ctrl1_enablePWM__.TID_stm0_t1,
+					ctrl0_enablePWM__.TID_stm0_t2,
+					ctrl1_dutyCyclePWM1__.TID_stm0_t3,
+					ctrl0_dutyCyclePWM1__.TID_stm0_t4|}
+				)
+			})
+			
+			MachineMemoryHidingSet = Union({
+				union(
+					{|get_duty,set_duty,
+					get_enabled,set_enabled|},
+					{||}
+				)
+			})
+			
+			MachineInternalEvents = {|
+				internal__
+			|}
+			
+			AUX(id__) = (
+				(
+					STM(id__)
+						[|MachineMemorySyncSet|]
+					sbisim(diamond(MemoryN(id__)))
+				)[[
+					int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+					int_enablePWM__.x____ <- int_enablePWM,
+					ctrl0_dutyCyclePWM1__.x____ <- ctrl0_dutyCyclePWM1,
+					ctrl1_dutyCyclePWM1__.x____ <- ctrl1_dutyCyclePWM1,
+					ctrl0_enablePWM__.x____ <- ctrl0_enablePWM,
+					ctrl1_enablePWM__.x____ <- ctrl1_enablePWM
+					| x____ <- TIDS
+				]]
+				\MachineMemoryHidingSet
+			)
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+			
+			
+			STM_core(id__) = 
+				sbisim(diamond(STM(id__)))
+				
+			AUX_opt(id__) = 
+				(MemorySTM_opt(id__)
+				)[[
+					int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1,
+					int_enablePWM__.x____ <- int_enablePWM,
+					ctrl0_dutyCyclePWM1__.x____ <- ctrl0_dutyCyclePWM1,
+					ctrl1_dutyCyclePWM1__.x____ <- ctrl1_dutyCyclePWM1,
+					ctrl0_enablePWM__.x____ <- ctrl0_enablePWM,
+					ctrl1_enablePWM__.x____ <- ctrl1_enablePWM
+					| x____ <- TIDS
+				]]
+				[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+			-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+			transparent diamond
+			transparent sbisim
+			transparent dbisim
+			transparent chase
+					
+			FVS__(id__) = AUX_opt(id__)
+			Dunopt__(id__) = AUX(id__) \ internal_events
+			D__(id__) = AUX_opt(id__) \ internal_events
+			O__(id__) = sbisim(diamond(D__(id__)))
+			VS__(id__) = ShowV(FVS__(id__))
+			VS_O__(id__) = sbisim(diamond(VS__(id__)))
+			HEXT__(id__) = O__(id__) [|shared_variable_events|] SKIP	
+		endmodule
+					
+		-- declaring controller events
+		channel int_dutyCyclePWM1: InOut.duty
+		channel int_enablePWM: InOut.core_boolean
+		channel ctrl0_dutyCyclePWM1: InOut.duty
+		channel ctrl1_dutyCyclePWM1: InOut.duty
+		channel ctrl0_enablePWM: InOut.core_boolean
+		channel ctrl1_enablePWM: InOut.core_boolean
+						
+
+	
+		channel terminate
+	
+		-- declaring controller memory
+		Memory(id__) = SKIP
+		-- declaring controller termination channel
+
+	
+		D__(id__) = (
+			(
+				stm0::D__(id__)[[
+					stm0::terminate <- terminate,
+					stm0::int_enablePWM <- int_enablePWM,
+					stm0::int_dutyCyclePWM1 <- int_dutyCyclePWM1,
+					stm0::ctrl0_dutyCyclePWM1 <- ctrl0_dutyCyclePWM1,
+					stm0::ctrl1_dutyCyclePWM1 <- ctrl1_dutyCyclePWM1,
+					stm0::ctrl0_enablePWM <- ctrl0_enablePWM,
+					stm0::ctrl1_enablePWM <- ctrl1_enablePWM
+				]]
+			)
+				[|
+					union(
+						{|
+						|},
+						{|
+						|}
+					)
+				|]
+			Memory(id__)
+		)
+		\ union(
+			{|
+			|},
+			{|
+			|}
+		)
+		[|{|terminate|}|>SKIP
+					
+		-- VS version
+		VS__(id__) = (
+			(
+				stm0::VS__(id__)[[
+					stm0::terminate <- terminate,
+					stm0::int_enablePWM <- int_enablePWM,
+					stm0::int_dutyCyclePWM1 <- int_dutyCyclePWM1,
+					stm0::ctrl0_dutyCyclePWM1 <- ctrl0_dutyCyclePWM1,
+					stm0::ctrl1_dutyCyclePWM1 <- ctrl1_dutyCyclePWM1,
+					stm0::ctrl0_enablePWM <- ctrl0_enablePWM,
+					stm0::ctrl1_enablePWM <- ctrl1_enablePWM
+				]]
+			)
+				[|
+					union(
+						{|
+						|},
+						{|
+						|}
+					)
+				|]
+			Memory(id__)
+		)
+		\ union(
+			{|
+			|},
+			{|
+			|}
+		)
+		[|{|terminate|}|>SKIP			
+
+					
+		-- O version (optimised) THESE TWO PROCESSES SHOULD BE KEPT IN SYNC WITH THE ABOVE TWO
+		O__(id__) = sbisim(
+			diamond(
+				(
+					(
+						stm0::O__(id__)[[
+							stm0::terminate <- terminate,
+							stm0::int_enablePWM <- int_enablePWM,
+							stm0::int_dutyCyclePWM1 <- int_dutyCyclePWM1,
+							stm0::ctrl0_dutyCyclePWM1 <- ctrl0_dutyCyclePWM1,
+							stm0::ctrl1_dutyCyclePWM1 <- ctrl1_dutyCyclePWM1,
+							stm0::ctrl0_enablePWM <- ctrl0_enablePWM,
+							stm0::ctrl1_enablePWM <- ctrl1_enablePWM
+						]]
+					)
+						[|
+							union(
+								{|
+								|},
+								{|
+								|}
+							)
+						|]
+					Memory(id__)
+				)
+				\ union(
+					{|
+					|},
+					{|
+					|}
+				)
+				[|{|terminate|}|>SKIP
+			)
+		)
+					
+		-- VS_O version
+		VS_O__(id__) = sbisim(
+			diamond(
+				(
+					(
+						stm0::VS_O__(id__)[[
+							stm0::terminate <- terminate,
+							stm0::int_enablePWM <- int_enablePWM,
+							stm0::int_dutyCyclePWM1 <- int_dutyCyclePWM1,
+							stm0::ctrl0_dutyCyclePWM1 <- ctrl0_dutyCyclePWM1,
+							stm0::ctrl1_dutyCyclePWM1 <- ctrl1_dutyCyclePWM1,
+							stm0::ctrl0_enablePWM <- ctrl0_enablePWM,
+							stm0::ctrl1_enablePWM <- ctrl1_enablePWM
+						]]
+					)
+						[|
+							union(
+								{|
+								|},
+								{|
+								|}
+							)
+						|]
+					Memory(id__)
+				)
+				\ union(
+					{|
+					|},
+					{|
+					|}
+				)
+				[|{|terminate|}|>SKIP
+			)
+		)
+		
+		HEXT(id__) = O__(id__) [|shared_variable_events|] SKIP	
+	endmodule

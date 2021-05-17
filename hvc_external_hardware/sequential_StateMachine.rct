@@ -1,0 +1,205 @@
+diagram sequential_StateMachine
+import Declarations::* 
+ stm State_machine {
+	const cycleTime : nat = ms ( 10 )
+	uses IEvents_ctrl0 requires IOps uses IVars_seqSM 
+	state Init {
+		entry AdjustLimits ( )
+	}
+	state ClosedLoop {
+		
+		initial i0
+		junction j0
+		junction j1
+
+		transition t0 {
+			from i0
+			to j7
+		}
+		transition t1 {
+			from j0
+			to j1
+			condition setPoint != 0 /\ HVEnabled == false
+			action HVEnabled = true
+		}
+		junction j2
+
+		transition t2 {
+			from j1
+			to j2
+			action 
+		supplyVoltCheck ( )
+		}
+		transition t3 {
+			from j0
+			to j3
+			condition setPoint == 0 \/ HVEnabled == true
+		}
+		transition t4 {
+			from j2
+			to j3
+			condition HVEnabled == true
+			action 
+		
+		
+		enableHV ( )
+		}
+		entry currentState = State :: ClosedLoop
+		junction j3
+
+		transition t5 {
+			from j2
+			to j3
+			condition HVEnabled == false
+		}
+		junction j4
+
+		junction j6
+
+		state s0 {
+		}
+
+		transition t7 {
+			from j3
+			to j4
+			action checkLimits ( )
+		}
+		transition t14 {
+			from s0
+			to j7
+			condition currentState == State :: ClosedLoop
+			action 
+		
+		wait ( cycleTime )
+		}
+		transition t8 {
+			from j6
+			to s0
+			action PID_Control()
+		}
+		junction j7
+		transition t9 {
+			from j4
+			to j6
+			condition HVEnabled == true
+			action 
+		
+		ext_setPoint ? setPoint <{ 0 } ; setPointRamping ( setPoint )
+		}
+		transition t12 {
+			from j4
+			to j6
+			condition HVEnabled == false
+		}
+	transition t13 {
+			from j7
+			to j0
+			action ext_setPoint ? setPoint <{ 0 } ; if ( setPoint == 0 ) then disableHV ( false ) else skip end
+		}
+	}
+	initial i0
+
+	transition t1 {
+		from Init
+		to Wait24Vpower
+		action 
+	wait ( cycleTime )
+	}
+	transition t2 {
+		from Wait24Vpower
+		to ErrorMode
+		condition currentState == State :: ErrorMode
+	}
+	transition t3 {
+		from Wait24Vpower
+		to ClosedLoop
+		//trigger ext_pow24VStatus.Power::On?x
+		condition setPoint == 0 /\ currentState != State :: ErrorMode /\ pow24VStatus == Power :: On
+	}
+	transition t4 {
+		from ClosedLoop
+		to ErrorMode
+		condition currentState == State :: ErrorMode
+		action 
+	
+	
+	wait ( cycleTime )
+	}
+	transition t5 {
+		from i0
+		to Init
+	action mSetPoint = 0 ; HVEnabled = false ; wait ( cycleTime )
+	}
+	transition t7 {
+		from ErrorMode
+		to Wait24Vpower
+		condition since ( Cl1 ) >= cycleTime /\ currentState == State :: Wait24Vpower
+	}
+	clock Cl1
+
+	requires IVars_seqSM_shared state Wait24Vpower {
+		initial i0
+		junction j0
+		junction j1
+		final f0
+		transition t0 {
+			from i0
+			to j0
+		}
+		transition t1 {
+			from j0
+			to j1
+			action 
+		
+		disableHV ( false ) ; supplyVoltCheck ( ) ; ext_setPoint ? setPoint <{ 0 }
+		}
+		transition t2 {
+			from j1
+			to f0
+			condition setPoint != 0
+			action 
+		disableHV ( true ) ; wait ( cycleTime )
+		}
+		transition t3 {
+			from j1
+			to f0
+			condition pow24VStatus == Power :: On /\ setPoint == 0
+			action 
+		wait ( cycleTime )
+		}
+		transition t4 {
+			from j1
+			to j0
+			condition 
+			not ( ( setPoint != 0 ) \/ ( pow24VStatus == Power :: On ) )
+			action 
+		wait ( cycleTime )
+		}
+		entry currentState = State :: Wait24Vpower
+	}
+	state ErrorMode {
+		initial i0
+		state s0 {
+			entry disableHV ( false ) ; # Cl1
+		}
+		final f0
+		transition t0 {
+			from i0
+			to s0
+		}
+		transition t1 {
+			from s0
+			to s0
+			condition since ( Cl1 ) == cycleTime
+		}
+		transition t2 {
+			from s0
+			to f0
+			trigger ext_errorAck
+			condition since ( Cl1 ) < cycleTime
+			action currentState = State :: Wait24Vpower
+		}
+		entry currentState = State :: ErrorMode
+	}
+}
+

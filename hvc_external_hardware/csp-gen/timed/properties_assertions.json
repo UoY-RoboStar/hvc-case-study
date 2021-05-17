@@ -1,0 +1,46 @@
+[
+{ "name": "timed ImplP1 refines SpecP1 (P1) [traces model]",
+  "type": "refines",
+  "negated": false 
+},
+{ "name": "timed ImplP1 refines SpecP1_nonFunctional (P1_fail) [traces model]",
+  "type": "refines",
+  "negated": false 
+},
+{ "name": "timed mod_sys_pwm is divergence free (P2_div_free) [failures divergences model]",
+  "type": "divergence-free",
+  "negated": false 
+},
+{ "name": "timed mod_sys_pwm is deadlock free (P2_dead_free) [failures divergences model]",
+  "type": "deadlock-free",
+  "negated": false 
+},
+{ "name": "timed mod_sys_pwm is not refined by TStop (P2_non_trivial) [traces model]",
+  "type": "refines",
+  "negated": true 
+},
+{ "name": "timed mod_sys_pwm refines SpecP2 (P2) [traces model]",
+  "type": "refines",
+  "negated": false 
+},
+{ "name": "timed mod_sys_setpoint is divergence free (P3_div_free) [failures divergences model]",
+  "type": "divergence-free",
+  "negated": false 
+},
+{ "name": "timed mod_sys_setpoint is deadlock free (P3_dead_free) [failures divergences model]",
+  "type": "deadlock-free",
+  "negated": false 
+},
+{ "name": "timed mod_sys_setpoint is not refined by TStop (P3_non_trivial) [traces model]",
+  "type": "refines",
+  "negated": true 
+},
+{ "name": "timed mod_sys_setpoint refines SpecP3 (P3) [traces model]",
+  "type": "refines",
+  "negated": false 
+},
+{ "name": "timed mod_sys is deadlock free (P4) [failures divergences model]",
+  "type": "deadlock-free",
+  "negated": false 
+}
+			]

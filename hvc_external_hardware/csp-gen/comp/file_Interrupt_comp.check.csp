@@ -1,0 +1,87 @@
+include "defs/file_Transition_system.csp"
+include "defs/file_sequential_StateMachine.csp"
+include "defs/robochart_defs.csp"
+include "defs/state_defs.csp"
+include "defs/core_defs.csp"
+include "defs/file_Interrupt.csp"
+include "defs/file_Transition_system_defs.csp"
+include "defs/file_sequential_StateMachine_defs.csp"
+include "defs/file_Interrupt_defs.csp"
+include "defs/file_Declarations.csp"
+include "defs/file_Declarations_defs.csp"
+include "../instantiations.csp"
+
+module original
+exports
+	include "../defs/file_Interrupt.csp"
+	include "../defs/file_Transition_system.csp"
+	include "../defs/file_Declarations.csp"
+	include "../defs/file_sequential_StateMachine.csp"
+endmodule
+
+-- Assertions
+
+
+
+-- StateMachineDef: Watchdog
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	original::Watchdog::O__(id__)
+	   [[ original::Watchdog::ext_pow24VStatus <- Watchdog::ext_pow24VStatus ]]
+	   [[ original::Watchdog::int_dutyCyclePWM1 <- Watchdog::int_dutyCyclePWM1 ]]
+	   [[ original::Watchdog::int_enablePWM <- Watchdog::int_enablePWM ]]
+	   [[ original::Watchdog::set_HVEnabled <- Watchdog::set_HVEnabled, original::Watchdog::set_EXT_HVEnabled <- Watchdog::set_EXT_HVEnabled]]
+	   [[ original::Watchdog::set_pow24VStatus <- Watchdog::set_pow24VStatus, original::Watchdog::set_EXT_pow24VStatus <- Watchdog::set_EXT_pow24VStatus]]
+	   [[ original::Watchdog::set_currentState <- Watchdog::set_currentState, original::Watchdog::set_EXT_currentState <- Watchdog::set_EXT_currentState]]
+	   [[ original::Watchdog::set_overLimit <- Watchdog::set_overLimit, original::Watchdog::set_EXT_overLimit <- Watchdog::set_EXT_overLimit]]
+	   [[ original::Watchdog::set_underLimit <- Watchdog::set_underLimit, original::Watchdog::set_EXT_underLimit <- Watchdog::set_EXT_underLimit]]
+	   [[ original::Watchdog::set_mSetPoint <- Watchdog::set_mSetPoint, original::Watchdog::set_EXT_mSetPoint <- Watchdog::set_EXT_mSetPoint]]
+	   [[ original::Watchdog::set_dutyCyclePWM1 <- Watchdog::set_dutyCyclePWM1, original::Watchdog::set_EXT_dutyCyclePWM1 <- Watchdog::set_EXT_dutyCyclePWM1]]
+	   [[ original::Watchdog::terminate <- Watchdog::terminate ]]
+	   [[ original::Watchdog::supplyVoltCheckCall <- Watchdog::supplyVoltCheckCall ]]
+	   	   [[ original::Watchdog::AdjustLimitsCall <- Watchdog::AdjustLimitsCall ]]
+	   )
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	Watchdog::O__(id__))
+	   
+assert (let 
+	id__ = 0
+	
+	
+	
+within
+	Watchdog::O__(id__))
+	   [FD=
+	   (let 
+	   	id__ = 0
+	   	
+	   	
+	   	
+	   within
+	   	original::Watchdog::O__(id__)
+		[[ original::Watchdog::ext_pow24VStatus <- Watchdog::ext_pow24VStatus ]]
+		[[ original::Watchdog::int_dutyCyclePWM1 <- Watchdog::int_dutyCyclePWM1 ]]
+		[[ original::Watchdog::int_enablePWM <- Watchdog::int_enablePWM ]]
+		[[ original::Watchdog::set_HVEnabled <- Watchdog::set_HVEnabled, original::Watchdog::set_EXT_HVEnabled <- Watchdog::set_EXT_HVEnabled]]
+		[[ original::Watchdog::set_pow24VStatus <- Watchdog::set_pow24VStatus, original::Watchdog::set_EXT_pow24VStatus <- Watchdog::set_EXT_pow24VStatus]]
+		[[ original::Watchdog::set_currentState <- Watchdog::set_currentState, original::Watchdog::set_EXT_currentState <- Watchdog::set_EXT_currentState]]
+		[[ original::Watchdog::set_overLimit <- Watchdog::set_overLimit, original::Watchdog::set_EXT_overLimit <- Watchdog::set_EXT_overLimit]]
+		[[ original::Watchdog::set_underLimit <- Watchdog::set_underLimit, original::Watchdog::set_EXT_underLimit <- Watchdog::set_EXT_underLimit]]
+		[[ original::Watchdog::set_mSetPoint <- Watchdog::set_mSetPoint, original::Watchdog::set_EXT_mSetPoint <- Watchdog::set_EXT_mSetPoint]]
+		[[ original::Watchdog::set_dutyCyclePWM1 <- Watchdog::set_dutyCyclePWM1, original::Watchdog::set_EXT_dutyCyclePWM1 <- Watchdog::set_EXT_dutyCyclePWM1]]
+		[[ original::Watchdog::terminate <- Watchdog::terminate ]]
+		[[ original::Watchdog::supplyVoltCheckCall <- Watchdog::supplyVoltCheckCall ]]
+				[[ original::Watchdog::AdjustLimitsCall <- Watchdog::AdjustLimitsCall ]]
+		)
+
+

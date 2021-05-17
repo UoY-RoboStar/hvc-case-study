@@ -1,0 +1,470 @@
+	module ctrl3
+		shared_variable_events = {|
+		|}		
+		
+	exports
+		transparent diamond
+		transparent sbisim
+		transparent chase
+
+	
+		-- declaring call and ret events for undefined operations
+	
+	
+	
+		module stm0
+		exports
+			-- flow channels
+			channel internal__ : TIDS
+			channel enteredV, enterV, exitV, exitedV : SIDS
+			channel enter, entered: SIDS.SIDS
+			channel exit,exited: SIDS.SIDS
+			channel terminate
+			
+			-- variable channels
+			channel get_ActualHV, set_ActualHV: core_real
+					
+			-- shared variable channels
+			
+			-- local variable channels for defined operations that are required by the state machine
+			
+			-- declaring state machine events
+			channel int_ActualHV__: TIDS.InOut.core_real
+			channel int_ActualHV: InOut.core_real
+			channel ActualHV_1__: TIDS.InOut.core_real
+			channel ActualHV_1: InOut.core_real
+			channel ActualHV_2__: TIDS.InOut.core_real
+			channel ActualHV_2: InOut.core_real
+			
+			-- declaring call and ret events for undefined operations
+			
+			-- Only the undefined operations are declared here.
+			-- If the state machine is in isolation, all required operations will be undefined.
+			-- If it is in the context of a controller, the required operations not provided by the
+			-- controller will be declared here, and the defined operations will be defined in the
+			-- context of the Controller module, and therefore within scope of the state machien module.
+			
+			
+			-- definition of functions used to expose flow channels
+			ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+							   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+							   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+							   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+								 
+			ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+						[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+						[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+						[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+			
+			-- declaring identifiers of state and final states
+			datatype SIDS = SID_stm0
+			              | SID_stm0_s0
+			
+			-- declaring identifiers of transitions
+			datatype TIDS = NULLTRANSITION__
+			              | TID_stm0_t0
+			              | TID_stm0_t1
+			
+			-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+			
+			ITIDS = {
+				TID_stm0_t1
+			}
+			
+			int_int = {|
+				int_ActualHV__.TID_stm0_t1,
+				ActualHV_1__.TID_stm0_t1,
+				ActualHV_2__.TID_stm0_t1,
+				internal__.TID_stm0_t1
+			|}
+				
+			
+			internal_events = {|enter,entered,exit,exited|}
+			shared_variable_events = {|
+			|}
+					
+			
+			-- declaring all states
+			CS_stm0_s0_sync = {|
+				enter.y____.x____, 
+				entered.y____.x____, 
+				exit.y____.x____, 
+				exited.y____.x____,
+				enter.x____.y____, 
+				entered.x____.y____, 
+				exit.x____.y____, 
+				exited.x____.y____ |
+				x____ <- {SID_stm0_s0},
+				y____ <- {SID_stm0_s0}
+			|}
+			
+			
+			stm0_s0_triggers = {|
+				internal__.TID_stm0_t1
+			|}
+			
+			State_stm0_s0(id__) = let
+				T_stm0_t1(id__) = internal__!TID_stm0_t1 ->  exit.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									SKIP;exited.SID_stm0_s0.SID_stm0_s0 -> SKIP;
+									get_ActualHV?ActualHV -> true&(ActualHV_1.out!ActualHV -> SKIP);get_ActualHV?ActualHV -> true&(ActualHV_2.out!ActualHV -> SKIP);enter!SID_stm0_s0!SID_stm0_s0 -> State_stm0_s0_execute(id__,SID_stm0_s0)
+				State_stm0_s0_execute(id__,o____) = true&(int_ActualHV.in?ActualHV -> set_ActualHV!ActualHV -> SKIP); 
+					entered!o____!SID_stm0_s0 ->
+					(SKIP; STOP /\ (
+						T_stm0_t1(id__)
+						[]
+						internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t1}) -> exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] ActualHV_1__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+						[] ActualHV_2__?x____:diff(ITIDS,{NULLTRANSITION__,TID_stm0_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (
+								SKIP;
+								exited!y____!SID_stm0_s0 -> SKIP);
+								State_stm0_s0(id__)
+					))
+			within
+				enter?x____:diff(SIDS,{SID_stm0_s0})!SID_stm0_s0 -> (State_stm0_s0_execute(id__,x____))
+			
+			
+			I_stm0_i0(id__) = let
+				T_stm0_t0(id__) = internal__!TID_stm0_t0 -> enter!SID_stm0!SID_stm0_s0 -> entered!SID_stm0!SID_stm0_s0 ->
+				SKIP
+			within
+				T_stm0_t0(id__)
+			
+			
+			State_stm0_s0_R(id__) = 
+				State_stm0_s0(id__)
+					[|diff(int_int,stm0_s0_triggers)|]
+				SKIP
+					 		
+				
+			STM(id__) = (
+				I_stm0_i0(id__)
+					[|
+						{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+							x____ <- diff(SIDS,{SID_stm0_s0}),
+							y____ <- {SID_stm0_s0}
+					|}|]
+				State_stm0_s0_R(id__)
+			)
+			
+			-- optimized memory process
+			channel getV_ActualHV: core_real
+			
+			-- individual memory processes
+			Memory_ActualHV(ActualHV) = (
+				get_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
+				[]
+				getV_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
+				[]
+				set_ActualHV?x__ -> Memory_ActualHV(x__)
+			)
+			
+			-- processes that read variables and offer transitions
+			MemoryTransitions(id__, ActualHV) = 		
+			(internal__!TID_stm0_t0 -> SKIP
+			[]
+			internal__!TID_stm0_t1 -> SKIP[]
+			set_ActualHV?x__ -> SKIP)
+			
+			MemoryTransitions_stm0(id__) = (getV_ActualHV?ActualHV ->
+			MemoryTransitions(id__, ActualHV)			
+			); MemoryTransitions_stm0(id__)
+					
+			
+			-- synchronisation, hiding and process sets 
+			MemoryVariablesProcesses_stm0 = Union(
+				{
+					{
+						(Memory_ActualHV(0),{|get_ActualHV,set_ActualHV,getV_ActualHV|})
+					}
+				}
+			)
+			
+			MemoryVariablesSyncSet = Union({
+				{|
+					set_ActualHV,
+					getV_ActualHV
+				|}	
+			})
+			
+			MemoryVariablesHideSet = Union({
+				{|
+					getV_ActualHV
+				|}
+			})
+			
+			-- combined individual memory processes
+			MemoryVariables = ||| (P, alpha) : MemoryVariablesProcesses_stm0 @ P
+			
+			-- complete memory process	
+			MemoryN(id__) = sbisim(diamond((sbisim(diamond(MemoryVariables)) [| MemoryVariablesSyncSet |] sbisim(diamond(MemoryTransitions_stm0(id__)))) \ MemoryVariablesHideSet))
+			
+			-- optimised memory
+			-- Sets of named elements identified according to transition conditions:
+			-- {}
+			-- Summary of all identified named elements:
+			-- {
+			-- ActualHV
+			-- }
+			
+			-- Allocation plan:
+			-- 0:{}
+			--	=> {
+			--		TID_stm0_t0,
+			--		TID_stm0_t1}
+			
+			-- Memory transition processes
+			MemoryTransitions_opt_0(id__) =
+			(
+				let
+					Update = Current(id__)
+					Current(id__)
+					 	   = 
+					 	   internal__!TID_stm0_t0 -> Update
+					 	   []
+					 	   internal__!TID_stm0_t1 -> Update
+				within
+					Update
+			)
+			
+			-- Memory cell processes
+			Memory_opt_ActualHV(x__) = ( 
+				get_ActualHV!x__ -> Memory_opt_ActualHV(x__)
+				[]
+				set_ActualHV?x__ -> Memory_opt_ActualHV(x__)
+			)
+			
+			-- Composition of memory, StateMachine and Memory transition processes
+			
+			MemorySTM_opt(id__) =
+				sbisim(	
+				  dbisim(
+				    sbisim(dbisim(sbisim(Memory_opt_ActualHV(0)
+				          	[| {|set_ActualHV,get_ActualHV|} |] 
+				          	STM_core(id__)
+				          	)\ {|set_ActualHV,get_ActualHV|}
+				          )
+				      	  [| {|internal__.TID_stm0_t0,internal__.TID_stm0_t1|} |]
+				      	  MemoryTransitions_opt_0(id__)
+				      	  )\{|internal__.TID_stm0_t0,internal__.TID_stm0_t1|})
+				      )
+			
+			-- main process
+			
+			MachineMemorySyncSet = Union({
+				union(
+					union(
+						{|get_ActualHV,set_ActualHV|},
+						{||}
+					)
+						
+					,
+					{|internal__.TID_stm0_t0,
+					internal__.TID_stm0_t1|}
+				)
+			})
+			
+			MachineMemoryHidingSet = Union({
+				union(
+					{|get_ActualHV,set_ActualHV|},
+					{||}
+				)
+			})
+			
+			MachineInternalEvents = {|
+				internal__
+			|}
+			
+			AUX(id__) = (
+				(
+					STM(id__)
+						[|MachineMemorySyncSet|]
+					sbisim(diamond(MemoryN(id__)))
+				)[[
+					int_ActualHV__.x____ <- int_ActualHV,
+					ActualHV_1__.x____ <- ActualHV_1,
+					ActualHV_2__.x____ <- ActualHV_2
+					| x____ <- TIDS
+				]]
+				\MachineMemoryHidingSet
+			)
+			[|{|terminate|}|>SKIP\MachineInternalEvents
+			
+			
+			STM_core(id__) = 
+				sbisim(diamond(STM(id__)))
+				
+			AUX_opt(id__) = 
+				(MemorySTM_opt(id__)
+				)[[
+					int_ActualHV__.x____ <- int_ActualHV,
+					ActualHV_1__.x____ <- ActualHV_1,
+					ActualHV_2__.x____ <- ActualHV_2
+					| x____ <- TIDS
+				]]
+				[|{|terminate|}|>SKIP\MachineInternalEvents
+		
+			-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+			transparent diamond
+			transparent sbisim
+			transparent dbisim
+			transparent chase
+					
+			FVS__(id__) = AUX_opt(id__)
+			Dunopt__(id__) = AUX(id__) \ internal_events
+			D__(id__) = AUX_opt(id__) \ internal_events
+			O__(id__) = sbisim(diamond(D__(id__)))
+			VS__(id__) = ShowV(FVS__(id__))
+			VS_O__(id__) = sbisim(diamond(VS__(id__)))
+			HEXT__(id__) = O__(id__) [|shared_variable_events|] SKIP	
+		endmodule
+					
+		-- declaring controller events
+		channel int_ActualHV: InOut.core_real
+		channel ActualHV_1: InOut.core_real
+		channel ActualHV_2: InOut.core_real
+						
+
+	
+		channel terminate
+	
+		-- declaring controller memory
+		Memory(id__) = SKIP
+		-- declaring controller termination channel
+
+	
+		D__(id__) = (
+			(
+				stm0::D__(id__)[[
+					stm0::terminate <- terminate,
+					stm0::int_ActualHV <- int_ActualHV,
+					stm0::ActualHV_1 <- ActualHV_1,
+					stm0::ActualHV_2 <- ActualHV_2
+				]]
+			)
+				[|
+					union(
+						{|
+						|},
+						{|
+						|}
+					)
+				|]
+			Memory(id__)
+		)
+		\ union(
+			{|
+			|},
+			{|
+			|}
+		)
+		[|{|terminate|}|>SKIP
+					
+		-- VS version
+		VS__(id__) = (
+			(
+				stm0::VS__(id__)[[
+					stm0::terminate <- terminate,
+					stm0::int_ActualHV <- int_ActualHV,
+					stm0::ActualHV_1 <- ActualHV_1,
+					stm0::ActualHV_2 <- ActualHV_2
+				]]
+			)
+				[|
+					union(
+						{|
+						|},
+						{|
+						|}
+					)
+				|]
+			Memory(id__)
+		)
+		\ union(
+			{|
+			|},
+			{|
+			|}
+		)
+		[|{|terminate|}|>SKIP			
+
+					
+		-- O version (optimised) THESE TWO PROCESSES SHOULD BE KEPT IN SYNC WITH THE ABOVE TWO
+		O__(id__) = sbisim(
+			diamond(
+				(
+					(
+						stm0::O__(id__)[[
+							stm0::terminate <- terminate,
+							stm0::int_ActualHV <- int_ActualHV,
+							stm0::ActualHV_1 <- ActualHV_1,
+							stm0::ActualHV_2 <- ActualHV_2
+						]]
+					)
+						[|
+							union(
+								{|
+								|},
+								{|
+								|}
+							)
+						|]
+					Memory(id__)
+				)
+				\ union(
+					{|
+					|},
+					{|
+					|}
+				)
+				[|{|terminate|}|>SKIP
+			)
+		)
+					
+		-- VS_O version
+		VS_O__(id__) = sbisim(
+			diamond(
+				(
+					(
+						stm0::VS_O__(id__)[[
+							stm0::terminate <- terminate,
+							stm0::int_ActualHV <- int_ActualHV,
+							stm0::ActualHV_1 <- ActualHV_1,
+							stm0::ActualHV_2 <- ActualHV_2
+						]]
+					)
+						[|
+							union(
+								{|
+								|},
+								{|
+								|}
+							)
+						|]
+					Memory(id__)
+				)
+				\ union(
+					{|
+					|},
+					{|
+					|}
+				)
+				[|{|terminate|}|>SKIP
+			)
+		)
+		
+		HEXT(id__) = O__(id__) [|shared_variable_events|] SKIP	
+	endmodule

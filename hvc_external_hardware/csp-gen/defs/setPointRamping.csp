@@ -1,0 +1,587 @@
+module OP_setPointRamping
+	-- Only the undefined operations are declared here.
+	-- If the state machine is in isolation, all required operations will be undefined.
+	-- If it is in the context of a controller, the required operations not provided by the
+	-- controller will be declared here, and the defined operations will be defined in the
+	-- context of the Controller module, and therefore within scope of the state machien module.
+	CALL__disableHV(id__,
+			    arg) =  disableHVCall.arg -> SKIP
+	
+	
+	
+	-- definition of functions used to expose flow channels
+	ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+					   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+					   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+					   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+						 
+	ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+				[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+				[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+				[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	
+	-- declaring identifiers of state and final states
+	datatype SIDS = SID_setPointRamping
+	              | SID_setPointRamping_f0
+	
+	-- declaring identifiers of transitions
+	datatype TIDS = NULLTRANSITION__
+	              | TID_setPointRamping_t0
+	              | TID_setPointRamping_t1
+	              | TID_setPointRamping_t2
+	              | TID_setPointRamping_t3
+	              | TID_setPointRamping_t4
+	              | TID_setPointRamping_t5
+	              | TID_setPointRamping_t6
+	              | TID_setPointRamping_t7
+	              | TID_setPointRamping_t8
+	              | TID_setPointRamping_t9
+	              | TID_setPointRamping_t10
+	              | TID_setPointRamping_t11
+	
+	-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+	
+	ITIDS = {
+	}
+	
+	int_int = {|
+	|}
+		
+	
+	internal_events = {|enter,entered,exit,exited|}
+	shared_variable_events = {|
+		set_EXT_HVEnabled,
+		set_EXT_currentState,
+		set_EXT_dutyCyclePWM1,
+		set_EXT_mSetPoint
+	|}
+			
+	
+	-- declaring all states
+	CS_setPointRamping_f0_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_setPointRamping_f0},
+		y____ <- {SID_setPointRamping_f0}
+	|}
+	
+	
+	setPointRamping_f0_triggers = {|
+	|}
+	
+	State_setPointRamping_f0(id__,
+			    const_setPointRamping_rampStep) = let
+		State_setPointRamping_f0_execute(id__,o____) = SKIP; 
+			entered!o____!SID_setPointRamping_f0 ->
+			terminate -> SKIP
+	within
+		enter?x____:diff(SIDS,{SID_setPointRamping_f0})!SID_setPointRamping_f0 -> (State_setPointRamping_f0_execute(id__,x____))
+	
+	
+	I_setPointRamping_i0(id__,
+			    const_setPointRamping_rampStep) = let
+		J_setPointRamping_j5(id__,
+				    const_setPointRamping_rampStep) = (
+					(internal__!TID_setPointRamping_t1 -> true & (set_mSetPoint!0 -> SKIP);true&CALL__disableHV(
+								id__,
+								false
+							);enter!SID_setPointRamping!SID_setPointRamping_f0 -> entered!SID_setPointRamping!SID_setPointRamping_f0 ->
+					SKIP
+					)[]
+					(internal__!TID_setPointRamping_t2 -> J_setPointRamping_j0(id__,
+							    const_setPointRamping_rampStep))
+					)
+		J_setPointRamping_j3(id__,
+				    const_setPointRamping_rampStep) = (
+					(internal__!TID_setPointRamping_t9 -> get_newSetPoint?newSetPoint -> true & (set_mSetPoint!newSetPoint -> SKIP);J_setPointRamping_j4(id__,
+							    const_setPointRamping_rampStep))[]
+					(internal__!TID_setPointRamping_t10 -> J_setPointRamping_j4(id__,
+							    const_setPointRamping_rampStep))
+					)
+		J_setPointRamping_j4(id__,
+				    const_setPointRamping_rampStep) = (
+					(internal__!TID_setPointRamping_t8 -> enter!SID_setPointRamping!SID_setPointRamping_f0 -> entered!SID_setPointRamping!SID_setPointRamping_f0 ->
+					SKIP
+					)
+					)
+		J_setPointRamping_j0(id__,
+				    const_setPointRamping_rampStep) = (
+					(internal__!TID_setPointRamping_t3 -> get_mSetPoint?mSetPoint -> true & (set_mSetPoint!Minus(mSetPoint, const_setPointRamping_rampStep, core_real) -> SKIP);J_setPointRamping_j1(id__,
+							    const_setPointRamping_rampStep))[]
+					(internal__!TID_setPointRamping_t7 -> get_mSetPoint?mSetPoint -> true & (set_mSetPoint!Plus(mSetPoint, const_setPointRamping_rampStep, core_real) -> SKIP);J_setPointRamping_j3(id__,
+							    const_setPointRamping_rampStep))[]
+					(internal__!TID_setPointRamping_t11 -> enter!SID_setPointRamping!SID_setPointRamping_f0 -> entered!SID_setPointRamping!SID_setPointRamping_f0 ->
+					SKIP
+					)
+					)
+		J_setPointRamping_j2(id__,
+				    const_setPointRamping_rampStep) = (
+					(internal__!TID_setPointRamping_t6 -> enter!SID_setPointRamping!SID_setPointRamping_f0 -> entered!SID_setPointRamping!SID_setPointRamping_f0 ->
+					SKIP
+					)
+					)
+		J_setPointRamping_j1(id__,
+				    const_setPointRamping_rampStep) = (
+					(internal__!TID_setPointRamping_t4 -> get_newSetPoint?newSetPoint -> true & (set_mSetPoint!newSetPoint -> SKIP);J_setPointRamping_j2(id__,
+							    const_setPointRamping_rampStep))[]
+					(internal__!TID_setPointRamping_t5 -> J_setPointRamping_j2(id__,
+							    const_setPointRamping_rampStep))
+					)
+		T_setPointRamping_t0(id__,
+				    const_setPointRamping_rampStep) = internal__!TID_setPointRamping_t0 -> J_setPointRamping_j5(id__,
+				    const_setPointRamping_rampStep)
+	within
+		T_setPointRamping_t0(id__,
+				    const_setPointRamping_rampStep)
+	
+	
+	State_setPointRamping_f0_R(id__,
+			    const_setPointRamping_rampStep) = 
+		State_setPointRamping_f0(id__,
+				    const_setPointRamping_rampStep)
+			[|diff(int_int,setPointRamping_f0_triggers)|]
+		SKIP
+			 		
+		
+	STM(id__,
+			    const_setPointRamping_rampStep) = (
+		I_setPointRamping_i0(id__,
+				    const_setPointRamping_rampStep)
+			[|
+				{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+					x____ <- diff(SIDS,{SID_setPointRamping_f0}),
+					y____ <- {SID_setPointRamping_f0}
+			|}|]
+		State_setPointRamping_f0_R(id__,
+				    const_setPointRamping_rampStep)
+	)
+	
+	-- optimized memory process
+	channel getV_newSetPoint: core_real
+	channel getV_HVEnabled: core_boolean
+	channel getV_currentState: State
+	channel getV_dutyCyclePWM1: duty
+	channel getV_mSetPoint: core_real
+	
+	-- individual memory processes
+	Memory_newSetPoint(newSetPoint) = (
+		get_newSetPoint!newSetPoint -> Memory_newSetPoint(newSetPoint)
+		[]
+		getV_newSetPoint!newSetPoint -> Memory_newSetPoint(newSetPoint)
+		[]
+		set_newSetPoint?x__ -> Memory_newSetPoint(x__)
+	)
+	Memory_HVEnabled(HVEnabled) = (
+		get_HVEnabled!HVEnabled -> Memory_HVEnabled(HVEnabled)
+		[]
+		getV_HVEnabled!HVEnabled -> Memory_HVEnabled(HVEnabled)
+		[]
+		set_HVEnabled?x__ -> Memory_HVEnabled(x__)
+		[]
+		set_EXT_HVEnabled?x__ -> Memory_HVEnabled(x__)
+	)
+	Memory_currentState(currentState) = (
+		get_currentState!currentState -> Memory_currentState(currentState)
+		[]
+		getV_currentState!currentState -> Memory_currentState(currentState)
+		[]
+		set_currentState?x__ -> Memory_currentState(x__)
+		[]
+		set_EXT_currentState?x__ -> Memory_currentState(x__)
+	)
+	Memory_dutyCyclePWM1(dutyCyclePWM1) = (
+		get_dutyCyclePWM1!dutyCyclePWM1 -> Memory_dutyCyclePWM1(dutyCyclePWM1)
+		[]
+		getV_dutyCyclePWM1!dutyCyclePWM1 -> Memory_dutyCyclePWM1(dutyCyclePWM1)
+		[]
+		set_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+		[]
+		set_EXT_dutyCyclePWM1?x__ -> Memory_dutyCyclePWM1(x__)
+	)
+	Memory_mSetPoint(mSetPoint) = (
+		get_mSetPoint!mSetPoint -> Memory_mSetPoint(mSetPoint)
+		[]
+		getV_mSetPoint!mSetPoint -> Memory_mSetPoint(mSetPoint)
+		[]
+		set_mSetPoint?x__ -> Memory_mSetPoint(x__)
+		[]
+		set_EXT_mSetPoint?x__ -> Memory_mSetPoint(x__)
+	)
+	
+	-- processes that read variables and offer transitions
+	MemoryTransitions(id__, newSetPoint, HVEnabled, currentState, dutyCyclePWM1, mSetPoint) = 		
+	(internal__!TID_setPointRamping_t0 -> SKIP
+	[]
+	((newSetPoint<=0))&(internal__!TID_setPointRamping_t1 -> SKIP)
+	[]
+	((newSetPoint>0))&(internal__!TID_setPointRamping_t2 -> SKIP)
+	[]
+	((mSetPoint>newSetPoint))&(internal__!TID_setPointRamping_t3 -> SKIP)
+	[]
+	((mSetPoint<newSetPoint))&(internal__!TID_setPointRamping_t4 -> SKIP)
+	[]
+	((mSetPoint>=newSetPoint))&(internal__!TID_setPointRamping_t5 -> SKIP)
+	[]
+	internal__!TID_setPointRamping_t6 -> SKIP
+	[]
+	((mSetPoint<newSetPoint))&(internal__!TID_setPointRamping_t7 -> SKIP)
+	[]
+	internal__!TID_setPointRamping_t8 -> SKIP
+	[]
+	((mSetPoint>newSetPoint))&(internal__!TID_setPointRamping_t9 -> SKIP)
+	[]
+	((mSetPoint<=newSetPoint))&(internal__!TID_setPointRamping_t10 -> SKIP)
+	[]
+	((mSetPoint==newSetPoint))&(internal__!TID_setPointRamping_t11 -> SKIP)[]
+	set_newSetPoint?x__ -> SKIP[]
+	set_HVEnabled?x__ -> SKIP[]
+	set_EXT_HVEnabled?x__ -> SKIP[]
+	set_currentState?x__ -> SKIP[]
+	set_EXT_currentState?x__ -> SKIP[]
+	set_dutyCyclePWM1?x__ -> SKIP[]
+	set_EXT_dutyCyclePWM1?x__ -> SKIP[]
+	set_mSetPoint?x__ -> SKIP[]
+	set_EXT_mSetPoint?x__ -> SKIP)
+	
+	MemoryTransitions_setPointRamping(id__, const_setPointRamping_rampStep) = (getV_newSetPoint?newSetPoint ->
+	getV_HVEnabled?HVEnabled ->
+	getV_currentState?currentState ->
+	getV_dutyCyclePWM1?dutyCyclePWM1 ->
+	getV_mSetPoint?mSetPoint ->
+	MemoryTransitions(id__, newSetPoint, HVEnabled, currentState, dutyCyclePWM1, mSetPoint)			
+	); MemoryTransitions_setPointRamping(id__, const_setPointRamping_rampStep)
+			
+	
+	-- synchronisation, hiding and process sets 
+	MemoryVariablesProcesses_setPointRamping = Union(
+		{
+			{
+				(Memory_newSetPoint(0),{|get_newSetPoint,getV_newSetPoint,set_newSetPoint|}),
+				(Memory_HVEnabled(true),{|get_HVEnabled,set_HVEnabled,set_EXT_HVEnabled,getV_HVEnabled|}),
+				(Memory_currentState(State_Wait24Vpower),{|getV_currentState,set_EXT_currentState,get_currentState,set_currentState|}),
+				(Memory_dutyCyclePWM1(0),{|set_dutyCyclePWM1,getV_dutyCyclePWM1,get_dutyCyclePWM1,set_EXT_dutyCyclePWM1|}),
+				(Memory_mSetPoint(0),{|get_mSetPoint,set_mSetPoint,getV_mSetPoint,set_EXT_mSetPoint|})
+			}
+		}
+	)
+	
+	MemoryVariablesSyncSet = Union({
+		{|
+			getV_currentState,
+			set_EXT_currentState,
+			set_mSetPoint,
+			set_EXT_mSetPoint,
+			getV_newSetPoint,
+			set_currentState,
+			set_dutyCyclePWM1,
+			getV_dutyCyclePWM1,
+			getV_mSetPoint,
+			set_HVEnabled,
+			set_EXT_HVEnabled,
+			set_EXT_dutyCyclePWM1,
+			getV_HVEnabled,
+			set_newSetPoint
+		|}	
+	})
+	
+	MemoryVariablesHideSet = Union({
+		{|
+			getV_currentState,
+			getV_dutyCyclePWM1,
+			getV_mSetPoint,
+			getV_HVEnabled,
+			getV_newSetPoint
+		|}
+	})
+	
+	-- combined individual memory processes
+	MemoryVariables = ||| (P, alpha) : MemoryVariablesProcesses_setPointRamping @ P
+	
+	-- complete memory process	
+	MemoryN(id__, const_setPointRamping_rampStep) = sbisim(diamond((sbisim(diamond(MemoryVariables)) [| MemoryVariablesSyncSet |] sbisim(diamond(MemoryTransitions_setPointRamping(id__, const_setPointRamping_rampStep)))) \ MemoryVariablesHideSet))
+	
+	-- optimised memory
+	-- Sets of named elements identified according to transition conditions:
+	-- {}
+	-- {OP_setPointRamping::mSetPoint,OP_setPointRamping::newSetPoint}
+	-- Summary of all identified named elements:
+	-- {
+	-- OP_setPointRamping::dutyCyclePWM1
+	-- OP_setPointRamping::mSetPoint
+	-- OP_setPointRamping::newSetPoint
+	-- OP_setPointRamping::HVEnabled
+	-- OP_setPointRamping::currentState
+	-- }
+	
+	-- Allocation plan:
+	-- 0:{}
+	--	=> {
+	--		TID_setPointRamping_t6,
+	--		TID_setPointRamping_t8,
+	--		TID_setPointRamping_t0}
+	-- 1:{OP_setPointRamping::mSetPoint,OP_setPointRamping::newSetPoint}
+	--	=> {
+	--		TID_setPointRamping_t7,
+	--		TID_setPointRamping_t1,
+	--		TID_setPointRamping_t11,
+	--		TID_setPointRamping_t9,
+	--		TID_setPointRamping_t4,
+	--		TID_setPointRamping_t2,
+	--		TID_setPointRamping_t10,
+	--		TID_setPointRamping_t5,
+	--		TID_setPointRamping_t3}
+	
+	-- Memory transition processes
+	MemoryTransitions_opt_0(id__) =
+	(
+		let
+			Update = Current(id__)
+			Current(id__)
+			 	   = 
+			 	   internal__!TID_setPointRamping_t6 -> Update
+			 	   []
+			 	   internal__!TID_setPointRamping_t8 -> Update
+			 	   []
+			 	   internal__!TID_setPointRamping_t0 -> Update
+		within
+			Update
+	)
+	MemoryTransitions_opt_1(id__) =
+	(
+		let
+			Update = 
+			get_mSetPoint?mSetPoint ->
+			get_newSetPoint?newSetPoint ->
+			Current(id__,
+				 mSetPoint,
+				 newSetPoint)
+			Current(id__,
+				 mSetPoint,
+				 newSetPoint)
+			 	   = 
+			 	   ((mSetPoint<newSetPoint))&(internal__!TID_setPointRamping_t7 -> Update)
+			 	   []
+			 	   ((newSetPoint<=0))&(internal__!TID_setPointRamping_t1 -> Update)
+			 	   []
+			 	   ((mSetPoint==newSetPoint))&(internal__!TID_setPointRamping_t11 -> Update)
+			 	   []
+			 	   ((mSetPoint>newSetPoint))&(internal__!TID_setPointRamping_t9 -> Update)
+			 	   []
+			 	   ((mSetPoint<newSetPoint))&(internal__!TID_setPointRamping_t4 -> Update)
+			 	   []
+			 	   ((newSetPoint>0))&(internal__!TID_setPointRamping_t2 -> Update)
+			 	   []
+			 	   ((mSetPoint<=newSetPoint))&(internal__!TID_setPointRamping_t10 -> Update)
+			 	   []
+			 	   ((mSetPoint>=newSetPoint))&(internal__!TID_setPointRamping_t5 -> Update)
+			 	   []
+			 	   ((mSetPoint>newSetPoint))&(internal__!TID_setPointRamping_t3 -> Update)
+			 	   	 
+			 	   	 []
+			 	   	 set_mSetPoint?x__ -> Update
+			 	   	 []
+			 	   	 set_EXT_mSetPoint?x__ -> Update
+			 	   	 []
+			 	   	 
+			 	   	 set_newSetPoint?x__ -> Update
+		within
+			Update
+	)
+	
+	-- Memory cell processes
+	Memory_opt_dutyCyclePWM1(x__) = ( 
+		get_dutyCyclePWM1!x__ -> Memory_opt_dutyCyclePWM1(x__)
+		[]
+		set_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+		[]
+		set_EXT_dutyCyclePWM1?x__ -> Memory_opt_dutyCyclePWM1(x__)
+	)
+	Memory_opt_mSetPoint(x__) = ( 
+		get_mSetPoint!x__ -> Memory_opt_mSetPoint(x__)
+		[]
+		set_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+		[]
+		set_EXT_mSetPoint?x__ -> Memory_opt_mSetPoint(x__)
+	)
+	Memory_opt_newSetPoint(x__) = ( 
+		get_newSetPoint!x__ -> Memory_opt_newSetPoint(x__)
+		[]
+		set_newSetPoint?x__ -> Memory_opt_newSetPoint(x__)
+	)
+	Memory_opt_HVEnabled(x__) = ( 
+		get_HVEnabled!x__ -> Memory_opt_HVEnabled(x__)
+		[]
+		set_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+		[]
+		set_EXT_HVEnabled?x__ -> Memory_opt_HVEnabled(x__)
+	)
+	Memory_opt_currentState(x__) = ( 
+		get_currentState!x__ -> Memory_opt_currentState(x__)
+		[]
+		set_currentState?x__ -> Memory_opt_currentState(x__)
+		[]
+		set_EXT_currentState?x__ -> Memory_opt_currentState(x__)
+	)
+	
+	-- Composition of memory, StateMachine and Memory transition processes
+	
+	MemorySTM_opt(id__, newSetPoint, const_setPointRamping_rampStep) =
+		dbisim(
+		  sbisim(Memory_opt_mSetPoint(0)
+		      	[| {|set_mSetPoint,get_mSetPoint,set_EXT_mSetPoint|} |] 
+		      	dbisim(
+		      	  sbisim(Memory_opt_newSetPoint(0)
+		      	      	[| {|get_newSetPoint,set_newSetPoint|} |] 
+		      	      	sbisim(	
+		      	      	  dbisim(
+		      	      	    sbisim(sbisim(	
+		      	      	      dbisim(
+		      	      	        sbisim(dbisim(sbisim(Memory_opt_dutyCyclePWM1(0)
+		      	      	              	[| {|set_dutyCyclePWM1,get_dutyCyclePWM1|} |] 
+		      	      	              	dbisim(sbisim(Memory_opt_HVEnabled(true)
+		      	      	              	      	[| {|set_HVEnabled,get_HVEnabled|} |] 
+		      	      	              	      	dbisim(sbisim(Memory_opt_currentState(State_Wait24Vpower)
+		      	      	              	      	      	[| {|get_currentState,set_currentState|} |] 
+		      	      	              	      	      	STM_core(id__, newSetPoint, const_setPointRamping_rampStep)
+		      	      	              	      	      	)\ {|get_currentState|}
+		      	      	              	      	      )
+		      	      	              	      	)\ {|get_HVEnabled|}
+		      	      	              	      )
+		      	      	              	)\ {|get_dutyCyclePWM1|}
+		      	      	              )
+		      	      	          	  [| {|internal__.TID_setPointRamping_t0,internal__.TID_setPointRamping_t6,internal__.TID_setPointRamping_t8|} |]
+		      	      	          	  MemoryTransitions_opt_0(id__)
+		      	      	          	  )\{|internal__.TID_setPointRamping_t0,internal__.TID_setPointRamping_t6,internal__.TID_setPointRamping_t8|})
+		      	      	          )
+		      	      	      	  [| {|internal__.TID_setPointRamping_t2,internal__.TID_setPointRamping_t10,internal__.TID_setPointRamping_t3,internal__.TID_setPointRamping_t11,internal__.TID_setPointRamping_t4,internal__.TID_setPointRamping_t5,set_mSetPoint,internal__.TID_setPointRamping_t1,internal__.TID_setPointRamping_t7,set_newSetPoint,internal__.TID_setPointRamping_t9|} |]
+		      	      	      	  MemoryTransitions_opt_1(id__)
+		      	      	      	  )\{|internal__.TID_setPointRamping_t2,internal__.TID_setPointRamping_t10,internal__.TID_setPointRamping_t3,internal__.TID_setPointRamping_t11,internal__.TID_setPointRamping_t4,internal__.TID_setPointRamping_t5,internal__.TID_setPointRamping_t1,internal__.TID_setPointRamping_t7,internal__.TID_setPointRamping_t9|})
+		      	      	      )
+		      	      	) \ {|get_newSetPoint,set_newSetPoint|}
+		      	      )
+		      	) \ {|get_mSetPoint|}
+		      )
+	
+	-- main process
+	
+	MachineMemorySyncSet = Union({
+		union(
+			union(
+				{|get_newSetPoint,set_newSetPoint|},
+				{||}
+			)
+				
+			,
+			{|internal__.TID_setPointRamping_t0,
+			internal__.TID_setPointRamping_t1,
+			internal__.TID_setPointRamping_t2,
+			internal__.TID_setPointRamping_t3,
+			internal__.TID_setPointRamping_t4,
+			internal__.TID_setPointRamping_t5,
+			internal__.TID_setPointRamping_t6,
+			internal__.TID_setPointRamping_t7,
+			internal__.TID_setPointRamping_t8,
+			internal__.TID_setPointRamping_t9,
+			internal__.TID_setPointRamping_t10,
+			internal__.TID_setPointRamping_t11|}
+		)
+	})
+	
+	MachineMemoryHidingSet = Union({
+		union(
+			{|get_newSetPoint,set_newSetPoint|},
+			{||}
+		)
+	})
+	
+	MachineInternalEvents = {|
+		internal__
+	|}
+	AUX(id__, newSetPoint, const_setPointRamping_rampStep) = (
+		(
+			set_newSetPoint!newSetPoint -> STM(id__,
+					    const_setPointRamping_rampStep)
+				[|MachineMemorySyncSet|]
+			sbisim(diamond(MemoryN(id__, const_setPointRamping_rampStep)))
+		)[[
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet
+	)
+	[|{|terminate|}|>SKIP\MachineInternalEvents	
+	
+	STM_core(id__, newSetPoint, const_setPointRamping_rampStep) = 
+		(set_newSetPoint!newSetPoint -> STM(id__,
+				    const_setPointRamping_rampStep)
+		)
+		
+	AUX_opt(id__, newSetPoint, const_setPointRamping_rampStep) = 
+		(MemorySTM_opt(id__, newSetPoint, const_setPointRamping_rampStep)
+		)[[
+			int_enablePWM__.x____ <- int_enablePWM,
+			int_dutyCyclePWM1__.x____ <- int_dutyCyclePWM1
+			| x____ <- TIDS
+		]]
+		[|{|terminate|}|>SKIP\MachineInternalEvents	
+	
+exports
+	-- flow channels
+	channel internal__ : TIDS
+	channel enteredV, enterV, exitV, exitedV : SIDS
+	channel enter, entered: SIDS.SIDS
+	channel exit,exited: SIDS.SIDS
+	channel terminate
+	
+	-- variable channels
+	channel get_newSetPoint, set_newSetPoint: core_real
+	channel get_HVEnabled, set_HVEnabled: core_boolean
+	channel get_currentState, set_currentState: State
+	channel get_dutyCyclePWM1, set_dutyCyclePWM1: duty
+	channel get_mSetPoint, set_mSetPoint: core_real
+			
+	-- shared variable channels
+	channel set_EXT_HVEnabled: core_boolean
+	channel set_EXT_currentState: State
+	channel set_EXT_dutyCyclePWM1: duty
+	channel set_EXT_mSetPoint: core_real
+	
+	-- local variable channels for defined operations that are required by the state machine
+	
+	-- declaring state machine events
+	channel int_enablePWM__: TIDS.InOut.core_boolean
+	channel int_enablePWM: InOut.core_boolean
+	channel int_dutyCyclePWM1__: TIDS.InOut.duty
+	channel int_dutyCyclePWM1: InOut.duty
+	
+	-- declaring call and ret events for undefined operations
+	channel disableHVCall: core_boolean
+	
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	FVS__(id__, newSetPoint, const_setPointRamping_rampStep) = AUX_opt(id__, newSetPoint, const_setPointRamping_rampStep) \ {|terminate|}
+	
+	-- original process using the unoptimised memory model
+	Dunopt__(id__, newSetPoint, const_setPointRamping_rampStep) = (AUX(id__, newSetPoint, const_setPointRamping_rampStep) \ internal_events) \ {|terminate|}
+	
+	D__(id__, newSetPoint, const_setPointRamping_rampStep) = (AUX_opt(id__, newSetPoint, const_setPointRamping_rampStep) \ internal_events) \ {|terminate|}
+	
+	O__(id__, newSetPoint, const_setPointRamping_rampStep) = sbisim(diamond(D__(id__, newSetPoint, const_setPointRamping_rampStep)))
+	VS__(id__, newSetPoint, const_setPointRamping_rampStep) = ShowV(FVS__(id__, newSetPoint, const_setPointRamping_rampStep))
+	VS_O__(id__, newSetPoint, const_setPointRamping_rampStep) = sbisim(diamond(VS__(id__, newSetPoint, const_setPointRamping_rampStep)))
+endmodule

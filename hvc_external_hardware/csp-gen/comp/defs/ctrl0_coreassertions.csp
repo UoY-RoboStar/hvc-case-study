@@ -1,0 +1,37 @@
+include "core_defs.csp"
+include "state_defs.csp"
+include "file_Transition_system_defs.csp"
+include "ctrl0.csp"
+include "robochart_defs.csp"
+include "../instantiations.csp"
+channel r__
+-- generate ctrl0
+P_ctrl0 = let
+	id__ = 0
+	const_State_machine_cycleTime = ms(10)
+	const_setPointRamping_rampStep = 1
+within
+	ctrl0::O__(id__,
+			    const_ctrl0_stm_ref0_cycleTime,
+			   	const_setPointRamping_rampStep)
+
+assert P_ctrl0 :[deadlock-free]	
+assert P_ctrl0;RUN({r__}) :[deadlock-free]
+assert P_ctrl0 :[deterministic]
+assert P_ctrl0 :[divergence-free]
+
+-- generate ctrl0_stm_ref0
+P_ctrl0_stm_ref0 = let
+	id = 0
+	const_State_machine_cycleTime = ms(10)
+	const_setPointRamping_rampStep = 1
+within
+	ctrl0::stm_ref0::O__(
+		id,
+		const_State_machine_cycleTime,
+		const_setPointRamping_rampStep
+	)
+assert P_ctrl0_stm_ref0 :[deadlock-free]	
+assert P_ctrl0_stm_ref0;RUN({r__}) :[deadlock-free]
+assert P_ctrl0_stm_ref0 :[deterministic]
+assert P_ctrl0_stm_ref0 :[divergence-free]

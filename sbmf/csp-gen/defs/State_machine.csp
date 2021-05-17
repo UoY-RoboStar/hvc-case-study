@@ -1,0 +1,2778 @@
+module State_machine
+exports
+	-- flow channels
+	channel internal__ : TIDS
+	channel enteredV, enterV, exitV, exitedV : SIDS
+	channel enter, entered: SIDS.SIDS
+	channel exit,exited: SIDS.SIDS
+	channel terminate
+	
+	-- variable channels
+	channel get_power, set_power: Power
+	channel get_setPoint, set_setPoint: core_real
+	channel get_res, set_res: core_boolean
+	channel get_errorFlag, set_errorFlag: core_boolean
+	channel get_lim, set_lim: core_boolean
+	channel get_supplyLim, set_supplyLim: core_boolean
+	channel get_ActualHV, set_ActualHV: core_real
+	channel get_errorAck, set_errorAck: core_boolean
+	channel get_overLimit, set_overLimit: core_real
+	channel get_underLimit, set_underLimit: core_real
+			
+	-- shared variable channels
+	
+	-- local variable channels for defined operations that are required by the state machine
+	
+	-- declaring state machine events
+	channel currentState__: TIDS.InOut.State
+	channel currentState: InOut.State
+	channel ext_setPoint__: TIDS.InOut.core_real
+	channel ext_setPoint: InOut.core_real
+	channel ext_pow24VStatus__: TIDS.InOut.Power
+	channel ext_pow24VStatus: InOut.Power
+	channel int_overLimit__: TIDS.InOut.core_real
+	channel int_overLimit: InOut.core_real
+	channel int_pwmSignal__: TIDS.InOut.Power
+	channel int_pwmSignal: InOut.Power
+	channel int_underLimit__: TIDS.InOut.core_real
+	channel int_underLimit: InOut.core_real
+	channel int_DisableHV__: TIDS.InOut
+	channel int_DisableHV: InOut
+	channel int_ActualHV__: TIDS.InOut.core_real
+	channel int_ActualHV: InOut.core_real
+	
+	-- declaring call and ret events for undefined operations
+	channel checkLimitsCall
+	channel supplyVoltCheckCall
+	channel disableHVCall: core_boolean
+	
+	-- Only the undefined operations are declared here.
+	-- If the state machine is in isolation, all required operations will be undefined.
+	-- If it is in the context of a controller, the required operations not provided by the
+	-- controller will be declared here, and the defined operations will be defined in the
+	-- context of the Controller module, and therefore within scope of the state machien module.
+	CALL__checkLimits(id__) =  checkLimitsCall -> SKIP
+	
+	CALL__supplyVoltCheck(id__) =  supplyVoltCheckCall -> SKIP
+	
+	CALL__disableHV(id__,
+			    arg) =  disableHVCall.arg -> SKIP
+	
+	
+	
+	-- definition of functions used to expose flow channels
+	ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
+					   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
+					   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
+					   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
+						 
+	ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
+				[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+				[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
+				[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
+	
+	-- declaring identifiers of state and final states
+	datatype SIDS = SID_State_machine
+	              | SID_State_machine_Ramping
+	              | SID_State_machine_Init
+	              | SID_State_machine_Init_si0
+	              | SID_State_machine_Wait24Vpower
+	              | SID_State_machine_Wait24Vpower_si0
+	              | SID_State_machine_Wait24Vpower_s1
+	              | SID_State_machine_ClosedLoop
+	              | SID_State_machine_ClosedLoop_s1
+	              | SID_State_machine_ClosedLoop_s2
+	              | SID_State_machine_ClosedLoop_s2_s0
+	              | SID_State_machine_ClosedLoop_s2_s1
+	              | SID_State_machine_ClosedLoop_s3
+	              | SID_State_machine_ClosedLoop_s4
+	              | SID_State_machine_ErrorMode
+	              | SID_State_machine_ErrorMode_f0
+	              | SID_State_machine_ErrorMode_s1
+	              | SID_State_machine_ErrorMode_s2
+	
+	-- declaring identifiers of transitions
+	datatype TIDS = NULLTRANSITION__
+	              | TID_State_machine_Init_t0
+	              | TID_State_machine_Wait24Vpower_t0
+	              | TID_State_machine_Wait24Vpower_t1
+	              | TID_State_machine_ClosedLoop_s2_t0
+	              | TID_State_machine_ClosedLoop_s2_t1
+	              | TID_State_machine_ClosedLoop_s2_t5
+	              | TID_State_machine_ClosedLoop_s2_t2
+	              | TID_State_machine_ClosedLoop_t1
+	              | TID_State_machine_ClosedLoop_t2
+	              | TID_State_machine_ClosedLoop_t3
+	              | TID_State_machine_ClosedLoop_t4
+	              | TID_State_machine_ClosedLoop_t5
+	              | TID_State_machine_ClosedLoop_t0
+	              | TID_State_machine_ErrorMode_t0
+	              | TID_State_machine_ErrorMode_t2
+	              | TID_State_machine_ErrorMode_t4
+	              | TID_State_machine_ErrorMode_t5
+	              | TID_State_machine_ErrorMode_t1
+	              | TID_State_machine_t0
+	              | TID_State_machine_t1
+	              | TID_State_machine_t2
+	              | TID_State_machine_t3
+	              | TID_State_machine_t4
+	              | TID_State_machine_t5
+	              | TID_State_machine_t6
+	              | TID_State_machine_t8
+	              | TID_State_machine_t11
+	              | TID_State_machine_t7
+	
+	-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+	
+	ITIDS = {
+		TID_State_machine_Wait24Vpower_t1,	TID_State_machine_ClosedLoop_s2_t1,	TID_State_machine_ClosedLoop_s2_t2,	TID_State_machine_ClosedLoop_t1,	TID_State_machine_ClosedLoop_t2,	TID_State_machine_ClosedLoop_t3,	TID_State_machine_ClosedLoop_t4,	TID_State_machine_ClosedLoop_t5,	TID_State_machine_ErrorMode_t0,	TID_State_machine_ErrorMode_t4,	TID_State_machine_t0,	TID_State_machine_t1,	TID_State_machine_t2,	TID_State_machine_t3,	TID_State_machine_t4,	TID_State_machine_t6,	TID_State_machine_t8,	TID_State_machine_t11
+	}
+	
+	int_int = {|
+		currentState__.TID_State_machine_Wait24Vpower_t1,
+		ext_setPoint__.TID_State_machine_Wait24Vpower_t1,
+		ext_pow24VStatus__.TID_State_machine_Wait24Vpower_t1,
+		int_overLimit__.TID_State_machine_Wait24Vpower_t1,
+		int_pwmSignal__.TID_State_machine_Wait24Vpower_t1,
+		int_underLimit__.TID_State_machine_Wait24Vpower_t1,
+		int_DisableHV__.TID_State_machine_Wait24Vpower_t1,
+		int_ActualHV__.TID_State_machine_Wait24Vpower_t1,
+		internal__.TID_State_machine_Wait24Vpower_t1,
+		currentState__.TID_State_machine_ClosedLoop_s2_t1,
+		ext_setPoint__.TID_State_machine_ClosedLoop_s2_t1,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_s2_t1,
+		int_overLimit__.TID_State_machine_ClosedLoop_s2_t1,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_s2_t1,
+		int_underLimit__.TID_State_machine_ClosedLoop_s2_t1,
+		int_DisableHV__.TID_State_machine_ClosedLoop_s2_t1,
+		int_ActualHV__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		currentState__.TID_State_machine_ClosedLoop_s2_t2,
+		ext_setPoint__.TID_State_machine_ClosedLoop_s2_t2,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_s2_t2,
+		int_overLimit__.TID_State_machine_ClosedLoop_s2_t2,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_s2_t2,
+		int_underLimit__.TID_State_machine_ClosedLoop_s2_t2,
+		int_DisableHV__.TID_State_machine_ClosedLoop_s2_t2,
+		int_ActualHV__.TID_State_machine_ClosedLoop_s2_t2,
+		internal__.TID_State_machine_ClosedLoop_s2_t2,
+		currentState__.TID_State_machine_ClosedLoop_t1,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t1,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t1,
+		int_overLimit__.TID_State_machine_ClosedLoop_t1,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t1,
+		int_underLimit__.TID_State_machine_ClosedLoop_t1,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t1,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t1,
+		internal__.TID_State_machine_ClosedLoop_t1,
+		currentState__.TID_State_machine_ClosedLoop_t2,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t2,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t2,
+		int_overLimit__.TID_State_machine_ClosedLoop_t2,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t2,
+		int_underLimit__.TID_State_machine_ClosedLoop_t2,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t2,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t2,
+		internal__.TID_State_machine_ClosedLoop_t2,
+		currentState__.TID_State_machine_ClosedLoop_t3,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t3,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t3,
+		int_overLimit__.TID_State_machine_ClosedLoop_t3,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t3,
+		int_underLimit__.TID_State_machine_ClosedLoop_t3,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t3,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t3,
+		internal__.TID_State_machine_ClosedLoop_t3,
+		currentState__.TID_State_machine_ClosedLoop_t4,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t4,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t4,
+		int_overLimit__.TID_State_machine_ClosedLoop_t4,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t4,
+		int_underLimit__.TID_State_machine_ClosedLoop_t4,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t4,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t4,
+		internal__.TID_State_machine_ClosedLoop_t4,
+		currentState__.TID_State_machine_ClosedLoop_t5,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t5,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t5,
+		int_overLimit__.TID_State_machine_ClosedLoop_t5,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t5,
+		int_underLimit__.TID_State_machine_ClosedLoop_t5,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t5,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t5,
+		internal__.TID_State_machine_ClosedLoop_t5,
+		currentState__.TID_State_machine_ErrorMode_t0,
+		ext_setPoint__.TID_State_machine_ErrorMode_t0,
+		ext_pow24VStatus__.TID_State_machine_ErrorMode_t0,
+		int_overLimit__.TID_State_machine_ErrorMode_t0,
+		int_pwmSignal__.TID_State_machine_ErrorMode_t0,
+		int_underLimit__.TID_State_machine_ErrorMode_t0,
+		int_DisableHV__.TID_State_machine_ErrorMode_t0,
+		int_ActualHV__.TID_State_machine_ErrorMode_t0,
+		internal__.TID_State_machine_ErrorMode_t0,
+		currentState__.TID_State_machine_ErrorMode_t4,
+		ext_setPoint__.TID_State_machine_ErrorMode_t4,
+		ext_pow24VStatus__.TID_State_machine_ErrorMode_t4,
+		int_overLimit__.TID_State_machine_ErrorMode_t4,
+		int_pwmSignal__.TID_State_machine_ErrorMode_t4,
+		int_underLimit__.TID_State_machine_ErrorMode_t4,
+		int_DisableHV__.TID_State_machine_ErrorMode_t4,
+		int_ActualHV__.TID_State_machine_ErrorMode_t4,
+		internal__.TID_State_machine_ErrorMode_t4,
+		currentState__.TID_State_machine_t0,
+		ext_setPoint__.TID_State_machine_t0,
+		ext_pow24VStatus__.TID_State_machine_t0,
+		int_overLimit__.TID_State_machine_t0,
+		int_pwmSignal__.TID_State_machine_t0,
+		int_underLimit__.TID_State_machine_t0,
+		int_DisableHV__.TID_State_machine_t0,
+		int_ActualHV__.TID_State_machine_t0,
+		internal__.TID_State_machine_t0,
+		currentState__.TID_State_machine_t1,
+		ext_setPoint__.TID_State_machine_t1,
+		ext_pow24VStatus__.TID_State_machine_t1,
+		int_overLimit__.TID_State_machine_t1,
+		int_pwmSignal__.TID_State_machine_t1,
+		int_underLimit__.TID_State_machine_t1,
+		int_DisableHV__.TID_State_machine_t1,
+		int_ActualHV__.TID_State_machine_t1,
+		internal__.TID_State_machine_t1,
+		currentState__.TID_State_machine_t2,
+		ext_setPoint__.TID_State_machine_t2,
+		ext_pow24VStatus__.TID_State_machine_t2,
+		int_overLimit__.TID_State_machine_t2,
+		int_pwmSignal__.TID_State_machine_t2,
+		int_underLimit__.TID_State_machine_t2,
+		int_DisableHV__.TID_State_machine_t2,
+		int_ActualHV__.TID_State_machine_t2,
+		internal__.TID_State_machine_t2,
+		currentState__.TID_State_machine_t3,
+		ext_setPoint__.TID_State_machine_t3,
+		ext_pow24VStatus__.TID_State_machine_t3,
+		int_overLimit__.TID_State_machine_t3,
+		int_pwmSignal__.TID_State_machine_t3,
+		int_underLimit__.TID_State_machine_t3,
+		int_DisableHV__.TID_State_machine_t3,
+		int_ActualHV__.TID_State_machine_t3,
+		internal__.TID_State_machine_t3,
+		currentState__.TID_State_machine_t4,
+		ext_setPoint__.TID_State_machine_t4,
+		ext_pow24VStatus__.TID_State_machine_t4,
+		int_overLimit__.TID_State_machine_t4,
+		int_pwmSignal__.TID_State_machine_t4,
+		int_underLimit__.TID_State_machine_t4,
+		int_DisableHV__.TID_State_machine_t4,
+		int_ActualHV__.TID_State_machine_t4,
+		internal__.TID_State_machine_t4,
+		currentState__.TID_State_machine_t6,
+		ext_setPoint__.TID_State_machine_t6,
+		ext_pow24VStatus__.TID_State_machine_t6,
+		int_overLimit__.TID_State_machine_t6,
+		int_pwmSignal__.TID_State_machine_t6,
+		int_underLimit__.TID_State_machine_t6,
+		int_DisableHV__.TID_State_machine_t6,
+		int_ActualHV__.TID_State_machine_t6,
+		internal__.TID_State_machine_t6,
+		currentState__.TID_State_machine_t8,
+		ext_setPoint__.TID_State_machine_t8,
+		ext_pow24VStatus__.TID_State_machine_t8,
+		int_overLimit__.TID_State_machine_t8,
+		int_pwmSignal__.TID_State_machine_t8,
+		int_underLimit__.TID_State_machine_t8,
+		int_DisableHV__.TID_State_machine_t8,
+		int_ActualHV__.TID_State_machine_t8,
+		internal__.TID_State_machine_t8,
+		currentState__.TID_State_machine_t11,
+		ext_setPoint__.TID_State_machine_t11,
+		ext_pow24VStatus__.TID_State_machine_t11,
+		int_overLimit__.TID_State_machine_t11,
+		int_pwmSignal__.TID_State_machine_t11,
+		int_underLimit__.TID_State_machine_t11,
+		int_DisableHV__.TID_State_machine_t11,
+		int_ActualHV__.TID_State_machine_t11,
+		internal__.TID_State_machine_t11
+	|}
+		
+	
+	internal_events = {|enter,entered,exit,exited|}
+	shared_variable_events = {|
+	|}
+			
+	
+	-- declaring all states
+	CS_State_machine_Ramping_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_Ramping,SID_State_machine_Init,SID_State_machine_Wait24Vpower,SID_State_machine_ClosedLoop,SID_State_machine_ErrorMode},
+		y____ <- {SID_State_machine_Ramping}
+	|}
+	
+	
+	State_machine_Ramping_triggers = {|
+		internal__.TID_State_machine_t6,
+		int_DisableHV__.TID_State_machine_t11,
+		internal__.TID_State_machine_t0,
+		internal__.TID_State_machine_t1,
+		int_DisableHV__.TID_State_machine_t8,
+		internal__.TID_State_machine_t3,
+		internal__.TID_State_machine_t4,
+		internal__.TID_State_machine_t7,
+		internal__.TID_State_machine_t2
+	|}
+	
+	State_State_machine_Ramping(id__) = let
+		T_State_machine_t0(id__) = internal__!TID_State_machine_t0 ->  exit.SID_State_machine_Ramping.SID_State_machine_Ramping -> SKIP;
+							SKIP;exited.SID_State_machine_Ramping.SID_State_machine_Ramping -> SKIP;
+							enter!SID_State_machine_Ramping!SID_State_machine_Init -> entered!SID_State_machine_Ramping!SID_State_machine_Init ->
+							State_State_machine_Ramping(id__)
+		State_State_machine_Ramping_execute(id__,o____) = true&(currentState.out!State_Ramp -> SKIP); 
+			entered!o____!SID_State_machine_Ramping ->
+			(SKIP; STOP /\ (
+				T_State_machine_t0(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t0,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (
+						SKIP;
+						exited!y____!SID_State_machine_Ramping -> SKIP);
+						State_State_machine_Ramping(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_Ramping})!SID_State_machine_Ramping -> (State_State_machine_Ramping_execute(id__,x____))
+	
+	CS_State_machine_Init_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_Ramping,SID_State_machine_Init,SID_State_machine_Wait24Vpower,SID_State_machine_ClosedLoop,SID_State_machine_ErrorMode},
+		y____ <- {SID_State_machine_Init}
+	|}
+	
+	State_machine_Init_int_int = {|
+	|}
+		
+	
+	State_machine_Init_int_triggers = {|
+		internal__.TID_State_machine_Init_t0
+	|}
+	
+	State_State_machine_Init_si0_R(id__) = 
+		State_State_machine_Init_si0(id__)
+	 		[|diff(State_machine_Init_int_int,State_machine_Init_si0_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_Init(id__) = (
+		State_State_machine_Init_aux(id__)
+			[|
+				union(
+					diff(int_int, State_machine_Init_int_triggers),
+					{|enter.x____.y____,
+					  entered.x____.y____,
+					  exit.x____.y____,
+					  exited.x____.y____ |
+					  x____ <- diff(SIDS,{SID_State_machine_Init_si0}),
+					  y____ <- {SID_State_machine_Init_si0}
+				    |}
+				)
+			|]
+		State_State_machine_Init_si0_R(id__)
+	)
+	
+	State_machine_Init_triggers = {|
+		internal__.TID_State_machine_t6,
+		int_DisableHV__.TID_State_machine_t11,
+		internal__.TID_State_machine_t1,
+		int_DisableHV__.TID_State_machine_t8,
+		internal__.TID_State_machine_t3,
+		internal__.TID_State_machine_t4,
+		internal__.TID_State_machine_t7,
+		internal__.TID_State_machine_t2,
+		internal__.TID_State_machine_Init_t0
+	|}
+	
+	State_State_machine_Init_aux(id__) = let
+		T_State_machine_t1(id__) = internal__!TID_State_machine_t1 ->  exit.SID_State_machine_Init.SID_State_machine_Init -> SKIP;
+							exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+									SKIP;
+							SKIP;exited.SID_State_machine_Init.SID_State_machine_Init -> SKIP;
+							enter!SID_State_machine_Init!SID_State_machine_Wait24Vpower -> entered!SID_State_machine_Init!SID_State_machine_Wait24Vpower ->
+							State_State_machine_Init_aux(id__)
+		State_State_machine_Init_aux_execute(id__,o____) = true&(currentState.out!State_Init -> SKIP);true&CALL__disableHV(
+					id__,
+					false
+				); 
+		I_State_machine_Init_i0(id__);
+			entered!o____!SID_State_machine_Init ->
+			(SKIP; STOP /\ (
+				T_State_machine_t1(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0}) -> exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2,TID_State_machine_Init_t0})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (
+						exit!SID_State_machine_Init?z____:{SID_State_machine_Init_si0} -> exited!SID_State_machine_Init!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Init -> SKIP);
+						State_State_machine_Init_aux(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_Init})!SID_State_machine_Init -> (State_State_machine_Init_aux_execute(id__,x____))
+	
+	CS_State_machine_Init_si0_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_Init_si0},
+		y____ <- {SID_State_machine_Init_si0}
+	|}
+	
+	
+	State_machine_Init_si0_triggers = {|
+	|}
+	
+	State_State_machine_Init_si0(id__) = let
+		State_State_machine_Init_si0_execute(id__,o____) = get_setPoint?setPoint -> true & (set_overLimit!overLimitF(Plus(setPoint, 2, core_real)) -> SKIP);get_setPoint?setPoint -> true & (set_underLimit!underLimitF(Minus(setPoint, 2, core_real)) -> SKIP);get_underLimit?underLimit -> true&(int_underLimit.out!underLimit -> SKIP);get_overLimit?overLimit -> true&(int_overLimit.out!overLimit -> SKIP); 
+			entered!o____!SID_State_machine_Init_si0 ->
+			(SKIP; STOP /\ (
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__}) -> exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Init_si0 -> SKIP);
+						State_State_machine_Init_si0(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_Init_si0})!SID_State_machine_Init_si0 -> (State_State_machine_Init_si0_execute(id__,x____))
+	
+	CS_State_machine_Wait24Vpower_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_Ramping,SID_State_machine_Init,SID_State_machine_Wait24Vpower,SID_State_machine_ClosedLoop,SID_State_machine_ErrorMode},
+		y____ <- {SID_State_machine_Wait24Vpower}
+	|}
+	
+	State_machine_Wait24Vpower_int_int = {|
+		currentState__.TID_State_machine_Wait24Vpower_t1,
+		ext_setPoint__.TID_State_machine_Wait24Vpower_t1,
+		ext_pow24VStatus__.TID_State_machine_Wait24Vpower_t1,
+		int_overLimit__.TID_State_machine_Wait24Vpower_t1,
+		int_pwmSignal__.TID_State_machine_Wait24Vpower_t1,
+		int_underLimit__.TID_State_machine_Wait24Vpower_t1,
+		int_DisableHV__.TID_State_machine_Wait24Vpower_t1,
+		int_ActualHV__.TID_State_machine_Wait24Vpower_t1,
+		internal__.TID_State_machine_Wait24Vpower_t1
+	|}
+		
+	
+	State_machine_Wait24Vpower_int_triggers = {|
+		internal__.TID_State_machine_Wait24Vpower_t0,
+		internal__.TID_State_machine_Wait24Vpower_t1
+	|}
+	
+	State_State_machine_Wait24Vpower_si0_R(id__) = 
+		State_State_machine_Wait24Vpower_si0(id__)
+	 		[|diff(State_machine_Wait24Vpower_int_int,State_machine_Wait24Vpower_si0_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_Wait24Vpower_s1_R(id__) = 
+		State_State_machine_Wait24Vpower_s1(id__)
+	 		[|diff(State_machine_Wait24Vpower_int_int,State_machine_Wait24Vpower_s1_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_Wait24Vpower(id__) = (
+		State_State_machine_Wait24Vpower_aux(id__)
+			[|
+				union(
+					diff(int_int, State_machine_Wait24Vpower_int_triggers),
+					{|enter.x____.y____,
+					  entered.x____.y____,
+					  exit.x____.y____,
+					  exited.x____.y____ |
+					  x____ <- diff(SIDS,{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1}),
+					  y____ <- {SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1}
+				    |}
+				)
+			|]
+		(
+			State_State_machine_Wait24Vpower_si0_R(id__)
+				[|inter(CS_State_machine_Wait24Vpower_si0_sync,CS_State_machine_Wait24Vpower_s1_sync)|]
+			State_State_machine_Wait24Vpower_s1_R(id__)
+		)
+	)
+	
+	State_machine_Wait24Vpower_triggers = {|
+		internal__.TID_State_machine_t6,
+		int_DisableHV__.TID_State_machine_t11,
+		internal__.TID_State_machine_Wait24Vpower_t0,
+		internal__.TID_State_machine_Wait24Vpower_t1,
+		int_DisableHV__.TID_State_machine_t8,
+		internal__.TID_State_machine_t3,
+		internal__.TID_State_machine_t4,
+		internal__.TID_State_machine_t7,
+		internal__.TID_State_machine_t2
+	|}
+	
+	State_State_machine_Wait24Vpower_aux(id__) = let
+		T_State_machine_t2(id__) = internal__!TID_State_machine_t2 ->  exit.SID_State_machine_Wait24Vpower.SID_State_machine_Wait24Vpower -> SKIP;
+							exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+									SKIP;
+							SKIP;exited.SID_State_machine_Wait24Vpower.SID_State_machine_Wait24Vpower -> SKIP;
+							true & (set_res!false -> SKIP);enter!SID_State_machine_Wait24Vpower!SID_State_machine_ErrorMode -> entered!SID_State_machine_Wait24Vpower!SID_State_machine_ErrorMode ->
+							State_State_machine_Wait24Vpower_aux(id__)
+		T_State_machine_t3(id__) = internal__!TID_State_machine_t3 ->  exit.SID_State_machine_Wait24Vpower.SID_State_machine_Wait24Vpower -> SKIP;
+							exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+									SKIP;
+							SKIP;exited.SID_State_machine_Wait24Vpower.SID_State_machine_Wait24Vpower -> SKIP;
+							enter!SID_State_machine_Wait24Vpower!SID_State_machine_ClosedLoop -> entered!SID_State_machine_Wait24Vpower!SID_State_machine_ClosedLoop ->
+							State_State_machine_Wait24Vpower_aux(id__)
+		T_State_machine_t8(id__) = int_DisableHV__!TID_State_machine_t8.in ->  (exit.SID_State_machine_Wait24Vpower.SID_State_machine_Wait24Vpower -> SKIP;
+							exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+									SKIP;
+							SKIP;exited.SID_State_machine_Wait24Vpower.SID_State_machine_Wait24Vpower -> SKIP;
+							J_State_machine_j0(id__))
+		J_State_machine_j0(id__) = (
+					(internal__!TID_State_machine_t7 -> true&CALL__disableHV(
+								id__,
+								true
+							);true & (set_res!false -> SKIP);enter!SID_State_machine_Wait24Vpower!SID_State_machine_ErrorMode -> entered!SID_State_machine_Wait24Vpower!SID_State_machine_ErrorMode ->
+					State_State_machine_Wait24Vpower_aux(id__)
+					)
+					)
+		State_State_machine_Wait24Vpower_aux_execute(id__,o____) = true&(currentState.out!State_Wait24Vpower -> SKIP);true&CALL__disableHV(
+					id__,
+					false
+				); 
+		I_State_machine_Wait24Vpower_i0(id__);
+			entered!o____!SID_State_machine_Wait24Vpower ->
+			(SKIP; STOP /\ (
+				T_State_machine_t2(id__)[]
+				T_State_machine_t3(id__)[]
+				T_State_machine_t8(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_t11,TID_State_machine_Wait24Vpower_t0,TID_State_machine_Wait24Vpower_t1,TID_State_machine_t8,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (
+						exit!SID_State_machine_Wait24Vpower?z____:{SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1} -> exited!SID_State_machine_Wait24Vpower!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower -> SKIP);
+						State_State_machine_Wait24Vpower_aux(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_Wait24Vpower})!SID_State_machine_Wait24Vpower -> (State_State_machine_Wait24Vpower_aux_execute(id__,x____))
+	
+	CS_State_machine_Wait24Vpower_si0_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1},
+		y____ <- {SID_State_machine_Wait24Vpower_si0}
+	|}
+	
+	
+	State_machine_Wait24Vpower_si0_triggers = {|
+		internal__.TID_State_machine_Wait24Vpower_t1
+	|}
+	
+	State_State_machine_Wait24Vpower_si0(id__) = let
+		T_State_machine_Wait24Vpower_t1(id__) = internal__!TID_State_machine_Wait24Vpower_t1 ->  exit.SID_State_machine_Wait24Vpower_si0.SID_State_machine_Wait24Vpower_si0 -> SKIP;
+							SKIP;exited.SID_State_machine_Wait24Vpower_si0.SID_State_machine_Wait24Vpower_si0 -> SKIP;
+							enter!SID_State_machine_Wait24Vpower_si0!SID_State_machine_Wait24Vpower_s1 -> entered!SID_State_machine_Wait24Vpower_si0!SID_State_machine_Wait24Vpower_s1 ->
+							State_State_machine_Wait24Vpower_si0(id__)
+		State_State_machine_Wait24Vpower_si0_execute(id__,o____) = true&CALL__supplyVoltCheck(
+					id__
+				); 
+			entered!o____!SID_State_machine_Wait24Vpower_si0 ->
+			(SKIP; STOP /\ (
+				T_State_machine_Wait24Vpower_t1(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1}) -> exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_Wait24Vpower_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_si0 -> SKIP);
+						State_State_machine_Wait24Vpower_si0(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_Wait24Vpower_si0})!SID_State_machine_Wait24Vpower_si0 -> (State_State_machine_Wait24Vpower_si0_execute(id__,x____))
+	
+	CS_State_machine_Wait24Vpower_s1_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_Wait24Vpower_si0,SID_State_machine_Wait24Vpower_s1},
+		y____ <- {SID_State_machine_Wait24Vpower_s1}
+	|}
+	
+	
+	State_machine_Wait24Vpower_s1_triggers = {|
+	|}
+	
+	State_State_machine_Wait24Vpower_s1(id__) = let
+		State_State_machine_Wait24Vpower_s1_execute(id__,o____) = true&CALL__disableHV(
+					id__,
+					true
+				); 
+			entered!o____!SID_State_machine_Wait24Vpower_s1 ->
+			(SKIP; STOP /\ (
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__}) -> exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_Wait24Vpower_s1 -> SKIP);
+						State_State_machine_Wait24Vpower_s1(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_Wait24Vpower_s1})!SID_State_machine_Wait24Vpower_s1 -> (State_State_machine_Wait24Vpower_s1_execute(id__,x____))
+	
+	CS_State_machine_ClosedLoop_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_Ramping,SID_State_machine_Init,SID_State_machine_Wait24Vpower,SID_State_machine_ClosedLoop,SID_State_machine_ErrorMode},
+		y____ <- {SID_State_machine_ClosedLoop}
+	|}
+	
+	State_machine_ClosedLoop_int_int = {|
+		currentState__.TID_State_machine_ClosedLoop_s2_t1,
+		ext_setPoint__.TID_State_machine_ClosedLoop_s2_t1,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_s2_t1,
+		int_overLimit__.TID_State_machine_ClosedLoop_s2_t1,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_s2_t1,
+		int_underLimit__.TID_State_machine_ClosedLoop_s2_t1,
+		int_DisableHV__.TID_State_machine_ClosedLoop_s2_t1,
+		int_ActualHV__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		currentState__.TID_State_machine_ClosedLoop_s2_t2,
+		ext_setPoint__.TID_State_machine_ClosedLoop_s2_t2,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_s2_t2,
+		int_overLimit__.TID_State_machine_ClosedLoop_s2_t2,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_s2_t2,
+		int_underLimit__.TID_State_machine_ClosedLoop_s2_t2,
+		int_DisableHV__.TID_State_machine_ClosedLoop_s2_t2,
+		int_ActualHV__.TID_State_machine_ClosedLoop_s2_t2,
+		internal__.TID_State_machine_ClosedLoop_s2_t2,
+		currentState__.TID_State_machine_ClosedLoop_t1,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t1,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t1,
+		int_overLimit__.TID_State_machine_ClosedLoop_t1,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t1,
+		int_underLimit__.TID_State_machine_ClosedLoop_t1,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t1,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t1,
+		internal__.TID_State_machine_ClosedLoop_t1,
+		currentState__.TID_State_machine_ClosedLoop_t2,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t2,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t2,
+		int_overLimit__.TID_State_machine_ClosedLoop_t2,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t2,
+		int_underLimit__.TID_State_machine_ClosedLoop_t2,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t2,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t2,
+		internal__.TID_State_machine_ClosedLoop_t2,
+		currentState__.TID_State_machine_ClosedLoop_t3,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t3,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t3,
+		int_overLimit__.TID_State_machine_ClosedLoop_t3,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t3,
+		int_underLimit__.TID_State_machine_ClosedLoop_t3,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t3,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t3,
+		internal__.TID_State_machine_ClosedLoop_t3,
+		currentState__.TID_State_machine_ClosedLoop_t4,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t4,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t4,
+		int_overLimit__.TID_State_machine_ClosedLoop_t4,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t4,
+		int_underLimit__.TID_State_machine_ClosedLoop_t4,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t4,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t4,
+		internal__.TID_State_machine_ClosedLoop_t4,
+		currentState__.TID_State_machine_ClosedLoop_t5,
+		ext_setPoint__.TID_State_machine_ClosedLoop_t5,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_t5,
+		int_overLimit__.TID_State_machine_ClosedLoop_t5,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_t5,
+		int_underLimit__.TID_State_machine_ClosedLoop_t5,
+		int_DisableHV__.TID_State_machine_ClosedLoop_t5,
+		int_ActualHV__.TID_State_machine_ClosedLoop_t5,
+		internal__.TID_State_machine_ClosedLoop_t5
+	|}
+		
+	
+	State_machine_ClosedLoop_int_triggers = {|
+		internal__.TID_State_machine_ClosedLoop_s2_t0,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_s2_t5,
+		internal__.TID_State_machine_ClosedLoop_s2_t2,
+		internal__.TID_State_machine_ClosedLoop_t1,
+		internal__.TID_State_machine_ClosedLoop_t2,
+		internal__.TID_State_machine_ClosedLoop_t3,
+		internal__.TID_State_machine_ClosedLoop_t4,
+		internal__.TID_State_machine_ClosedLoop_t5,
+		internal__.TID_State_machine_ClosedLoop_t0
+	|}
+	
+	State_State_machine_ClosedLoop_s1_R(id__) = 
+		State_State_machine_ClosedLoop_s1(id__)
+	 		[|diff(State_machine_ClosedLoop_int_int,State_machine_ClosedLoop_s1_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ClosedLoop_s2_R(id__) = 
+		State_State_machine_ClosedLoop_s2(id__)
+	 		[|diff(State_machine_ClosedLoop_int_int,State_machine_ClosedLoop_s2_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ClosedLoop_s3_R(id__) = 
+		State_State_machine_ClosedLoop_s3(id__)
+	 		[|diff(State_machine_ClosedLoop_int_int,State_machine_ClosedLoop_s3_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ClosedLoop_s4_R(id__) = 
+		State_State_machine_ClosedLoop_s4(id__)
+	 		[|diff(State_machine_ClosedLoop_int_int,State_machine_ClosedLoop_s4_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ClosedLoop(id__) = (
+		State_State_machine_ClosedLoop_aux(id__)
+			[|
+				union(
+					diff(int_int, State_machine_ClosedLoop_int_triggers),
+					{|enter.x____.y____,
+					  entered.x____.y____,
+					  exit.x____.y____,
+					  exited.x____.y____ |
+					  x____ <- diff(SIDS,{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4}),
+					  y____ <- {SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4}
+				    |}
+				)
+			|]
+		(
+			State_State_machine_ClosedLoop_s1_R(id__)
+				[|inter(CS_State_machine_ClosedLoop_s1_sync,union(union(CS_State_machine_ClosedLoop_s2_sync,CS_State_machine_ClosedLoop_s3_sync),CS_State_machine_ClosedLoop_s4_sync))|]
+			(
+				State_State_machine_ClosedLoop_s2_R(id__)
+					[|inter(CS_State_machine_ClosedLoop_s2_sync,union(CS_State_machine_ClosedLoop_s3_sync,CS_State_machine_ClosedLoop_s4_sync))|]
+				(
+					State_State_machine_ClosedLoop_s3_R(id__)
+						[|inter(CS_State_machine_ClosedLoop_s3_sync,CS_State_machine_ClosedLoop_s4_sync)|]
+					State_State_machine_ClosedLoop_s4_R(id__)
+				)
+			)
+		)
+	)
+	
+	State_machine_ClosedLoop_triggers = {|
+		internal__.TID_State_machine_ClosedLoop_t0,
+		internal__.TID_State_machine_ClosedLoop_s2_t0,
+		int_DisableHV__.TID_State_machine_t8,
+		internal__.TID_State_machine_t4,
+		internal__.TID_State_machine_t3,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_t4,
+		internal__.TID_State_machine_t2,
+		internal__.TID_State_machine_t6,
+		internal__.TID_State_machine_ClosedLoop_t3,
+		int_DisableHV__.TID_State_machine_t11,
+		internal__.TID_State_machine_ClosedLoop_s2_t5,
+		internal__.TID_State_machine_ClosedLoop_t1,
+		internal__.TID_State_machine_ClosedLoop_t5,
+		internal__.TID_State_machine_t7,
+		internal__.TID_State_machine_ClosedLoop_t2,
+		internal__.TID_State_machine_ClosedLoop_s2_t2
+	|}
+	
+	State_State_machine_ClosedLoop_aux(id__) = let
+		T_State_machine_t4(id__) = internal__!TID_State_machine_t4 ->  exit.SID_State_machine_ClosedLoop.SID_State_machine_ClosedLoop -> SKIP;
+							exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+									SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop.SID_State_machine_ClosedLoop -> SKIP;
+							true & (set_res!false -> SKIP);enter!SID_State_machine_ClosedLoop!SID_State_machine_ErrorMode -> entered!SID_State_machine_ClosedLoop!SID_State_machine_ErrorMode ->
+							State_State_machine_ClosedLoop_aux(id__)
+		T_State_machine_t11(id__) = int_DisableHV__!TID_State_machine_t11.in ->  (exit.SID_State_machine_ClosedLoop.SID_State_machine_ClosedLoop -> SKIP;
+							exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+									SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop.SID_State_machine_ClosedLoop -> SKIP;
+							J_State_machine_j0(id__))
+		J_State_machine_j0(id__) = (
+					(internal__!TID_State_machine_t7 -> true&CALL__disableHV(
+								id__,
+								true
+							);true & (set_res!false -> SKIP);enter!SID_State_machine_ClosedLoop!SID_State_machine_ErrorMode -> entered!SID_State_machine_ClosedLoop!SID_State_machine_ErrorMode ->
+					State_State_machine_ClosedLoop_aux(id__)
+					)
+					)
+		State_State_machine_ClosedLoop_aux_execute(id__,o____) = true&(currentState.out!State_ClosedLoop -> SKIP); 
+		I_State_machine_ClosedLoop_i0(id__);
+			entered!o____!SID_State_machine_ClosedLoop ->
+			(SKIP; STOP /\ (
+				T_State_machine_t4(id__)[]
+				T_State_machine_t11(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t0,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_t8,TID_State_machine_t4,TID_State_machine_t3,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t4,TID_State_machine_t2,TID_State_machine_t6,TID_State_machine_ClosedLoop_t3,TID_State_machine_t11,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_t7,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (
+						exit!SID_State_machine_ClosedLoop?z____:{SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4} -> exited!SID_State_machine_ClosedLoop!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop -> SKIP);
+						State_State_machine_ClosedLoop_aux(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ClosedLoop})!SID_State_machine_ClosedLoop -> (State_State_machine_ClosedLoop_aux_execute(id__,x____))
+	
+	CS_State_machine_ClosedLoop_s1_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4},
+		y____ <- {SID_State_machine_ClosedLoop_s1}
+	|}
+	
+	
+	State_machine_ClosedLoop_s1_triggers = {|
+	|}
+	
+	State_State_machine_ClosedLoop_s1(id__) = let
+		State_State_machine_ClosedLoop_s1_execute(id__,o____) = true & (set_lim!false -> SKIP);true&CALL__disableHV(
+					id__,
+					true
+				); 
+			entered!o____!SID_State_machine_ClosedLoop_s1 ->
+			(SKIP; STOP /\ (
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__}) -> exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s1(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ClosedLoop_s1})!SID_State_machine_ClosedLoop_s1 -> (State_State_machine_ClosedLoop_s1_execute(id__,x____))
+	
+	CS_State_machine_ClosedLoop_s2_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4},
+		y____ <- {SID_State_machine_ClosedLoop_s2}
+	|}
+	
+	State_machine_ClosedLoop_s2_int_int = {|
+		currentState__.TID_State_machine_ClosedLoop_s2_t1,
+		ext_setPoint__.TID_State_machine_ClosedLoop_s2_t1,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_s2_t1,
+		int_overLimit__.TID_State_machine_ClosedLoop_s2_t1,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_s2_t1,
+		int_underLimit__.TID_State_machine_ClosedLoop_s2_t1,
+		int_DisableHV__.TID_State_machine_ClosedLoop_s2_t1,
+		int_ActualHV__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		currentState__.TID_State_machine_ClosedLoop_s2_t2,
+		ext_setPoint__.TID_State_machine_ClosedLoop_s2_t2,
+		ext_pow24VStatus__.TID_State_machine_ClosedLoop_s2_t2,
+		int_overLimit__.TID_State_machine_ClosedLoop_s2_t2,
+		int_pwmSignal__.TID_State_machine_ClosedLoop_s2_t2,
+		int_underLimit__.TID_State_machine_ClosedLoop_s2_t2,
+		int_DisableHV__.TID_State_machine_ClosedLoop_s2_t2,
+		int_ActualHV__.TID_State_machine_ClosedLoop_s2_t2,
+		internal__.TID_State_machine_ClosedLoop_s2_t2
+	|}
+		
+	
+	State_machine_ClosedLoop_s2_int_triggers = {|
+		internal__.TID_State_machine_ClosedLoop_s2_t0,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_s2_t5,
+		internal__.TID_State_machine_ClosedLoop_s2_t2
+	|}
+	
+	State_State_machine_ClosedLoop_s2_s0_R(id__) = 
+		State_State_machine_ClosedLoop_s2_s0(id__)
+	 		[|diff(State_machine_ClosedLoop_s2_int_int,State_machine_ClosedLoop_s2_s0_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ClosedLoop_s2_s1_R(id__) = 
+		State_State_machine_ClosedLoop_s2_s1(id__)
+	 		[|diff(State_machine_ClosedLoop_s2_int_int,State_machine_ClosedLoop_s2_s1_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ClosedLoop_s2(id__) = (
+		State_State_machine_ClosedLoop_s2_aux(id__)
+			[|
+				union(
+					diff(int_int, State_machine_ClosedLoop_s2_int_triggers),
+					{|enter.x____.y____,
+					  entered.x____.y____,
+					  exit.x____.y____,
+					  exited.x____.y____ |
+					  x____ <- diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1}),
+					  y____ <- {SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1}
+				    |}
+				)
+			|]
+		(
+			State_State_machine_ClosedLoop_s2_s0_R(id__)
+				[|inter(CS_State_machine_ClosedLoop_s2_s0_sync,CS_State_machine_ClosedLoop_s2_s1_sync)|]
+			State_State_machine_ClosedLoop_s2_s1_R(id__)
+		)
+	)
+	
+	State_machine_ClosedLoop_s2_triggers = {|
+		internal__.TID_State_machine_ClosedLoop_s2_t5,
+		internal__.TID_State_machine_ClosedLoop_s2_t0,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_t2,
+		internal__.TID_State_machine_ClosedLoop_s2_t2
+	|}
+	
+	State_State_machine_ClosedLoop_s2_aux(id__) = let
+		T_State_machine_ClosedLoop_t2(id__) = internal__!TID_State_machine_ClosedLoop_t2 ->  exit.SID_State_machine_ClosedLoop_s2.SID_State_machine_ClosedLoop_s2 -> SKIP;
+							exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+									SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop_s2.SID_State_machine_ClosedLoop_s2 -> SKIP;
+							enter!SID_State_machine_ClosedLoop_s2!SID_State_machine_ClosedLoop_s1 -> entered!SID_State_machine_ClosedLoop_s2!SID_State_machine_ClosedLoop_s1 ->
+							State_State_machine_ClosedLoop_s2_aux(id__)
+		State_State_machine_ClosedLoop_s2_aux_execute(id__,o____) = SKIP; 
+		I_State_machine_ClosedLoop_s2_i0(id__);
+			entered!o____!SID_State_machine_ClosedLoop_s2 ->
+			(SKIP; STOP /\ (
+				T_State_machine_ClosedLoop_t2(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t0,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_t2,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (
+						exit!SID_State_machine_ClosedLoop_s2?z____:{SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1} -> exited!SID_State_machine_ClosedLoop_s2!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2 -> SKIP);
+						State_State_machine_ClosedLoop_s2_aux(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ClosedLoop_s2})!SID_State_machine_ClosedLoop_s2 -> (State_State_machine_ClosedLoop_s2_aux_execute(id__,x____))
+	
+	CS_State_machine_ClosedLoop_s2_s0_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1},
+		y____ <- {SID_State_machine_ClosedLoop_s2_s0}
+	|}
+	
+	
+	State_machine_ClosedLoop_s2_s0_triggers = {|
+		internal__.TID_State_machine_ClosedLoop_s2_t5,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_s2_t2
+	|}
+	
+	State_State_machine_ClosedLoop_s2_s0(id__) = let
+		T_State_machine_ClosedLoop_s2_t1(id__) = internal__!TID_State_machine_ClosedLoop_s2_t1 ->  exit.SID_State_machine_ClosedLoop_s2_s0.SID_State_machine_ClosedLoop_s2_s0 -> SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop_s2_s0.SID_State_machine_ClosedLoop_s2_s0 -> SKIP;
+							enter!SID_State_machine_ClosedLoop_s2_s0!SID_State_machine_ClosedLoop_s2_s1 -> entered!SID_State_machine_ClosedLoop_s2_s0!SID_State_machine_ClosedLoop_s2_s1 ->
+							State_State_machine_ClosedLoop_s2_s0(id__)
+		State_State_machine_ClosedLoop_s2_s0_execute(id__,o____) = true&CALL__checkLimits(
+					id__
+				); 
+			entered!o____!SID_State_machine_ClosedLoop_s2_s0 ->
+			(SKIP; STOP /\ (
+				T_State_machine_ClosedLoop_s2_t1(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s0 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s0(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s0})!SID_State_machine_ClosedLoop_s2_s0 -> (State_State_machine_ClosedLoop_s2_s0_execute(id__,x____))
+	
+	CS_State_machine_ClosedLoop_s2_s1_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ClosedLoop_s2_s0,SID_State_machine_ClosedLoop_s2_s1},
+		y____ <- {SID_State_machine_ClosedLoop_s2_s1}
+	|}
+	
+	
+	State_machine_ClosedLoop_s2_s1_triggers = {|
+		internal__.TID_State_machine_ClosedLoop_s2_t5,
+		internal__.TID_State_machine_ClosedLoop_s2_t1,
+		internal__.TID_State_machine_ClosedLoop_s2_t2
+	|}
+	
+	State_State_machine_ClosedLoop_s2_s1(id__) = let
+		T_State_machine_ClosedLoop_s2_t2(id__) = internal__!TID_State_machine_ClosedLoop_s2_t2 ->  exit.SID_State_machine_ClosedLoop_s2_s1.SID_State_machine_ClosedLoop_s2_s1 -> SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop_s2_s1.SID_State_machine_ClosedLoop_s2_s1 -> SKIP;
+							get_setPoint?setPoint -> true & (set_ActualHV!setPoint -> SKIP);J_State_machine_ClosedLoop_s2_j0(id__)
+		J_State_machine_ClosedLoop_s2_j0(id__) = (
+					(internal__!TID_State_machine_ClosedLoop_s2_t5 -> get_ActualHV?ActualHV -> true&(int_ActualHV.out!ActualHV -> SKIP);enter!SID_State_machine_ClosedLoop_s2_s1!SID_State_machine_ClosedLoop_s2_s0 -> entered!SID_State_machine_ClosedLoop_s2_s1!SID_State_machine_ClosedLoop_s2_s0 ->
+					State_State_machine_ClosedLoop_s2_s1(id__)
+					)
+					)
+		State_State_machine_ClosedLoop_s2_s1_execute(id__,o____) = true&(ext_setPoint.in?setPoint -> set_setPoint!setPoint -> SKIP); 
+			entered!o____!SID_State_machine_ClosedLoop_s2_s1 ->
+			(SKIP; STOP /\ (
+				T_State_machine_ClosedLoop_s2_t2(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_s2_t5,TID_State_machine_ClosedLoop_s2_t1,TID_State_machine_ClosedLoop_s2_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s2_s1 -> SKIP);
+						State_State_machine_ClosedLoop_s2_s1(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ClosedLoop_s2_s1})!SID_State_machine_ClosedLoop_s2_s1 -> (State_State_machine_ClosedLoop_s2_s1_execute(id__,x____))
+	
+	CS_State_machine_ClosedLoop_s3_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4},
+		y____ <- {SID_State_machine_ClosedLoop_s3}
+	|}
+	
+	
+	State_machine_ClosedLoop_s3_triggers = {|
+		internal__.TID_State_machine_ClosedLoop_t5,
+		internal__.TID_State_machine_ClosedLoop_t4,
+		internal__.TID_State_machine_ClosedLoop_t2
+	|}
+	
+	State_State_machine_ClosedLoop_s3(id__) = let
+		T_State_machine_ClosedLoop_t4(id__) = internal__!TID_State_machine_ClosedLoop_t4 ->  exit.SID_State_machine_ClosedLoop_s3.SID_State_machine_ClosedLoop_s3 -> SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop_s3.SID_State_machine_ClosedLoop_s3 -> SKIP;
+							enter!SID_State_machine_ClosedLoop_s3!SID_State_machine_ClosedLoop_s2 -> entered!SID_State_machine_ClosedLoop_s3!SID_State_machine_ClosedLoop_s2 ->
+							State_State_machine_ClosedLoop_s3(id__)
+		T_State_machine_ClosedLoop_t5(id__) = internal__!TID_State_machine_ClosedLoop_t5 ->  exit.SID_State_machine_ClosedLoop_s3.SID_State_machine_ClosedLoop_s3 -> SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop_s3.SID_State_machine_ClosedLoop_s3 -> SKIP;
+							enter!SID_State_machine_ClosedLoop_s3!SID_State_machine_ClosedLoop_s1 -> entered!SID_State_machine_ClosedLoop_s3!SID_State_machine_ClosedLoop_s1 ->
+							State_State_machine_ClosedLoop_s3(id__)
+		State_State_machine_ClosedLoop_s3_execute(id__,o____) = true&CALL__checkLimits(
+					id__
+				); 
+			entered!o____!SID_State_machine_ClosedLoop_s3 ->
+			(SKIP; STOP /\ (
+				T_State_machine_ClosedLoop_t4(id__)[]
+				T_State_machine_ClosedLoop_t5(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s3 -> SKIP);
+						State_State_machine_ClosedLoop_s3(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ClosedLoop_s3})!SID_State_machine_ClosedLoop_s3 -> (State_State_machine_ClosedLoop_s3_execute(id__,x____))
+	
+	CS_State_machine_ClosedLoop_s4_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ClosedLoop_s1,SID_State_machine_ClosedLoop_s2,SID_State_machine_ClosedLoop_s3,SID_State_machine_ClosedLoop_s4},
+		y____ <- {SID_State_machine_ClosedLoop_s4}
+	|}
+	
+	
+	State_machine_ClosedLoop_s4_triggers = {|
+		internal__.TID_State_machine_ClosedLoop_t3,
+		internal__.TID_State_machine_ClosedLoop_t1,
+		internal__.TID_State_machine_ClosedLoop_t5,
+		internal__.TID_State_machine_ClosedLoop_t4,
+		internal__.TID_State_machine_ClosedLoop_t2
+	|}
+	
+	State_State_machine_ClosedLoop_s4(id__) = let
+		T_State_machine_ClosedLoop_t1(id__) = internal__!TID_State_machine_ClosedLoop_t1 ->  exit.SID_State_machine_ClosedLoop_s4.SID_State_machine_ClosedLoop_s4 -> SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop_s4.SID_State_machine_ClosedLoop_s4 -> SKIP;
+							enter!SID_State_machine_ClosedLoop_s4!SID_State_machine_ClosedLoop_s1 -> entered!SID_State_machine_ClosedLoop_s4!SID_State_machine_ClosedLoop_s1 ->
+							State_State_machine_ClosedLoop_s4(id__)
+		T_State_machine_ClosedLoop_t3(id__) = internal__!TID_State_machine_ClosedLoop_t3 ->  exit.SID_State_machine_ClosedLoop_s4.SID_State_machine_ClosedLoop_s4 -> SKIP;
+							SKIP;exited.SID_State_machine_ClosedLoop_s4.SID_State_machine_ClosedLoop_s4 -> SKIP;
+							true&(int_pwmSignal.out!Power_On -> SKIP);enter!SID_State_machine_ClosedLoop_s4!SID_State_machine_ClosedLoop_s3 -> entered!SID_State_machine_ClosedLoop_s4!SID_State_machine_ClosedLoop_s3 ->
+							State_State_machine_ClosedLoop_s4(id__)
+		State_State_machine_ClosedLoop_s4_execute(id__,o____) = true&CALL__supplyVoltCheck(
+					id__
+				); 
+			entered!o____!SID_State_machine_ClosedLoop_s4 ->
+			(SKIP; STOP /\ (
+				T_State_machine_ClosedLoop_t1(id__)[]
+				T_State_machine_ClosedLoop_t3(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ClosedLoop_t3,TID_State_machine_ClosedLoop_t1,TID_State_machine_ClosedLoop_t5,TID_State_machine_ClosedLoop_t4,TID_State_machine_ClosedLoop_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ClosedLoop_s4 -> SKIP);
+						State_State_machine_ClosedLoop_s4(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ClosedLoop_s4})!SID_State_machine_ClosedLoop_s4 -> (State_State_machine_ClosedLoop_s4_execute(id__,x____))
+	
+	CS_State_machine_ErrorMode_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_Ramping,SID_State_machine_Init,SID_State_machine_Wait24Vpower,SID_State_machine_ClosedLoop,SID_State_machine_ErrorMode},
+		y____ <- {SID_State_machine_ErrorMode}
+	|}
+	
+	State_machine_ErrorMode_int_int = {|
+		currentState__.TID_State_machine_ErrorMode_t0,
+		ext_setPoint__.TID_State_machine_ErrorMode_t0,
+		ext_pow24VStatus__.TID_State_machine_ErrorMode_t0,
+		int_overLimit__.TID_State_machine_ErrorMode_t0,
+		int_pwmSignal__.TID_State_machine_ErrorMode_t0,
+		int_underLimit__.TID_State_machine_ErrorMode_t0,
+		int_DisableHV__.TID_State_machine_ErrorMode_t0,
+		int_ActualHV__.TID_State_machine_ErrorMode_t0,
+		internal__.TID_State_machine_ErrorMode_t0,
+		currentState__.TID_State_machine_ErrorMode_t4,
+		ext_setPoint__.TID_State_machine_ErrorMode_t4,
+		ext_pow24VStatus__.TID_State_machine_ErrorMode_t4,
+		int_overLimit__.TID_State_machine_ErrorMode_t4,
+		int_pwmSignal__.TID_State_machine_ErrorMode_t4,
+		int_underLimit__.TID_State_machine_ErrorMode_t4,
+		int_DisableHV__.TID_State_machine_ErrorMode_t4,
+		int_ActualHV__.TID_State_machine_ErrorMode_t4,
+		internal__.TID_State_machine_ErrorMode_t4
+	|}
+		
+	
+	State_machine_ErrorMode_int_triggers = {|
+		internal__.TID_State_machine_ErrorMode_t0,
+		internal__.TID_State_machine_ErrorMode_t2,
+		internal__.TID_State_machine_ErrorMode_t4,
+		internal__.TID_State_machine_ErrorMode_t5,
+		internal__.TID_State_machine_ErrorMode_t1
+	|}
+	
+	State_State_machine_ErrorMode_f0_R(id__) = 
+		State_State_machine_ErrorMode_f0(id__)
+	 		[|diff(State_machine_ErrorMode_int_int,State_machine_ErrorMode_f0_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ErrorMode_s1_R(id__) = 
+		State_State_machine_ErrorMode_s1(id__)
+	 		[|diff(State_machine_ErrorMode_int_int,State_machine_ErrorMode_s1_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ErrorMode_s2_R(id__) = 
+		State_State_machine_ErrorMode_s2(id__)
+	 		[|diff(State_machine_ErrorMode_int_int,State_machine_ErrorMode_s2_triggers)|]
+	 	SKIP
+	 		
+	State_State_machine_ErrorMode(id__) = (
+		State_State_machine_ErrorMode_aux(id__)
+			[|
+				union(
+					diff(int_int, State_machine_ErrorMode_int_triggers),
+					{|enter.x____.y____,
+					  entered.x____.y____,
+					  exit.x____.y____,
+					  exited.x____.y____ |
+					  x____ <- diff(SIDS,{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2}),
+					  y____ <- {SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2}
+				    |}
+				)
+			|]
+		(
+			State_State_machine_ErrorMode_f0_R(id__)
+				[|inter(CS_State_machine_ErrorMode_f0_sync,union(CS_State_machine_ErrorMode_s1_sync,CS_State_machine_ErrorMode_s2_sync))|]
+			(
+				State_State_machine_ErrorMode_s1_R(id__)
+					[|inter(CS_State_machine_ErrorMode_s1_sync,CS_State_machine_ErrorMode_s2_sync)|]
+				State_State_machine_ErrorMode_s2_R(id__)
+			)
+		)
+	)
+	
+	State_machine_ErrorMode_triggers = {|
+		internal__.TID_State_machine_t6,
+		internal__.TID_State_machine_ErrorMode_t0,
+		internal__.TID_State_machine_ErrorMode_t5,
+		int_DisableHV__.TID_State_machine_t11,
+		internal__.TID_State_machine_ErrorMode_t2,
+		internal__.TID_State_machine_ErrorMode_t4,
+		int_DisableHV__.TID_State_machine_t8,
+		internal__.TID_State_machine_ErrorMode_t1,
+		internal__.TID_State_machine_t3,
+		internal__.TID_State_machine_t4,
+		internal__.TID_State_machine_t7,
+		internal__.TID_State_machine_t2
+	|}
+	
+	State_State_machine_ErrorMode_aux(id__) = let
+		T_State_machine_t6(id__) = internal__!TID_State_machine_t6 ->  exit.SID_State_machine_ErrorMode.SID_State_machine_ErrorMode -> SKIP;
+							exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+									SKIP;
+							SKIP;exited.SID_State_machine_ErrorMode.SID_State_machine_ErrorMode -> SKIP;
+							enter!SID_State_machine_ErrorMode!SID_State_machine_Wait24Vpower -> entered!SID_State_machine_ErrorMode!SID_State_machine_Wait24Vpower ->
+							State_State_machine_ErrorMode_aux(id__)
+		State_State_machine_ErrorMode_aux_execute(id__,o____) = true&(currentState.out!State_ErrorMode -> SKIP);true&CALL__disableHV(
+					id__,
+					false
+				); 
+		I_State_machine_ErrorMode_i0(id__);
+			entered!o____!SID_State_machine_ErrorMode ->
+			(SKIP; STOP /\ (
+				T_State_machine_t6(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2}) -> exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_t6,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_t11,TID_State_machine_ErrorMode_t2,TID_State_machine_ErrorMode_t4,TID_State_machine_t8,TID_State_machine_ErrorMode_t1,TID_State_machine_t3,TID_State_machine_t4,TID_State_machine_t7,TID_State_machine_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (
+						exit!SID_State_machine_ErrorMode?z____:{SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2} -> exited!SID_State_machine_ErrorMode!z____ -> 
+								SKIP;
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode -> SKIP);
+						State_State_machine_ErrorMode_aux(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ErrorMode})!SID_State_machine_ErrorMode -> (State_State_machine_ErrorMode_aux_execute(id__,x____))
+	
+	CS_State_machine_ErrorMode_f0_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2},
+		y____ <- {SID_State_machine_ErrorMode_f0}
+	|}
+	
+	
+	State_machine_ErrorMode_f0_triggers = {|
+	|}
+	
+	State_State_machine_ErrorMode_f0(id__) = let
+		State_State_machine_ErrorMode_f0_execute(id__,o____) = SKIP; 
+			entered!o____!SID_State_machine_ErrorMode_f0 ->
+			(SKIP; STOP /\ (
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__}) -> exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_f0 -> SKIP);
+						State_State_machine_ErrorMode_f0(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ErrorMode_f0})!SID_State_machine_ErrorMode_f0 -> (State_State_machine_ErrorMode_f0_execute(id__,x____))
+	
+	CS_State_machine_ErrorMode_s1_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2},
+		y____ <- {SID_State_machine_ErrorMode_s1}
+	|}
+	
+	
+	State_machine_ErrorMode_s1_triggers = {|
+		internal__.TID_State_machine_ErrorMode_t0,
+		internal__.TID_State_machine_ErrorMode_t5,
+		internal__.TID_State_machine_ErrorMode_t4,
+		internal__.TID_State_machine_ErrorMode_t1
+	|}
+	
+	State_State_machine_ErrorMode_s1(id__) = let
+		T_State_machine_ErrorMode_t0(id__) = internal__!TID_State_machine_ErrorMode_t0 ->  exit.SID_State_machine_ErrorMode_s1.SID_State_machine_ErrorMode_s1 -> SKIP;
+							SKIP;exited.SID_State_machine_ErrorMode_s1.SID_State_machine_ErrorMode_s1 -> SKIP;
+							get_setPoint?setPoint -> true&(ext_setPoint.out!setPoint -> SKIP);enter!SID_State_machine_ErrorMode_s1!SID_State_machine_ErrorMode_s2 -> entered!SID_State_machine_ErrorMode_s1!SID_State_machine_ErrorMode_s2 ->
+							State_State_machine_ErrorMode_s1(id__)
+		State_State_machine_ErrorMode_s1_execute(id__,o____) = true & (set_setPoint!0 -> SKIP); 
+			entered!o____!SID_State_machine_ErrorMode_s1 ->
+			(SKIP; STOP /\ (
+				T_State_machine_ErrorMode_t0(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1}) -> exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s1 -> SKIP);
+						State_State_machine_ErrorMode_s1(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ErrorMode_s1})!SID_State_machine_ErrorMode_s1 -> (State_State_machine_ErrorMode_s1_execute(id__,x____))
+	
+	CS_State_machine_ErrorMode_s2_sync = {|
+		enter.y____.x____, 
+		entered.y____.x____, 
+		exit.y____.x____, 
+		exited.y____.x____,
+		enter.x____.y____, 
+		entered.x____.y____, 
+		exit.x____.y____, 
+		exited.x____.y____ |
+		x____ <- {SID_State_machine_ErrorMode_f0,SID_State_machine_ErrorMode_s1,SID_State_machine_ErrorMode_s2},
+		y____ <- {SID_State_machine_ErrorMode_s2}
+	|}
+	
+	
+	State_machine_ErrorMode_s2_triggers = {|
+		internal__.TID_State_machine_ErrorMode_t5,
+		internal__.TID_State_machine_ErrorMode_t0,
+		internal__.TID_State_machine_ErrorMode_t4,
+		internal__.TID_State_machine_ErrorMode_t1
+	|}
+	
+	State_State_machine_ErrorMode_s2(id__) = let
+		T_State_machine_ErrorMode_t4(id__) = internal__!TID_State_machine_ErrorMode_t4 ->  exit.SID_State_machine_ErrorMode_s2.SID_State_machine_ErrorMode_s2 -> SKIP;
+							SKIP;exited.SID_State_machine_ErrorMode_s2.SID_State_machine_ErrorMode_s2 -> SKIP;
+							get_ActualHV?ActualHV -> true&(int_ActualHV.out!ActualHV -> SKIP);J_State_machine_ErrorMode_j0(id__)
+		J_State_machine_ErrorMode_j0(id__) = (
+					(internal__!TID_State_machine_ErrorMode_t5 -> true & (set_errorAck!true -> SKIP);enter!SID_State_machine_ErrorMode_s2!SID_State_machine_ErrorMode_f0 -> entered!SID_State_machine_ErrorMode_s2!SID_State_machine_ErrorMode_f0 ->
+					State_State_machine_ErrorMode_s2(id__)
+					)[]
+					(internal__!TID_State_machine_ErrorMode_t1 -> enter!SID_State_machine_ErrorMode_s2!SID_State_machine_ErrorMode_s1 -> entered!SID_State_machine_ErrorMode_s2!SID_State_machine_ErrorMode_s1 ->
+					State_State_machine_ErrorMode_s2(id__)
+					)
+					)
+		State_State_machine_ErrorMode_s2_execute(id__,o____) = true & (set_ActualHV!0 -> SKIP); 
+			entered!o____!SID_State_machine_ErrorMode_s2 ->
+			(SKIP; STOP /\ (
+				T_State_machine_ErrorMode_t4(id__)
+				[]
+				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1}) -> exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+				[] currentState__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+				[] int_overLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+				[] int_pwmSignal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+				[] int_underLimit__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+				[] int_DisableHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+				[] int_ActualHV__?x____:diff(ITIDS,{NULLTRANSITION__,TID_State_machine_ErrorMode_t5,TID_State_machine_ErrorMode_t0,TID_State_machine_ErrorMode_t4,TID_State_machine_ErrorMode_t1})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (
+						SKIP;
+						exited!y____!SID_State_machine_ErrorMode_s2 -> SKIP);
+						State_State_machine_ErrorMode_s2(id__)
+			))
+	within
+		enter?x____:diff(SIDS,{SID_State_machine_ErrorMode_s2})!SID_State_machine_ErrorMode_s2 -> (State_State_machine_ErrorMode_s2_execute(id__,x____))
+	
+	
+	I_State_machine_Init_i0(id__) = let
+		T_State_machine_Init_t0(id__) = internal__!TID_State_machine_Init_t0 -> true&(ext_setPoint.in?setPoint -> set_setPoint!setPoint -> SKIP);enter!SID_State_machine_Init!SID_State_machine_Init_si0 -> entered!SID_State_machine_Init!SID_State_machine_Init_si0 ->
+		SKIP
+	within
+		T_State_machine_Init_t0(id__)
+	
+	I_State_machine_Wait24Vpower_i0(id__) = let
+		T_State_machine_Wait24Vpower_t0(id__) = internal__!TID_State_machine_Wait24Vpower_t0 -> true&(ext_setPoint.in?setPoint -> set_setPoint!setPoint -> SKIP);enter!SID_State_machine_Wait24Vpower!SID_State_machine_Wait24Vpower_si0 -> entered!SID_State_machine_Wait24Vpower!SID_State_machine_Wait24Vpower_si0 ->
+		SKIP
+	within
+		T_State_machine_Wait24Vpower_t0(id__)
+	
+	I_State_machine_ClosedLoop_i0(id__) = let
+		T_State_machine_ClosedLoop_t0(id__) = internal__!TID_State_machine_ClosedLoop_t0 -> enter!SID_State_machine_ClosedLoop!SID_State_machine_ClosedLoop_s4 -> entered!SID_State_machine_ClosedLoop!SID_State_machine_ClosedLoop_s4 ->
+		SKIP
+	within
+		T_State_machine_ClosedLoop_t0(id__)
+	
+	I_State_machine_ClosedLoop_s2_i0(id__) = let
+		T_State_machine_ClosedLoop_s2_t0(id__) = internal__!TID_State_machine_ClosedLoop_s2_t0 -> enter!SID_State_machine_ClosedLoop_s2!SID_State_machine_ClosedLoop_s2_s1 -> entered!SID_State_machine_ClosedLoop_s2!SID_State_machine_ClosedLoop_s2_s1 ->
+		SKIP
+	within
+		T_State_machine_ClosedLoop_s2_t0(id__)
+	
+	I_State_machine_ErrorMode_i0(id__) = let
+		T_State_machine_ErrorMode_t2(id__) = internal__!TID_State_machine_ErrorMode_t2 -> true & (set_errorAck!false -> SKIP);enter!SID_State_machine_ErrorMode!SID_State_machine_ErrorMode_s1 -> entered!SID_State_machine_ErrorMode!SID_State_machine_ErrorMode_s1 ->
+		SKIP
+	within
+		T_State_machine_ErrorMode_t2(id__)
+	
+	I_State_machine_i0(id__) = let
+		T_State_machine_t5(id__) = internal__!TID_State_machine_t5 -> enter!SID_State_machine!SID_State_machine_Ramping -> entered!SID_State_machine!SID_State_machine_Ramping ->
+		SKIP
+	within
+		T_State_machine_t5(id__)
+	
+	
+	State_State_machine_Ramping_R(id__) = 
+		State_State_machine_Ramping(id__)
+			[|diff(int_int,State_machine_Ramping_triggers)|]
+		SKIP
+			 		
+	State_State_machine_Init_R(id__) = 
+		State_State_machine_Init(id__)
+			[|diff(int_int,State_machine_Init_triggers)|]
+		SKIP
+			 		
+	State_State_machine_Wait24Vpower_R(id__) = 
+		State_State_machine_Wait24Vpower(id__)
+			[|diff(int_int,State_machine_Wait24Vpower_triggers)|]
+		SKIP
+			 		
+	State_State_machine_ClosedLoop_R(id__) = 
+		State_State_machine_ClosedLoop(id__)
+			[|diff(int_int,State_machine_ClosedLoop_triggers)|]
+		SKIP
+			 		
+	State_State_machine_ErrorMode_R(id__) = 
+		State_State_machine_ErrorMode(id__)
+			[|diff(int_int,State_machine_ErrorMode_triggers)|]
+		SKIP
+			 		
+		
+	STM(id__) = (
+		I_State_machine_i0(id__)
+			[|
+				{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
+					x____ <- diff(SIDS,{SID_State_machine_Ramping,SID_State_machine_Init,SID_State_machine_Wait24Vpower,SID_State_machine_ClosedLoop,SID_State_machine_ErrorMode}),
+					y____ <- {SID_State_machine_Ramping,SID_State_machine_Init,SID_State_machine_Wait24Vpower,SID_State_machine_ClosedLoop,SID_State_machine_ErrorMode}
+			|}|]
+		(
+			State_State_machine_Ramping_R(id__)
+				[|inter(CS_State_machine_Ramping_sync,union(union(union(CS_State_machine_Init_sync,CS_State_machine_Wait24Vpower_sync),CS_State_machine_ClosedLoop_sync),CS_State_machine_ErrorMode_sync))|]
+			(
+				State_State_machine_Init_R(id__)
+					[|inter(CS_State_machine_Init_sync,union(union(CS_State_machine_Wait24Vpower_sync,CS_State_machine_ClosedLoop_sync),CS_State_machine_ErrorMode_sync))|]
+				(
+					State_State_machine_Wait24Vpower_R(id__)
+						[|inter(CS_State_machine_Wait24Vpower_sync,union(CS_State_machine_ClosedLoop_sync,CS_State_machine_ErrorMode_sync))|]
+					(
+						State_State_machine_ClosedLoop_R(id__)
+							[|inter(CS_State_machine_ClosedLoop_sync,CS_State_machine_ErrorMode_sync)|]
+						State_State_machine_ErrorMode_R(id__)
+					)
+				)
+			)
+		)
+	)
+	
+	-- optimized memory process
+	channel getV_power: Power
+	channel getV_setPoint: core_real
+	channel getV_res: core_boolean
+	channel getV_errorFlag: core_boolean
+	channel getV_lim: core_boolean
+	channel getV_supplyLim: core_boolean
+	channel getV_ActualHV: core_real
+	channel getV_errorAck: core_boolean
+	channel getV_overLimit: core_real
+	channel getV_underLimit: core_real
+	
+	-- individual memory processes
+	Memory_power(power) = (
+		get_power!power -> Memory_power(power)
+		[]
+		getV_power!power -> Memory_power(power)
+		[]
+		set_power?x__ -> Memory_power(x__)
+	)
+	Memory_setPoint(setPoint) = (
+		get_setPoint!setPoint -> Memory_setPoint(setPoint)
+		[]
+		getV_setPoint!setPoint -> Memory_setPoint(setPoint)
+		[]
+		set_setPoint?x__ -> Memory_setPoint(x__)
+	)
+	Memory_res(res) = (
+		get_res!res -> Memory_res(res)
+		[]
+		getV_res!res -> Memory_res(res)
+		[]
+		set_res?x__ -> Memory_res(x__)
+	)
+	Memory_errorFlag(errorFlag) = (
+		get_errorFlag!errorFlag -> Memory_errorFlag(errorFlag)
+		[]
+		getV_errorFlag!errorFlag -> Memory_errorFlag(errorFlag)
+		[]
+		set_errorFlag?x__ -> Memory_errorFlag(x__)
+	)
+	Memory_lim(lim) = (
+		get_lim!lim -> Memory_lim(lim)
+		[]
+		getV_lim!lim -> Memory_lim(lim)
+		[]
+		set_lim?x__ -> Memory_lim(x__)
+	)
+	Memory_supplyLim(supplyLim) = (
+		get_supplyLim!supplyLim -> Memory_supplyLim(supplyLim)
+		[]
+		getV_supplyLim!supplyLim -> Memory_supplyLim(supplyLim)
+		[]
+		set_supplyLim?x__ -> Memory_supplyLim(x__)
+	)
+	Memory_ActualHV(ActualHV) = (
+		get_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
+		[]
+		getV_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
+		[]
+		set_ActualHV?x__ -> Memory_ActualHV(x__)
+	)
+	Memory_errorAck(errorAck) = (
+		get_errorAck!errorAck -> Memory_errorAck(errorAck)
+		[]
+		getV_errorAck!errorAck -> Memory_errorAck(errorAck)
+		[]
+		set_errorAck?x__ -> Memory_errorAck(x__)
+	)
+	Memory_overLimit(overLimit) = (
+		get_overLimit!overLimit -> Memory_overLimit(overLimit)
+		[]
+		getV_overLimit!overLimit -> Memory_overLimit(overLimit)
+		[]
+		set_overLimit?x__ -> Memory_overLimit(x__)
+	)
+	Memory_underLimit(underLimit) = (
+		get_underLimit!underLimit -> Memory_underLimit(underLimit)
+		[]
+		getV_underLimit!underLimit -> Memory_underLimit(underLimit)
+		[]
+		set_underLimit?x__ -> Memory_underLimit(x__)
+	)
+	
+	-- processes that read variables and offer transitions
+	MemoryTransitions(id__, power, setPoint, res, errorFlag, lim, supplyLim, ActualHV, errorAck, overLimit, underLimit) = 		
+	(internal__!TID_State_machine_Init_t0 -> SKIP
+	[]
+	internal__!TID_State_machine_Wait24Vpower_t0 -> SKIP
+	[]
+	(((setPoint!=0) or (lim==true)))&(internal__!TID_State_machine_Wait24Vpower_t1 -> SKIP)
+	[]
+	internal__!TID_State_machine_ClosedLoop_s2_t0 -> SKIP
+	[]
+	(true)&(internal__!TID_State_machine_ClosedLoop_s2_t1 -> SKIP)
+	[]
+	internal__!TID_State_machine_ClosedLoop_s2_t5 -> SKIP
+	[]
+	internal__!TID_State_machine_ClosedLoop_s2_t2 -> SKIP
+	[]
+	((lim==true))&(internal__!TID_State_machine_ClosedLoop_t1 -> SKIP)
+	[]
+	((lim==true))&(internal__!TID_State_machine_ClosedLoop_t2 -> SKIP)
+	[]
+	((lim==false))&(internal__!TID_State_machine_ClosedLoop_t3 -> SKIP)
+	[]
+	(true)&(internal__!TID_State_machine_ClosedLoop_t4 -> SKIP)
+	[]
+	((lim==true))&(internal__!TID_State_machine_ClosedLoop_t5 -> SKIP)
+	[]
+	internal__!TID_State_machine_ClosedLoop_t0 -> SKIP
+	[]
+	internal__!TID_State_machine_ErrorMode_t0 -> SKIP
+	[]
+	internal__!TID_State_machine_ErrorMode_t2 -> SKIP
+	[]
+	internal__!TID_State_machine_ErrorMode_t4 -> SKIP
+	[]
+	(((setPoint==0) and (ActualHV==0)))&(internal__!TID_State_machine_ErrorMode_t5 -> SKIP)
+	[]
+	(((setPoint!=0) or (ActualHV!=0)))&(internal__!TID_State_machine_ErrorMode_t1 -> SKIP)
+	[]
+	(true)&(internal__!TID_State_machine_t0 -> SKIP)
+	[]
+	internal__!TID_State_machine_t1 -> SKIP
+	[]
+	((res==true))&(internal__!TID_State_machine_t2 -> SKIP)
+	[]
+	((((setPoint==0) and (lim==false)) and (res==false)))&(internal__!TID_State_machine_t3 -> SKIP)
+	[]
+	((res==true))&(internal__!TID_State_machine_t4 -> SKIP)
+	[]
+	internal__!TID_State_machine_t5 -> SKIP
+	[]
+	(errorAck)&(internal__!TID_State_machine_t6 -> SKIP)
+	[]
+	int_DisableHV__!TID_State_machine_t8.in -> SKIP
+	[]
+	int_DisableHV__!TID_State_machine_t11.in -> SKIP
+	[]
+	internal__!TID_State_machine_t7 -> SKIP[]
+	set_power?x__ -> SKIP[]
+	set_setPoint?x__ -> SKIP[]
+	set_res?x__ -> SKIP[]
+	set_errorFlag?x__ -> SKIP[]
+	set_lim?x__ -> SKIP[]
+	set_supplyLim?x__ -> SKIP[]
+	set_ActualHV?x__ -> SKIP[]
+	set_errorAck?x__ -> SKIP[]
+	set_overLimit?x__ -> SKIP[]
+	set_underLimit?x__ -> SKIP)
+	
+	MemoryTransitions_State_machine(id__) = (getV_power?power ->
+	getV_setPoint?setPoint ->
+	getV_res?res ->
+	getV_errorFlag?errorFlag ->
+	getV_lim?lim ->
+	getV_supplyLim?supplyLim ->
+	getV_ActualHV?ActualHV ->
+	getV_errorAck?errorAck ->
+	getV_overLimit?overLimit ->
+	getV_underLimit?underLimit ->
+	MemoryTransitions(id__, power, setPoint, res, errorFlag, lim, supplyLim, ActualHV, errorAck, overLimit, underLimit)			
+	); MemoryTransitions_State_machine(id__)
+			
+	
+	-- synchronisation, hiding and process sets 
+	MemoryVariablesProcesses_State_machine = Union(
+		{
+			{
+				(Memory_power(Power_On),{|get_power,getV_power,set_power|}),
+				(Memory_setPoint(0),{|set_setPoint,getV_setPoint,get_setPoint|}),
+				(Memory_res(false),{|set_res,getV_res,get_res|}),
+				(Memory_errorFlag(true),{|set_errorFlag,get_errorFlag,getV_errorFlag|}),
+				(Memory_lim(false),{|set_lim,getV_lim,get_lim|}),
+				(Memory_supplyLim(false),{|get_supplyLim,getV_supplyLim,set_supplyLim|}),
+				(Memory_ActualHV(0),{|get_ActualHV,set_ActualHV,getV_ActualHV|}),
+				(Memory_errorAck(false),{|set_errorAck,getV_errorAck,get_errorAck|}),
+				(Memory_overLimit(0),{|set_overLimit,get_overLimit,getV_overLimit|}),
+				(Memory_underLimit(0),{|get_underLimit,set_underLimit,getV_underLimit|})
+			}
+		}
+	)
+	
+	MemoryVariablesSyncSet = Union({
+		{|
+			getV_power,
+			set_ActualHV,
+			set_overLimit,
+			set_errorFlag,
+			set_lim,
+			getV_setPoint,
+			getV_res,
+			getV_supplyLim,
+			set_power,
+			getV_errorFlag,
+			set_errorAck,
+			set_setPoint,
+			set_res,
+			getV_errorAck,
+			getV_lim,
+			set_supplyLim,
+			set_underLimit,
+			getV_underLimit,
+			getV_ActualHV,
+			getV_overLimit
+		|}	
+	})
+	
+	MemoryVariablesHideSet = Union({
+		{|
+			getV_power,
+			getV_errorAck,
+			getV_setPoint,
+			getV_res,
+			getV_lim,
+			getV_supplyLim,
+			getV_errorFlag,
+			getV_underLimit,
+			getV_ActualHV,
+			getV_overLimit
+		|}
+	})
+	
+	-- combined individual memory processes
+	MemoryVariables = ||| (P, alpha) : MemoryVariablesProcesses_State_machine @ P
+	
+	-- complete memory process	
+	MemoryN(id__) = sbisim(diamond((sbisim(diamond(MemoryVariables)) [| MemoryVariablesSyncSet |] sbisim(diamond(MemoryTransitions_State_machine(id__)))) \ MemoryVariablesHideSet))
+	
+	-- optimised memory
+	-- Sets of named elements identified according to transition conditions:
+	-- {}
+	-- {lim,setPoint,res}
+	-- {errorAck}
+	-- {ActualHV,setPoint}
+	-- Summary of all identified named elements:
+	-- {
+	-- lim
+	-- ActualHV
+	-- setPoint
+	-- power
+	-- supplyLim
+	-- errorAck
+	-- errorFlag
+	-- res
+	-- overLimit
+	-- underLimit
+	-- }
+	
+	-- Allocation plan:
+	-- 0:{}
+	--	=> {
+	--		TID_State_machine_ClosedLoop_t0,
+	--		TID_State_machine_ErrorMode_t4,
+	--		TID_State_machine_t0,
+	--		TID_State_machine_ClosedLoop_s2_t0,
+	--		TID_State_machine_t8,
+	--		TID_State_machine_ClosedLoop_s2_t1,
+	--		TID_State_machine_ErrorMode_t0,
+	--		TID_State_machine_t11,
+	--		TID_State_machine_ErrorMode_t2,
+	--		TID_State_machine_Wait24Vpower_t0,
+	--		TID_State_machine_ClosedLoop_s2_t5,
+	--		TID_State_machine_t1,
+	--		TID_State_machine_t5,
+	--		TID_State_machine_t7,
+	--		TID_State_machine_ClosedLoop_s2_t2,
+	--		TID_State_machine_Init_t0}
+	-- 3:{lim,setPoint,res}
+	--	=> {
+	--		TID_State_machine_ClosedLoop_t3,
+	--		TID_State_machine_ClosedLoop_t1,
+	--		TID_State_machine_Wait24Vpower_t1,
+	--		TID_State_machine_ClosedLoop_t5,
+	--		TID_State_machine_t3,
+	--		TID_State_machine_t4,
+	--		TID_State_machine_ClosedLoop_t4,
+	--		TID_State_machine_ClosedLoop_t2,
+	--		TID_State_machine_t2}
+	-- 1:{errorAck}
+	--	=> {
+	--		TID_State_machine_t6}
+	-- 2:{ActualHV,setPoint}
+	--	=> {
+	--		TID_State_machine_ErrorMode_t5,
+	--		TID_State_machine_ErrorMode_t1}
+	
+	-- Memory transition processes
+	MemoryTransitions_opt_0(id__) =
+	(
+		let
+			Update = Current(id__)
+			Current(id__)
+			 	   = 
+			 	   internal__!TID_State_machine_ClosedLoop_t0 -> Update
+			 	   []
+			 	   internal__!TID_State_machine_ErrorMode_t4 -> Update
+			 	   []
+			 	   (true)&(internal__!TID_State_machine_t0 -> Update)
+			 	   []
+			 	   internal__!TID_State_machine_ClosedLoop_s2_t0 -> Update
+			 	   []
+			 	   int_DisableHV__!TID_State_machine_t8.in -> Update
+			 	   []
+			 	   (true)&(internal__!TID_State_machine_ClosedLoop_s2_t1 -> Update)
+			 	   []
+			 	   internal__!TID_State_machine_ErrorMode_t0 -> Update
+			 	   []
+			 	   int_DisableHV__!TID_State_machine_t11.in -> Update
+			 	   []
+			 	   internal__!TID_State_machine_ErrorMode_t2 -> Update
+			 	   []
+			 	   internal__!TID_State_machine_Wait24Vpower_t0 -> Update
+			 	   []
+			 	   internal__!TID_State_machine_ClosedLoop_s2_t5 -> Update
+			 	   []
+			 	   internal__!TID_State_machine_t1 -> Update
+			 	   []
+			 	   internal__!TID_State_machine_t5 -> Update
+			 	   []
+			 	   internal__!TID_State_machine_t7 -> Update
+			 	   []
+			 	   internal__!TID_State_machine_ClosedLoop_s2_t2 -> Update
+			 	   []
+			 	   internal__!TID_State_machine_Init_t0 -> Update
+		within
+			Update
+	)
+	MemoryTransitions_opt_3(id__) =
+	(
+		let
+			Update = 
+			get_lim?lim ->
+			get_setPoint?setPoint ->
+			get_res?res ->
+			Current(id__,
+				 lim,
+				 setPoint,
+				 res)
+			Current(id__,
+				 lim,
+				 setPoint,
+				 res)
+			 	   = 
+			 	   ((lim==false))&(internal__!TID_State_machine_ClosedLoop_t3 -> Update)
+			 	   []
+			 	   ((lim==true))&(internal__!TID_State_machine_ClosedLoop_t1 -> Update)
+			 	   []
+			 	   (((setPoint!=0) or (lim==true)))&(internal__!TID_State_machine_Wait24Vpower_t1 -> Update)
+			 	   []
+			 	   ((lim==true))&(internal__!TID_State_machine_ClosedLoop_t5 -> Update)
+			 	   []
+			 	   ((((setPoint==0) and (lim==false)) and (res==false)))&(internal__!TID_State_machine_t3 -> Update)
+			 	   []
+			 	   ((res==true))&(internal__!TID_State_machine_t4 -> Update)
+			 	   []
+			 	   (true)&(internal__!TID_State_machine_ClosedLoop_t4 -> Update)
+			 	   []
+			 	   ((lim==true))&(internal__!TID_State_machine_ClosedLoop_t2 -> Update)
+			 	   []
+			 	   ((res==true))&(internal__!TID_State_machine_t2 -> Update)
+			 	   	 
+			 	   	 []
+			 	   	 set_lim?x__ -> Update
+			 	   	 []
+			 	   	 
+			 	   	 set_setPoint?x__ -> Update
+			 	   	 []
+			 	   	 
+			 	   	 set_res?x__ -> Update
+		within
+			Update
+	)
+	MemoryTransitions_opt_1(id__) =
+	(
+		let
+			Update = 
+			get_errorAck?errorAck ->
+			Current(id__,
+				 errorAck)
+			Current(id__,
+				 errorAck)
+			 	   = 
+			 	   (errorAck)&(internal__!TID_State_machine_t6 -> Update)
+			 	   	 
+			 	   	 []
+			 	   	 set_errorAck?x__ -> Update
+		within
+			Update
+	)
+	MemoryTransitions_opt_2(id__) =
+	(
+		let
+			Update = 
+			get_ActualHV?ActualHV ->
+			get_setPoint?setPoint ->
+			Current(id__,
+				 ActualHV,
+				 setPoint)
+			Current(id__,
+				 ActualHV,
+				 setPoint)
+			 	   = 
+			 	   (((setPoint==0) and (ActualHV==0)))&(internal__!TID_State_machine_ErrorMode_t5 -> Update)
+			 	   []
+			 	   (((setPoint!=0) or (ActualHV!=0)))&(internal__!TID_State_machine_ErrorMode_t1 -> Update)
+			 	   	 
+			 	   	 []
+			 	   	 set_ActualHV?x__ -> Update
+			 	   	 []
+			 	   	 
+			 	   	 set_setPoint?x__ -> Update
+		within
+			Update
+	)
+	
+	-- Memory cell processes
+	Memory_opt_lim(x__) = ( 
+		get_lim!x__ -> Memory_opt_lim(x__)
+		[]
+		set_lim?x__ -> Memory_opt_lim(x__)
+	)
+	Memory_opt_ActualHV(x__) = ( 
+		get_ActualHV!x__ -> Memory_opt_ActualHV(x__)
+		[]
+		set_ActualHV?x__ -> Memory_opt_ActualHV(x__)
+	)
+	Memory_opt_setPoint(x__) = ( 
+		get_setPoint!x__ -> Memory_opt_setPoint(x__)
+		[]
+		set_setPoint?x__ -> Memory_opt_setPoint(x__)
+	)
+	Memory_opt_power(x__) = ( 
+		get_power!x__ -> Memory_opt_power(x__)
+		[]
+		set_power?x__ -> Memory_opt_power(x__)
+	)
+	Memory_opt_supplyLim(x__) = ( 
+		get_supplyLim!x__ -> Memory_opt_supplyLim(x__)
+		[]
+		set_supplyLim?x__ -> Memory_opt_supplyLim(x__)
+	)
+	Memory_opt_errorAck(x__) = ( 
+		get_errorAck!x__ -> Memory_opt_errorAck(x__)
+		[]
+		set_errorAck?x__ -> Memory_opt_errorAck(x__)
+	)
+	Memory_opt_errorFlag(x__) = ( 
+		get_errorFlag!x__ -> Memory_opt_errorFlag(x__)
+		[]
+		set_errorFlag?x__ -> Memory_opt_errorFlag(x__)
+	)
+	Memory_opt_res(x__) = ( 
+		get_res!x__ -> Memory_opt_res(x__)
+		[]
+		set_res?x__ -> Memory_opt_res(x__)
+	)
+	Memory_opt_overLimit(x__) = ( 
+		get_overLimit!x__ -> Memory_opt_overLimit(x__)
+		[]
+		set_overLimit?x__ -> Memory_opt_overLimit(x__)
+	)
+	Memory_opt_underLimit(x__) = ( 
+		get_underLimit!x__ -> Memory_opt_underLimit(x__)
+		[]
+		set_underLimit?x__ -> Memory_opt_underLimit(x__)
+	)
+	
+	-- Composition of memory, StateMachine and Memory transition processes
+	
+	MemorySTM_opt(id__) =
+		dbisim(
+		  sbisim(Memory_opt_lim(false)
+		      	[| {|set_lim,get_lim|} |] 
+		      	dbisim(
+		      	  sbisim(Memory_opt_setPoint(0)
+		      	      	[| {|set_setPoint,get_setPoint|} |] 
+		      	      	dbisim(
+		      	      	  sbisim(Memory_opt_res(false)
+		      	      	      	[| {|set_res,get_res|} |] 
+		      	      	      	sbisim(	
+		      	      	      	  dbisim(
+		      	      	      	    sbisim(dbisim(
+		      	      	      	      sbisim(Memory_opt_errorAck(false)
+		      	      	      	          	[| {|set_errorAck,get_errorAck|} |] 
+		      	      	      	          	sbisim(	
+		      	      	      	          	  dbisim(
+		      	      	      	          	    sbisim(dbisim(
+		      	      	      	          	      sbisim(Memory_opt_ActualHV(0)
+		      	      	      	          	          	[| {|set_ActualHV,get_ActualHV|} |] 
+		      	      	      	          	          	sbisim(	
+		      	      	      	          	          	  dbisim(
+		      	      	      	          	          	    sbisim(sbisim(	
+		      	      	      	          	          	      dbisim(
+		      	      	      	          	          	        sbisim(dbisim(sbisim(Memory_opt_power(Power_On)
+		      	      	      	          	          	              	[| {|get_power,set_power|} |] 
+		      	      	      	          	          	              	dbisim(sbisim(Memory_opt_supplyLim(false)
+		      	      	      	          	          	              	      	[| {|get_supplyLim,set_supplyLim|} |] 
+		      	      	      	          	          	              	      	dbisim(sbisim(Memory_opt_errorFlag(true)
+		      	      	      	          	          	              	      	      	[| {|set_errorFlag,get_errorFlag|} |] 
+		      	      	      	          	          	              	      	      	dbisim(sbisim(Memory_opt_overLimit(0)
+		      	      	      	          	          	              	      	      	      	[| {|set_overLimit,get_overLimit|} |] 
+		      	      	      	          	          	              	      	      	      	dbisim(sbisim(Memory_opt_underLimit(0)
+		      	      	      	          	          	              	      	      	      	      	[| {|get_underLimit,set_underLimit|} |] 
+		      	      	      	          	          	              	      	      	      	      	STM_core(id__)
+		      	      	      	          	          	              	      	      	      	      	)\ {|get_underLimit,set_underLimit|}
+		      	      	      	          	          	              	      	      	      	      )
+		      	      	      	          	          	              	      	      	      	)\ {|set_overLimit,get_overLimit|}
+		      	      	      	          	          	              	      	      	      )
+		      	      	      	          	          	              	      	      	)\ {|set_errorFlag,get_errorFlag|}
+		      	      	      	          	          	              	      	      )
+		      	      	      	          	          	              	      	)\ {|get_supplyLim,set_supplyLim|}
+		      	      	      	          	          	              	      )
+		      	      	      	          	          	              	)\ {|get_power,set_power|}
+		      	      	      	          	          	              )
+		      	      	      	          	          	          	  [| {|int_DisableHV__.TID_State_machine_t8,internal__.TID_State_machine_Init_t0,internal__.TID_State_machine_t0,internal__.TID_State_machine_ClosedLoop_t0,internal__.TID_State_machine_ErrorMode_t0,internal__.TID_State_machine_Wait24Vpower_t0,internal__.TID_State_machine_ClosedLoop_s2_t5,int_DisableHV__.TID_State_machine_t11,internal__.TID_State_machine_t1,internal__.TID_State_machine_ErrorMode_t4,internal__.TID_State_machine_ClosedLoop_s2_t0,internal__.TID_State_machine_ClosedLoop_s2_t1,internal__.TID_State_machine_t7,internal__.TID_State_machine_ErrorMode_t2,internal__.TID_State_machine_ClosedLoop_s2_t2,internal__.TID_State_machine_t5|} |]
+		      	      	      	          	          	          	  MemoryTransitions_opt_0(id__)
+		      	      	      	          	          	          	  )\{|internal__.TID_State_machine_Init_t0,internal__.TID_State_machine_t0,internal__.TID_State_machine_ClosedLoop_t0,internal__.TID_State_machine_ErrorMode_t0,internal__.TID_State_machine_Wait24Vpower_t0,internal__.TID_State_machine_ClosedLoop_s2_t5,internal__.TID_State_machine_t1,internal__.TID_State_machine_ErrorMode_t4,internal__.TID_State_machine_ClosedLoop_s2_t0,internal__.TID_State_machine_ClosedLoop_s2_t1,internal__.TID_State_machine_t7,internal__.TID_State_machine_ErrorMode_t2,internal__.TID_State_machine_ClosedLoop_s2_t2,internal__.TID_State_machine_t5|})
+		      	      	      	          	          	          )
+		      	      	      	          	          	      	  [| {|set_ActualHV,set_setPoint,internal__.TID_State_machine_ErrorMode_t1,internal__.TID_State_machine_ErrorMode_t5|} |]
+		      	      	      	          	          	      	  MemoryTransitions_opt_2(id__)
+		      	      	      	          	          	      	  )\{|internal__.TID_State_machine_ErrorMode_t1,internal__.TID_State_machine_ErrorMode_t5|})
+		      	      	      	          	          	      )
+		      	      	      	          	          	) \ {|set_ActualHV,get_ActualHV|}
+		      	      	      	          	          )
+		      	      	      	          	      	  [| {|set_errorAck,internal__.TID_State_machine_t6|} |]
+		      	      	      	          	      	  MemoryTransitions_opt_1(id__)
+		      	      	      	          	      	  )\{|internal__.TID_State_machine_t6|})
+		      	      	      	          	      )
+		      	      	      	          	) \ {|set_errorAck,get_errorAck|}
+		      	      	      	          )
+		      	      	      	      	  [| {|internal__.TID_State_machine_ClosedLoop_t2,internal__.TID_State_machine_ClosedLoop_t3,internal__.TID_State_machine_ClosedLoop_t1,internal__.TID_State_machine_t4,set_setPoint,internal__.TID_State_machine_Wait24Vpower_t1,internal__.TID_State_machine_t3,set_lim,set_res,internal__.TID_State_machine_t2,internal__.TID_State_machine_ClosedLoop_t4,internal__.TID_State_machine_ClosedLoop_t5|} |]
+		      	      	      	      	  MemoryTransitions_opt_3(id__)
+		      	      	      	      	  )\{|internal__.TID_State_machine_ClosedLoop_t2,internal__.TID_State_machine_ClosedLoop_t3,internal__.TID_State_machine_ClosedLoop_t1,internal__.TID_State_machine_t4,internal__.TID_State_machine_Wait24Vpower_t1,internal__.TID_State_machine_t3,internal__.TID_State_machine_t2,internal__.TID_State_machine_ClosedLoop_t4,internal__.TID_State_machine_ClosedLoop_t5|})
+		      	      	      	      )
+		      	      	      	) \ {|set_res,get_res|}
+		      	      	      )
+		      	      	) \ {|set_setPoint,get_setPoint|}
+		      	      )
+		      	) \ {|set_lim,get_lim|}
+		      )
+	
+	-- main process
+	
+	MachineMemorySyncSet = Union({
+		union(
+			union(
+				{|get_power,set_power,
+				get_setPoint,set_setPoint,
+				get_res,set_res,
+				get_errorFlag,set_errorFlag,
+				get_lim,set_lim,
+				get_supplyLim,set_supplyLim,
+				get_ActualHV,set_ActualHV,
+				get_errorAck,set_errorAck,
+				get_overLimit,set_overLimit,
+				get_underLimit,set_underLimit|},
+				{||}
+			)
+				
+			,
+			{|internal__.TID_State_machine_Init_t0,
+			internal__.TID_State_machine_Wait24Vpower_t0,
+			internal__.TID_State_machine_Wait24Vpower_t1,
+			internal__.TID_State_machine_ClosedLoop_s2_t0,
+			internal__.TID_State_machine_ClosedLoop_s2_t1,
+			internal__.TID_State_machine_ClosedLoop_s2_t5,
+			internal__.TID_State_machine_ClosedLoop_s2_t2,
+			internal__.TID_State_machine_ClosedLoop_t1,
+			internal__.TID_State_machine_ClosedLoop_t2,
+			internal__.TID_State_machine_ClosedLoop_t3,
+			internal__.TID_State_machine_ClosedLoop_t4,
+			internal__.TID_State_machine_ClosedLoop_t5,
+			internal__.TID_State_machine_ClosedLoop_t0,
+			internal__.TID_State_machine_ErrorMode_t0,
+			internal__.TID_State_machine_ErrorMode_t2,
+			internal__.TID_State_machine_ErrorMode_t4,
+			internal__.TID_State_machine_ErrorMode_t5,
+			internal__.TID_State_machine_ErrorMode_t1,
+			internal__.TID_State_machine_t0,
+			internal__.TID_State_machine_t1,
+			internal__.TID_State_machine_t2,
+			internal__.TID_State_machine_t3,
+			internal__.TID_State_machine_t4,
+			internal__.TID_State_machine_t5,
+			internal__.TID_State_machine_t6,
+			int_DisableHV__.TID_State_machine_t8,
+			int_DisableHV__.TID_State_machine_t11,
+			internal__.TID_State_machine_t7|}
+		)
+	})
+	
+	MachineMemoryHidingSet = Union({
+		union(
+			{|get_power,set_power,
+			get_setPoint,set_setPoint,
+			get_res,set_res,
+			get_errorFlag,set_errorFlag,
+			get_lim,set_lim,
+			get_supplyLim,set_supplyLim,
+			get_ActualHV,set_ActualHV,
+			get_errorAck,set_errorAck,
+			get_overLimit,set_overLimit,
+			get_underLimit,set_underLimit|},
+			{||}
+		)
+	})
+	
+	MachineInternalEvents = {|
+		internal__
+	|}
+	
+	AUX(id__) = (
+		(
+			STM(id__)
+				[|MachineMemorySyncSet|]
+			sbisim(diamond(MemoryN(id__)))
+		)[[
+			currentState__.x____ <- currentState,
+			ext_setPoint__.x____ <- ext_setPoint,
+			ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+			int_overLimit__.x____ <- int_overLimit,
+			int_pwmSignal__.x____ <- int_pwmSignal,
+			int_underLimit__.x____ <- int_underLimit,
+			int_DisableHV__.x____ <- int_DisableHV,
+			int_ActualHV__.x____ <- int_ActualHV
+			| x____ <- TIDS
+		]]
+		\MachineMemoryHidingSet
+	)
+	[|{|terminate|}|>SKIP\MachineInternalEvents
+	
+	
+	STM_core(id__) = 
+		sbisim(diamond(STM(id__)))
+		
+	AUX_opt(id__) = 
+		(MemorySTM_opt(id__)
+		)[[
+			currentState__.x____ <- currentState,
+			ext_setPoint__.x____ <- ext_setPoint,
+			ext_pow24VStatus__.x____ <- ext_pow24VStatus,
+			int_overLimit__.x____ <- int_overLimit,
+			int_pwmSignal__.x____ <- int_pwmSignal,
+			int_underLimit__.x____ <- int_underLimit,
+			int_DisableHV__.x____ <- int_DisableHV,
+			int_ActualHV__.x____ <- int_ActualHV
+			| x____ <- TIDS
+		]]
+		[|{|terminate|}|>SKIP\MachineInternalEvents
+
+	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+			
+	FVS__(id__) = AUX_opt(id__)
+	Dunopt__(id__) = AUX(id__) \ internal_events
+	D__(id__) = AUX_opt(id__) \ internal_events
+	O__(id__) = sbisim(diamond(D__(id__)))
+	VS__(id__) = ShowV(FVS__(id__))
+	VS_O__(id__) = sbisim(diamond(VS__(id__)))
+	HEXT__(id__) = O__(id__) [|shared_variable_events|] SKIP	
+endmodule

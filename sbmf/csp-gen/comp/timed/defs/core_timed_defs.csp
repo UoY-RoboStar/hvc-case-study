@@ -1,0 +1,74 @@
+-- *************************************************************************
+-- Copyright (c) 2020 University of York and others
+--
+-- This program and the accompanying materials are made available under the
+-- terms of the Eclipse Public License 2.0 which is available at
+-- http://www.eclipse.org/legal/epl-2.0.
+--
+-- SPDX-License-Identifier: EPL-2.0
+--
+-- Contributors:
+--   Pedro Ribeiro - initial definition
+-- *************************************************************************
+
+external prioritise
+transparent wbisim
+
+datatype deadlineSignal = on | off
+
+-- time definitions
+channel tock, tock', finished, dummyevent
+channel on__, off__
+
+USTOP = STOP
+
+OneStep(_) = 0
+
+-- Wait for use outside Timed Sections
+wait(n) = if n > 0 then tock -> wait(n-1) else SKIP
+	
+-- immediate termination SKIP
+SKIP0 = SKIP
+Countdown(t) = if t <= 0 then SKIP0 else tock -> Countdown(t-1)
+Deadline(P, t) = (((P ; finished -> SKIP0) [|{tock, finished}|] (Countdown(t) /\ finished->SKIP0)) \ {finished};TSKIP)
+IB(P,Q,n,i) = if n == 0 then (P -> IB(P,Q,i,i) [] tock -> IB(P,Q,0,i)) else Q -> IB(P,Q,0,i) [] P -> IB(P,Q,i,i) [] tock -> IB(P,Q,n-1,i)
+EDeadline(e, t) = ((e -> SKIP0) [|{e}|] (Countdown(t) /\ e->SKIP0));TSKIP
+
+ETimedOffer(e,t) = if t == 0 then SKIP else (tock -> ETimedOffer(e, t-1) [] e -> ETimedOffer(e, t))
+OfferEventsTill(t) = if t == 0 then SKIP else (RUN(diff(Events,{finished,tock})) /\ tock -> OfferEventsTill(t-1))
+-- renaming with dummy event prevents CHAOS(Events) in P from interacting with the process
+TimedInterrupt(P,t) = wbisim(((P[[finished<-dummyevent]] [| diff(Events,{finished}) |] (OfferEventsTill(t) ; finished -> SKIP)) [| {finished} |> SKIP) \ {finished};TSKIP)
+
+-- Assumes no time needed to reset clock
+DoClockReset(CS) = ||| c : CS @ c -> SKIP
+
+-- Time can pass while counting down on a Transition Deadline
+-- Note: The reason this process is not simpler is because a deadline
+--		 can depend on the value of a variable whose value is only known
+--		 once the transition becomes enabled, hence P can be slightly more
+--		 complex than just EDeadline(e,t).
+Timed(OneStep) {
+	TDeadline(e, P) = e -> P ; TDeadline(e,P)
+	PDeadline(P, S, Q, d) = (Deadline(P,d) ; SKIP) [|S|] (Q)
+	TSKIP = SKIP
+	-- Nondeterministic wait
+	WAIT_INTERVAL(S) = |~| x : S @ WAIT(x)
+	
+	-- Startind deadline
+	StartBy(P,d) = P [] (WAIT(d);USTOP)
+}
+
+-- Termination at any time
+SKIP_ANYTIME = SKIP |~| tock -> SKIP_ANYTIME
+
+-- Calculation of types for clocks
+clock_type_max(S) = clock_type_seq_max(seq(S),0)
+clock_type_seq_max(<>,x__) = x__
+clock_type_seq_max(<elem__>^xs,x__) = (if elem__ > x__ then clock_type_seq_max(xs,elem__) else clock_type_seq_max(xs,x__))
+
+-- Efficient timeout operator for d = 1
+-- NOTE: Encoding the same deadline within a TimedSection results in a non-optimal representation.
+TimeOut_1(P,Q) = (USTOP[+{tock}+]P) [] (tock -> Q)
+
+-- Timeout operator for arbitary 'd' cannot be used in a recursive process because of hiding
+TimeOut(P,d,Q) = if d > 0 then (P [+ {tock} +] (Countdown(d-1);tock'-> Q))[[tock' <- tock]] else Q

@@ -1,0 +1,24 @@
+
+
+
+
+
+
+
+
+
+
+
+include "defs/robochart_defs.csp"
+include "defs/core_defs.csp"
+include "defs/mod_sys.csp"
+include "defs/file_Transition_system_defs.csp"
+
+channel r__
+
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref0::stm_ref0::Init::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref0::stm_ref0::Wait24Vpower::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref0::stm_ref0::ClosedLoop::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref0::stm_ref0::ErrorMode::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref1::stm_ref0::s0::entered|}
+assert not STOP [T= mod_sys::VS_O__(0,ms(10),1) |\ {|mod_sys::ctrl_ref1::stm_ref0::s1::entered|}

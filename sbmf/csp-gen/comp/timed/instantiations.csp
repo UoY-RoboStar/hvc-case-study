@@ -1,0 +1,77 @@
+-- generate --
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate nat
+nametype core_nat = {calc_type_min(Union(
+			{{0..2},{0..2}}))..calc_type_max(Union({{0..2},{0..2}}))} --{0..2}
+
+-- generate string
+nametype core_string = LSeq(Char,2)
+
+-- generate ms
+ms(t) = 0
+
+-- generate real
+nametype core_real = {calc_type_min(Union(
+			{{ActualHV|ActualHV <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{underLimit|underLimit <- { -2..2}},{overLimit|overLimit <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{setPoint|setPoint <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{0},{overLimitF(Plus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{underLimitF(Minus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{setPoint|setPoint <- { -2..2}},{0},{0},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{0..2},{0..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{Plus(setPoint, 2, { -2..2})|setPoint <- { -2..2}},{Minus(setPoint, 2, { -2..2})|setPoint <- { -2..2}}}))..calc_type_max(Union({{ActualHV|ActualHV <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{underLimit|underLimit <- { -2..2}},{overLimit|overLimit <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{setPoint|setPoint <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{0},{overLimitF(Plus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{underLimitF(Minus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{setPoint|setPoint <- { -2..2}},{0},{0},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{0..2},{0..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{Plus(setPoint, 2, { -2..2})|setPoint <- { -2..2}},{Minus(setPoint, 2, { -2..2})|setPoint <- { -2..2}}}))} -- { -2..2}
+
+-- BASIC FUNCTIONS
+
+-- generate int
+nametype core_int = {calc_type_min(Union(
+			{{0..2},{0..2}}))..calc_type_max(Union({{0..2},{0..2}}))} --{ -2..2}
+
+-- generate -- OPERATION BOUNDS
+
+-- MODULE CONSTANTS
+
+-- CONTROLLER CONSTANTS
+
+-- STATEMACHINE CONSTANTS
+
+-- OPERATION CONSTANTS
+
+-- BASIC TYPES
+
+-- generate Div
+Div(e1,e2,T) = if member(e1/e2,T) then e1/e2 else e1
+
+-- generate Neg
+Neg(e1,T) = if member(-e1,T) then -e1 else e1
+
+-- generate boolean
+nametype core_boolean = Bool
+
+-- generate s
+s(t) = 0
+
+-- generate msx
+msx(t) = 0
+
+-- generate Mult
+Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1
+
+-- generate overLimitF
+overLimitF(x) = 0
+
+-- generate underLimitF
+underLimitF(x) = 0
+
+-- generate Modulus
+Modulus(e1,e2,T) = if member(e1%e2,T) then e1%e2 else e1
+
+-- generate Plus
+Plus(e1,e2,T) = if member(e1+e2,T) then e1+e2 else e1
+
+-- generate Minus
+Minus(e1,e2,T) = if member(e1-e2,T) then e1-e2 else e1
+
