@@ -15,7 +15,6 @@
     <semanticResources>prism-gen/exported_normalised.model</semanticResources>
     <semanticResources>prism-gen/Transition_system.pm</semanticResources>
     <semanticResources>assertions/probability_prism/basics.assertions</semanticResources>
-    <semanticResources>assertions/probability_prism/prism_properties.assertions</semanticResources>
     <semanticResources>assertions/probability_prism/P2.assertions</semanticResources>
     <semanticResources>assertions/probability_prism/P3.assertions</semanticResources>
     <semanticResources>assertions/probability_prism/P4.assertions</semanticResources>
