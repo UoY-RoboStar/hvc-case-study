@@ -1,0 +1,377 @@
+PRISM
+=====
+
+Version: 4.6
+Date: Sun May 16 22:33:30 BST 2021
+Hostname: compute3.cs.york.ac.uk
+Memory limits: cudd=400g, java(heap)=8g
+Command line: prism P2__P2_deadlock_free_assertions.prism P2_assertions.props -prop P2_deadlock_free -hybrid -cuddmaxmem 400g -javamaxmem 8g
+
+Parsing model file "P2__P2_deadlock_free_assertions.prism"...
+
+Type:        DTMC
+Modules:     BUF_int_DisableHV_16 BUF_ext_pow24_1_17 BUF_int_underLimit_20 mod_sys_ctrl_ref1_stm_ref0 mod_sys_ctrl_ref3_stm0 BUF_ext_pow24_2_25 BUF_int_ActualHV_27 BUF_int_overLimit_22 mod_sys_ctrl_ref2_stm0 BUF_ActualHV_1_19 mod_sys_ctrl_ref0_stm_ref0 mod_sys_rp_ref0 P2 
+Variables:   BUF_int_DisableHV_16_f BUF_ext_pow24_1_17_f EVT__IN_BUF__ext_pow24_1_17 FIN__OUT_BUF__ext_pow24_1_17 BUF_int_underLimit_20_f EVT__IN_BUF__int_underLimit_20 FIN__OUT_BUF__int_underLimit_20 FIN__IN_BUF__ActualHV_1_19 mod_sys_ctrl_ref1_stm_ref0_overLimit mod_sys_ctrl_ref1_stm_ref0_underLimit mod_sys_ctrl_ref1_stm_ref0_ActualHV mod_sys_ctrl_ref1_stm_ref0_s0_scpc_8 mod_sys_ctrl_ref1_stm_ref0_power FIN__IN_BUF__int_underLimit_20 FIN__IN_BUF__ext_pow24_2_25 mod_sys_ctrl_ref1_stm_ref0_exit_9 FIN__IN_BUF__int_overLimit_22 mod_sys_ctrl_ref1_stm_ref0_lock_7 mod_sys_ctrl_ref1_stm_ref0_scpc_8 mod_sys_ctrl_ref1_stm_ref0_s0_exit_9 mod_sys_ctrl_ref3_stm0_exit_9 EVT__OUT_BUF__ActualHV_1_19 FIN__IN_BUF__int_ActualHV_27 mod_sys_ctrl_ref3_stm0_scpc_8 mod_sys_ctrl_ref3_stm0_ActualHV mod_sys_ctrl_ref3_stm0_lock_7 EVT__RP__ActualHV_2_21 BUF_ext_pow24_2_25_f EVT__IN_BUF__ext_pow24_2_25 FIN__OUT_BUF__ext_pow24_2_25 BUF_int_ActualHV_27_f EVT__IN_BUF__int_ActualHV_27 FIN__OUT_BUF__int_ActualHV_27 BUF_int_overLimit_22_f EVT__IN_BUF__int_overLimit_22 FIN__OUT_BUF__int_overLimit_22 FIN__RP__ext_pow24VStatus_28 mod_sys_ctrl_ref2_stm0_power mod_sys_ctrl_ref2_stm0_lock_7 EVT__OUT_BUF__ext_pow24_2_25 EVT__OUT_BUF__ext_pow24_1_17 mod_sys_ctrl_ref2_stm0_scpc_8 mod_sys_ctrl_ref2_stm0_exit_9 BUF_ActualHV_1_19_f EVT__IN_BUF__ActualHV_1_19 FIN__OUT_BUF__ActualHV_1_19 mod_sys_ctrl_ref0_stm_ref0_Wait24Vpower_exit_9 mod_sys_ctrl_ref0_stm_ref0_ClosedLoop_s2_exit_9 mod_sys_ctrl_ref0_stm_ref0_ErrorMode_exit_9 mod_sys_ctrl_ref0_stm_ref0_setPoint mod_sys_ctrl_ref0_stm_ref0_scpc_8 mod_sys_ctrl_ref0_stm_ref0_disableHV_arg mod_sys_ctrl_ref0_stm_ref0_lock_7 mod_sys_ctrl_ref0_stm_ref0_ClosedLoop_scpc_8 mod_sys_ctrl_ref0_stm_ref0_errorFlag EVT__OUT_BUF__int_overLimit_22 mod_sys_ctrl_ref0_stm_ref0_Init_exit_9 mod_sys_ctrl_ref0_stm_ref0_ActualHV EVT__RP__int_pwmSignal_18 mod_sys_ctrl_ref0_stm_ref0_power mod_sys_ctrl_ref0_stm_ref0_Init_scpc_8 EVT__RP__ext_setPoint_24 mod_sys_ctrl_ref0_stm_ref0_ErrorMode_scpc_8 mod_sys_ctrl_ref0_stm_ref0_disableHV_lock_7 mod_sys_ctrl_ref0_stm_ref0_underLimit mod_sys_ctrl_ref0_stm_ref0_errorAck mod_sys_ctrl_ref0_stm_ref0_Wait24Vpower_scpc_8 mod_sys_ctrl_ref0_stm_ref0_overLimit FIN__IN_BUF__ext_pow24_1_17 mod_sys_ctrl_ref0_stm_ref0_exit_9 mod_sys_ctrl_ref0_stm_ref0_res mod_sys_ctrl_ref0_stm_ref0_supplyVoltCheck_lock_7 mod_sys_ctrl_ref0_stm_ref0_checkLimits_exit_9 mod_sys_ctrl_ref0_stm_ref0_supplyVoltCheck_exit_9 mod_sys_ctrl_ref0_stm_ref0_checkLimits_scpc_8 mod_sys_ctrl_ref0_stm_ref0_disableHV_scpc_8 mod_sys_ctrl_ref0_stm_ref0_supplyVoltCheck_power mod_sys_ctrl_ref0_stm_ref0_supplyVoltCheck_scpc_8 mod_sys_ctrl_ref0_stm_ref0_ClosedLoop_s2_scpc_8 EVT__OUT_BUF__int_underLimit_20 mod_sys_ctrl_ref0_stm_ref0_ClosedLoop_exit_9 EVT__RP__currentState_26 EVT__OUT_BUF__int_ActualHV_27 FIN__RP__ext_setPoint_23 mod_sys_ctrl_ref0_stm_ref0_disableHV_exit_9 mod_sys_ctrl_ref0_stm_ref0_checkLimits_lock_7 mod_sys_ctrl_ref0_stm_ref0_supplyLim mod_sys_ctrl_ref0_stm_ref0_lim EVT__RP__ext_setPoint_23 EVT__RP__ext_pow24VStatus_28 P2_scpc P2_updating 
+
+Parsing properties file "P2_assertions.props"...
+
+2 properties:
+(1) "P2_deadlock_free": (!E [ (F "deadlock") ])
+(2) "P2": A [ (G "l2") ]
+
+---------------------------------------------------------------------
+
+Model checking: "P2_deadlock_free": (!E [ (F "deadlock") ])
+
+Building model...
+
+Warning: Guard for command 5 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 6 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 9 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 11 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 13 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 14 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 15 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 16 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 18 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 19 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 20 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 21 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 22 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 24 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 25 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 28 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 30 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 32 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 33 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 36 of module "mod_sys_ctrl_ref1_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 8 of module "mod_sys_ctrl_ref3_stm0" overlaps with previous commands.
+
+Warning: Guard for command 7 of module "mod_sys_ctrl_ref2_stm0" overlaps with previous commands.
+
+Warning: Guard for command 7 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 10 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 12 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 13 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 14 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 15 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 16 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 17 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 18 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 19 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 20 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 21 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 23 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 24 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 25 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 26 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 27 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 28 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 29 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 30 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 31 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 32 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 33 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 34 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 35 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 37 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 38 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 39 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 40 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 41 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 43 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 44 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 45 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 47 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 48 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 49 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 50 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 51 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 52 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 53 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 54 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 55 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 57 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 58 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 59 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 60 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 61 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 62 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 63 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 64 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 65 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 68 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 69 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 70 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 71 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 73 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 74 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 75 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 76 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 77 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 78 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 79 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 80 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 81 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 82 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 83 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 84 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 85 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 86 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 87 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 88 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 89 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 90 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 91 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 92 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 93 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 94 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 95 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 96 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 97 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 98 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 99 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 100 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 101 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 102 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 103 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 105 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 106 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 107 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 109 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 110 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 111 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 112 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 113 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 114 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 115 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 116 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 117 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 118 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 119 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 120 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 122 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 123 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 124 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 125 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 126 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 127 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 128 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 129 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 130 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 131 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 132 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 133 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 134 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 138 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 139 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 140 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 141 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 142 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 143 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 144 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 145 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 146 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 147 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 148 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 149 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 150 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 153 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 155 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 156 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 157 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 158 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 159 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 160 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 161 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 162 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 72 of module "mod_sys_ctrl_ref0_stm_ref0" overlaps with previous commands.
+
+Warning: Guard for command 8 of module "mod_sys_rp_ref0" overlaps with previous commands.
+
+Warning: Guard for command 3 of module "mod_sys_rp_ref0" overlaps with previous commands.
+
+Warning: Guard for command 7 of module "mod_sys_rp_ref0" overlaps with previous commands.
+
+Computing reachable states...
+
+Reachability (BFS): 395 iterations in 6469.57 seconds (average 16.378653, setup 0.00)
+
+Time for model construction: 12287.65 seconds.
+
+Type:        DTMC
+States:      8022587009 (1 initial)
+Transitions: 37559924060
+
+Transition matrix: 19873752 nodes (10 terminal), 37559924060 minterms, vars: 192r/192c
+
+Warning: Switching to MTBDD engine, as number of states is too large for Hybrid engine.
+
+CTL EU fixpoint: 1 iterations in 4.811 seconds
+
+Property satisfied in 1 of 1 initial states.
+
+Time for model checking: 5.185 seconds.
+
+Result: true (property satisfied in the initial state)
+
+---------------------------------------------------------------------
+
+Note: There were 163 warnings during computation.
+

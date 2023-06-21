@@ -1,0 +1,43 @@
+PRISM
+=====
+
+Version: 4.6
+Date: Sun May 16 22:33:06 BST 2021
+Hostname: compute3.cs.york.ac.uk
+Memory limits: cudd=400g, java(heap)=8g
+Command line: prism P5__P_reach_Wait24Vpower_assertions.prism P5_assertions.props -prop P_reach_Wait24Vpower -sim -simmethod ci -simconf 0.01 --simsamples 100 -simpathlen 100000000 -hybrid -cuddmaxmem 400g -javamaxmem 8g
+
+Parsing model file "P5__P_reach_Wait24Vpower_assertions.prism"...
+
+Type:        DTMC
+Modules:     BUF_int_DisableHV_16 BUF_ext_pow24_1_17 BUF_int_underLimit_20 mod_sys_ctrl_ref1_stm_ref0 mod_sys_ctrl_ref3_stm0 BUF_ext_pow24_2_25 BUF_int_ActualHV_27 BUF_int_overLimit_22 mod_sys_ctrl_ref2_stm0 BUF_ActualHV_1_19 mod_sys_ctrl_ref0_stm_ref0 mod_sys_rp_ref0 
+Variables:   BUF_int_DisableHV_16_f BUF_ext_pow24_1_17_f EVT__IN_BUF__ext_pow24_1_17 FIN__OUT_BUF__ext_pow24_1_17 BUF_int_underLimit_20_f EVT__IN_BUF__int_underLimit_20 FIN__OUT_BUF__int_underLimit_20 FIN__IN_BUF__ActualHV_1_19 mod_sys_ctrl_ref1_stm_ref0_overLimit mod_sys_ctrl_ref1_stm_ref0_underLimit mod_sys_ctrl_ref1_stm_ref0_ActualHV mod_sys_ctrl_ref1_stm_ref0_s0_scpc_8 mod_sys_ctrl_ref1_stm_ref0_power FIN__IN_BUF__int_underLimit_20 FIN__IN_BUF__ext_pow24_2_25 mod_sys_ctrl_ref1_stm_ref0_exit_9 FIN__IN_BUF__int_overLimit_22 mod_sys_ctrl_ref1_stm_ref0_lock_7 mod_sys_ctrl_ref1_stm_ref0_scpc_8 mod_sys_ctrl_ref1_stm_ref0_s0_exit_9 mod_sys_ctrl_ref3_stm0_exit_9 EVT__OUT_BUF__ActualHV_1_19 FIN__IN_BUF__int_ActualHV_27 mod_sys_ctrl_ref3_stm0_scpc_8 mod_sys_ctrl_ref3_stm0_ActualHV mod_sys_ctrl_ref3_stm0_lock_7 EVT__RP__ActualHV_2_21 BUF_ext_pow24_2_25_f EVT__IN_BUF__ext_pow24_2_25 FIN__OUT_BUF__ext_pow24_2_25 BUF_int_ActualHV_27_f EVT__IN_BUF__int_ActualHV_27 FIN__OUT_BUF__int_ActualHV_27 BUF_int_overLimit_22_f EVT__IN_BUF__int_overLimit_22 FIN__OUT_BUF__int_overLimit_22 FIN__RP__ext_pow24VStatus_28 mod_sys_ctrl_ref2_stm0_power mod_sys_ctrl_ref2_stm0_lock_7 EVT__OUT_BUF__ext_pow24_2_25 EVT__OUT_BUF__ext_pow24_1_17 mod_sys_ctrl_ref2_stm0_scpc_8 mod_sys_ctrl_ref2_stm0_exit_9 BUF_ActualHV_1_19_f EVT__IN_BUF__ActualHV_1_19 FIN__OUT_BUF__ActualHV_1_19 mod_sys_ctrl_ref0_stm_ref0_Wait24Vpower_exit_9 mod_sys_ctrl_ref0_stm_ref0_ClosedLoop_s2_exit_9 mod_sys_ctrl_ref0_stm_ref0_ErrorMode_exit_9 mod_sys_ctrl_ref0_stm_ref0_setPoint mod_sys_ctrl_ref0_stm_ref0_scpc_8 mod_sys_ctrl_ref0_stm_ref0_disableHV_arg mod_sys_ctrl_ref0_stm_ref0_lock_7 mod_sys_ctrl_ref0_stm_ref0_ClosedLoop_scpc_8 mod_sys_ctrl_ref0_stm_ref0_errorFlag EVT__OUT_BUF__int_overLimit_22 mod_sys_ctrl_ref0_stm_ref0_Init_exit_9 mod_sys_ctrl_ref0_stm_ref0_ActualHV EVT__RP__int_pwmSignal_18 mod_sys_ctrl_ref0_stm_ref0_power mod_sys_ctrl_ref0_stm_ref0_Init_scpc_8 EVT__RP__ext_setPoint_24 mod_sys_ctrl_ref0_stm_ref0_ErrorMode_scpc_8 mod_sys_ctrl_ref0_stm_ref0_disableHV_lock_7 mod_sys_ctrl_ref0_stm_ref0_underLimit mod_sys_ctrl_ref0_stm_ref0_errorAck mod_sys_ctrl_ref0_stm_ref0_Wait24Vpower_scpc_8 mod_sys_ctrl_ref0_stm_ref0_overLimit FIN__IN_BUF__ext_pow24_1_17 mod_sys_ctrl_ref0_stm_ref0_exit_9 mod_sys_ctrl_ref0_stm_ref0_res mod_sys_ctrl_ref0_stm_ref0_supplyVoltCheck_lock_7 mod_sys_ctrl_ref0_stm_ref0_checkLimits_exit_9 mod_sys_ctrl_ref0_stm_ref0_supplyVoltCheck_exit_9 mod_sys_ctrl_ref0_stm_ref0_checkLimits_scpc_8 mod_sys_ctrl_ref0_stm_ref0_disableHV_scpc_8 mod_sys_ctrl_ref0_stm_ref0_supplyVoltCheck_power mod_sys_ctrl_ref0_stm_ref0_supplyVoltCheck_scpc_8 mod_sys_ctrl_ref0_stm_ref0_ClosedLoop_s2_scpc_8 EVT__OUT_BUF__int_underLimit_20 mod_sys_ctrl_ref0_stm_ref0_ClosedLoop_exit_9 EVT__RP__currentState_26 EVT__OUT_BUF__int_ActualHV_27 FIN__RP__ext_setPoint_23 mod_sys_ctrl_ref0_stm_ref0_disableHV_exit_9 mod_sys_ctrl_ref0_stm_ref0_checkLimits_lock_7 mod_sys_ctrl_ref0_stm_ref0_supplyLim mod_sys_ctrl_ref0_stm_ref0_lim EVT__RP__ext_setPoint_23 EVT__RP__ext_pow24VStatus_28 
+
+Parsing properties file "P5_assertions.props"...
+
+5 properties:
+(1) "P_reach_Ramping": P>0.0 [ (F mod_sys_ctrl_ref0_stm_ref0_scpc_8=mod_sys_ctrl_ref0_stm_ref0_Ramping) ]
+(2) "P_reach_Init": P>0.0 [ (F mod_sys_ctrl_ref0_stm_ref0_scpc_8=mod_sys_ctrl_ref0_stm_ref0_Init) ]
+(3) "P_reach_Wait24Vpower": P>0.0 [ (F mod_sys_ctrl_ref0_stm_ref0_scpc_8=mod_sys_ctrl_ref0_stm_ref0_Wait24Vpower) ]
+(4) "P_reach_ClosedLoop": P>0.0 [ (F mod_sys_ctrl_ref0_stm_ref0_scpc_8=mod_sys_ctrl_ref0_stm_ref0_ClosedLoop) ]
+(5) "P_reach_ErrorMode": P>0.0 [ (F mod_sys_ctrl_ref0_stm_ref0_scpc_8=mod_sys_ctrl_ref0_stm_ref0_ErrorMode) ]
+
+---------------------------------------------------------------------
+
+Simulating: P>0.0 [ (F mod_sys_ctrl_ref0_stm_ref0_scpc_8=mod_sys_ctrl_ref0_stm_ref0_Wait24Vpower) ]
+
+Simulation method: CI (Confidence Interval)
+Simulation method parameters: width=unknown, confidence=0.01, number of samples=100
+Simulation parameters: max path length=100000000
+
+Sampling progress: [ 10% 20% 30% 40% 50% 60% 70% 80% 90% 100% ]
+
+Sampling complete: 100 iterations in 0.357 seconds (average 0.0036)
+Path length statistics: average 95, min 63, max 127
+
+Simulation method parameters: width=0.0, confidence=0.01, number of samples=100
+
+Simulation result details: confidence interval is 1.0 +/- 0.0, based on 99.0% confidence level
+
+Result: true
+
