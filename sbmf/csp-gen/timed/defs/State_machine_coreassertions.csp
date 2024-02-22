@@ -1,6 +1,16 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:39
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
+include "core_timed_defs.csp"
 include "State_machine.csp"
 include "core_defs.csp"
-include "timed_definitions.csp"
+include "state_timed_defs.csp"
 include "file_sequential_StateMachine_defs.csp"
 include "robochart_defs.csp"
 include "../instantiations.csp"
@@ -9,12 +19,20 @@ transparent wbisim
 channel r__
 -- generate State_machine
 P_State_machine = let
-	id = 0
+	id__ = 0
+	
+	
+	
 within
 	State_machine::O__(
-		id
+		id__
 	)
 assert P_State_machine :[deadlock-free]	
 assert P_State_machine;RUN({r__}) :[deadlock-free]
 assert P_State_machine :[deterministic]
 assert P_State_machine :[divergence-free]
+-- timed deadlock free
+assert prioritise(P_State_machine[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- timelock free
+assert RUN({tock}) ||| CHAOS(diff(Events,{|tock|})) [F= P_State_machine

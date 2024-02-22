@@ -59,7 +59,7 @@ underLimitMin(x) = if x < REAL_MIN then REAL_MIN else x
 overLimitF(x) = overLimitMax(x+2)
 underLimitF(x) = underLimitMin(x-2)
 
-
+nametype core_clock_type = {0..11}
 
 csp-end
 

@@ -1,80 +1,17 @@
 
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:39
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
 
-
-
-
-
-
--- A4 - timed deadlock free
-assert prioritise(let 
-	id__ = 0
-	
-	
-	
-	
-		
-within
-	mod_sys::D__(id__)[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
-
--- A5 - reachable
-assert not STOP [T= let 
-	id__ = 0
-	
-	
-	
-	
-	
-within
-	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Ramping|}
-
--- A6 - reachable
-assert not STOP [T= let 
-	id__ = 0
-	
-	
-	
-	
-	
-within
-	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Init|}
-
--- A7 - reachable
-assert not STOP [T= let 
-	id__ = 0
-	
-	
-	
-	
-	
-within
-	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_Wait24Vpower|}
-
--- A8 - reachable
-assert not STOP [T= let 
-	id__ = 0
-	
-	
-	
-	
-	
-within
-	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_ClosedLoop|}
-
--- A9 - reachable
-assert not STOP [T= let 
-	id__ = 0
-	
-	
-	
-	
-	
-within
-	State_machine::VS__(id__) |\ {|State_machine::enteredV.State_machine::SID_State_machine_ErrorMode|}
-
-include "defs/timed_definitions.csp"
+include "defs/state_timed_defs.csp"
 include "defs/robochart_defs.csp"
 include "defs/core_defs.csp"
 include "defs/mod_sys.csp"
+include "defs/core_timed_defs.csp"
 include "defs/file_sequential_StateMachine_defs.csp"
 include "defs/State_machine.csp"
 include "defs/file_Transition_system_defs.csp"
@@ -138,3 +75,66 @@ underLimitMin(x) = if x < REAL_MIN then REAL_MIN else x
 
 overLimitF(x) = overLimitMax(x+2)
 underLimitF(x) = underLimitMin(x-2)
+
+
+
+
+
+
+
+
+-- A4 - timed deadlock free
+assert prioritise(let 
+	id__ = 0
+	
+	
+	
+		
+within
+	mod_sys::D__(id__)[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- A5 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::Ramping::entered|}
+
+-- A6 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::Init::entered|}
+
+-- A7 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::Wait24Vpower::entered|}
+
+-- A8 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::ClosedLoop::entered|}
+
+-- A9 - reachable
+assert not STOP [T= let 
+	id__ = 0
+	
+	
+	
+within
+	State_machine::VS__(id__) |\ {|State_machine::ErrorMode::entered|}
+

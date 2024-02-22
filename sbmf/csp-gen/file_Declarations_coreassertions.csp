@@ -1,30 +1,52 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:40
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
 include "file_Declarations.csp"
 
 
 -- generate OP_disableHV
 P_OP_disableHV = let
-	id = 0 
-	const_disableHV_arg = true
+	id__ = 0
+	
+	param_arg = true
+	
+	
+	
 within
-	OP_disableHV::O__(id, const_disableHV_arg)
+	OP_disableHV::O__(id__,
+				param_arg)
 assert P_OP_disableHV :[deadlock-free]	
 assert P_OP_disableHV;RUN({r__}) :[deadlock-free]
 assert P_OP_disableHV :[deterministic]
 assert P_OP_disableHV :[divergence-free]
 -- generate OP_checkLimits
 P_OP_checkLimits = let
-	id = 0 
+	id__ = 0
+	
+	
+	
+	
 within
-	OP_checkLimits::O__(id)
+	OP_checkLimits::O__(id__)
 assert P_OP_checkLimits :[deadlock-free]	
 assert P_OP_checkLimits;RUN({r__}) :[deadlock-free]
 assert P_OP_checkLimits :[deterministic]
 assert P_OP_checkLimits :[divergence-free]
 -- generate OP_supplyVoltCheck
 P_OP_supplyVoltCheck = let
-	id = 0 
+	id__ = 0
+	
+	
+	
+	
 within
-	OP_supplyVoltCheck::O__(id)
+	OP_supplyVoltCheck::O__(id__)
 assert P_OP_supplyVoltCheck :[deadlock-free]	
 assert P_OP_supplyVoltCheck;RUN({r__}) :[deadlock-free]
 assert P_OP_supplyVoltCheck :[deterministic]

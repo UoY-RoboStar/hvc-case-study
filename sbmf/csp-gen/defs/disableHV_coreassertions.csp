@@ -1,4 +1,14 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:40
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
 include "core_defs.csp"
+include "state_defs.csp"
 include "file_Declarations_defs.csp"
 include "robochart_defs.csp"
 include "disableHV.csp"
@@ -6,10 +16,15 @@ include "../instantiations.csp"
 channel r__
 -- generate OP_disableHV
 P_OP_disableHV = let
-	id = 0 
-	const_disableHV_arg = true
+	id__ = 0
+	
+	param_arg = true
+	
+	
+	
 within
-	OP_disableHV::O__(id, const_disableHV_arg)
+	OP_disableHV::O__(id__,
+				param_arg)
 assert P_OP_disableHV :[deadlock-free]	
 assert P_OP_disableHV;RUN({r__}) :[deadlock-free]
 assert P_OP_disableHV :[deterministic]

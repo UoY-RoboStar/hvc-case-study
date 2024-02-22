@@ -1,54 +1,80 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:40
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
+-- compileSelfContainedOperation
 module OP_checkLimits
-	-- Only the undefined operations are declared here.
-	-- If the state machine is in isolation, all required operations will be undefined.
-	-- If it is in the context of a controller, the required operations not provided by the
-	-- controller will be declared here, and the defined operations will be defined in the
-	-- context of the Controller module, and therefore within scope of the state machien module.
-	
-	
-	-- definition of functions used to expose flow channels
-	ShowEvents(P,E) = P[[ entered.x____.y____ <- enteredV.y____ | entered.x____.y____ <- E]]
-					   [[ enter.x____.y____ <- enterV.y____ | enter.x____.y____ <- E]]
-					   [[ exit.x____.y____ <- exitV.y____ | exit.x____.y____ <- E]]
-					   [[ exited.x____.y____ <- exitedV.y____ | exited.x____.y____ <- E ]]
-						 
-	ShowEnteredV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS ]]
-	ShowEnterV(P) = P[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
-	ShowExitV(P) = P[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS ]]
-	ShowExitedV(P) = P[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
-	ShowV(P) = P[[ entered.x____.y____ <- enteredV.y____ | x____ <- SIDS, y____ <- SIDS]]
-				[[ enter.x____.y____ <- enterV.y____ | x____ <- SIDS, y____ <- SIDS ]]
-				[[ exit.x____.y____ <- exitV.y____ | x____ <- SIDS, y____ <- SIDS]]
-				[[ exited.x____.y____ <- exitedV.y____ | x____ <- SIDS, y____ <- SIDS ]]
-	
-	-- declaring identifiers of state and final states
-	datatype SIDS = SID_checkLimits
-	              | SID_checkLimits_s0
-	              | SID_checkLimits_f0
-	
+exports
+	transparent diamond
+	transparent sbisim
+	transparent dbisim
+	transparent chase
+
+	-- Transition identifiers
 	-- declaring identifiers of transitions
-	datatype TIDS = NULLTRANSITION__
-	              | TID_checkLimits_t0
-	              | TID_checkLimits_t1
-	              | TID_checkLimits_t2
+	datatype NIDS = 
+	              NID_i0|
+	              NID_s0|
+	              NID_f0
 	
-	-- declaring identifiers of transitions that can interupt a state (excludes transitions from junctions)
+	channel internal__ : NIDS
 	
-	ITIDS = {
-		TID_checkLimits_t1,	TID_checkLimits_t2
-	}
+	-- Flow channels		
+	channel interrupt
+	channel exited
+	channel exit
+	channel terminate
 	
-	int_int = {|
-		ext_setPoint__.TID_checkLimits_t1,
-		ext_pow24VStatus__.TID_checkLimits_t1,
-		internal__.TID_checkLimits_t1,
-		ext_setPoint__.TID_checkLimits_t2,
-		ext_pow24VStatus__.TID_checkLimits_t2,
-		internal__.TID_checkLimits_t2
+	-- Variable channels
+	channel get_setPoint, set_setPoint, setL_setPoint, setR_setPoint: core_real
+	channel get_res, set_res, setL_res, setR_res: core_boolean
+	channel get_errorFlag, set_errorFlag, setL_errorFlag, setR_errorFlag: core_boolean
+	channel get_lim, set_lim, setL_lim, setR_lim: core_boolean
+	channel get_supplyLim, set_supplyLim, setL_supplyLim, setR_supplyLim: core_boolean
+	channel get_ActualHV, set_ActualHV, setL_ActualHV, setR_ActualHV: core_real
+	channel get_errorAck, set_errorAck, setL_errorAck, setR_errorAck: core_boolean
+	channel get_overLimit, set_overLimit, setL_overLimit, setR_overLimit: core_real
+	channel get_underLimit, set_underLimit, setL_underLimit, setR_underLimit: core_real
+	
+	-- Shared variable channels
+	channel set_EXT_setPoint: core_real
+	channel set_EXT_res: core_boolean
+	channel set_EXT_errorFlag: core_boolean
+	channel set_EXT_lim: core_boolean
+	channel set_EXT_supplyLim: core_boolean
+	channel set_EXT_ActualHV: core_real
+	channel set_EXT_errorAck: core_boolean
+	channel set_EXT_overLimit: core_real
+	channel set_EXT_underLimit: core_real
+	
+	-- Local variable channels for defined operations that are required by the state machine
+	
+	-- Declaring state machine events
+	channel ext_setPoint__: NIDS.InOut.core_real
+	channel ext_setPoint: InOut.core_real
+	channel ext_pow24VStatus__: NIDS.InOut.Power
+	channel ext_pow24VStatus: InOut.Power
+	
+	-- Declaring call and ret events for undefined operations
+	
+	enterSS = {|
+	i0::enter,
+	s0::enter,
+	f0::enter
 	|}
-		
 	
-	internal_events = {|enter,entered,exit,exited|}
+	enteredSS = 	{|
+	s0::entered,
+	f0::entered
+	|}
+	
+	internal_events = union(enteredSS,union(enterSS,{|interrupt,exited|}))
+	
 	shared_variable_events = {|
 		set_EXT_setPoint,
 		set_EXT_res,
@@ -60,621 +86,348 @@ module OP_checkLimits
 		set_EXT_overLimit,
 		set_EXT_underLimit
 	|}
-			
 	
-	-- declaring all states
-	CS_checkLimits_s0_sync = {|
-		enter.y____.x____, 
-		entered.y____.x____, 
-		exit.y____.x____, 
-		exited.y____.x____,
-		enter.x____.y____, 
-		entered.x____.y____, 
-		exit.x____.y____, 
-		exited.x____.y____ |
-		x____ <- {SID_checkLimits_s0,SID_checkLimits_f0},
-		y____ <- {SID_checkLimits_s0}
-	|}
-	
-	
-	checkLimits_s0_triggers = {|
-		internal__.TID_checkLimits_t1,
-		internal__.TID_checkLimits_t2
-	|}
-	
-	State_checkLimits_s0(id__) = let
-		T_checkLimits_t1(id__) = internal__!TID_checkLimits_t1 ->  exit.SID_checkLimits_s0.SID_checkLimits_s0 -> SKIP;
-							SKIP;exited.SID_checkLimits_s0.SID_checkLimits_s0 -> SKIP;
-							true & (set_lim!false -> SKIP);enter!SID_checkLimits_s0!SID_checkLimits_f0 -> entered!SID_checkLimits_s0!SID_checkLimits_f0 ->
-							State_checkLimits_s0(id__)
-		T_checkLimits_t2(id__) = internal__!TID_checkLimits_t2 ->  exit.SID_checkLimits_s0.SID_checkLimits_s0 -> SKIP;
-							SKIP;exited.SID_checkLimits_s0.SID_checkLimits_s0 -> SKIP;
-							true & (set_lim!true -> SKIP);enter!SID_checkLimits_s0!SID_checkLimits_f0 -> entered!SID_checkLimits_s0!SID_checkLimits_f0 ->
-							State_checkLimits_s0(id__)
-		State_checkLimits_s0_execute(id__,o____) = SKIP; 
-			entered!o____!SID_checkLimits_s0 ->
-			(SKIP; STOP /\ (
-				T_checkLimits_t1(id__)[]
-				T_checkLimits_t2(id__)
-				[]
-				internal__?x____:diff(ITIDS,{NULLTRANSITION__,TID_checkLimits_t1,TID_checkLimits_t2}) -> exit?y____:diff(SIDS,{SID_checkLimits_s0})!SID_checkLimits_s0 -> (
-						SKIP;
-						exited!y____!SID_checkLimits_s0 -> SKIP);
-						State_checkLimits_s0(id__)
-				[] ext_setPoint__?x____:diff(ITIDS,{NULLTRANSITION__,TID_checkLimits_t1,TID_checkLimits_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_checkLimits_s0})!SID_checkLimits_s0 -> (
-						SKIP;
-						exited!y____!SID_checkLimits_s0 -> SKIP);
-						State_checkLimits_s0(id__)
-				[] ext_pow24VStatus__?x____:diff(ITIDS,{NULLTRANSITION__,TID_checkLimits_t1,TID_checkLimits_t2})?d____?aux____ ->	exit?y____:diff(SIDS,{SID_checkLimits_s0})!SID_checkLimits_s0 -> (
-						SKIP;
-						exited!y____!SID_checkLimits_s0 -> SKIP);
-						State_checkLimits_s0(id__)
-			))
-	within
-		enter?x____:diff(SIDS,{SID_checkLimits_s0})!SID_checkLimits_s0 -> (State_checkLimits_s0_execute(id__,x____))
-	
-	CS_checkLimits_f0_sync = {|
-		enter.y____.x____, 
-		entered.y____.x____, 
-		exit.y____.x____, 
-		exited.y____.x____,
-		enter.x____.y____, 
-		entered.x____.y____, 
-		exit.x____.y____, 
-		exited.x____.y____ |
-		x____ <- {SID_checkLimits_s0,SID_checkLimits_f0},
-		y____ <- {SID_checkLimits_f0}
-	|}
-	
-	
-	checkLimits_f0_triggers = {|
-	|}
-	
-	State_checkLimits_f0(id__) = let
-		State_checkLimits_f0_execute(id__,o____) = SKIP; 
-			entered!o____!SID_checkLimits_f0 ->
-			terminate -> SKIP
-	within
-		enter?x____:diff(SIDS,{SID_checkLimits_f0})!SID_checkLimits_f0 -> (State_checkLimits_f0_execute(id__,x____))
-	
-	
-	I_checkLimits_i0(id__) = let
-		T_checkLimits_t0(id__) = internal__!TID_checkLimits_t0 -> enter!SID_checkLimits!SID_checkLimits_s0 -> entered!SID_checkLimits!SID_checkLimits_s0 ->
-		SKIP
-	within
-		T_checkLimits_t0(id__)
-	
-	
-	State_checkLimits_s0_R(id__) = 
-		State_checkLimits_s0(id__)
-			[|diff(int_int,checkLimits_s0_triggers)|]
-		SKIP
-			 		
-	State_checkLimits_f0_R(id__) = 
-		State_checkLimits_f0(id__)
-			[|diff(int_int,checkLimits_f0_triggers)|]
-		SKIP
-			 		
-		
-	STM(id__) = (
-		I_checkLimits_i0(id__)
-			[|
-				{|enter.x____.y____, entered.x____.y____, exit.x____.y____, exited.x____.y____ |
-					x____ <- diff(SIDS,{SID_checkLimits_s0,SID_checkLimits_f0}),
-					y____ <- {SID_checkLimits_s0,SID_checkLimits_f0}
-			|}|]
-		(
-			State_checkLimits_s0_R(id__)
-				[|inter(CS_checkLimits_s0_sync,CS_checkLimits_f0_sync)|]
-			State_checkLimits_f0_R(id__)
-		)
-	)
-	
-	-- optimized memory process
-	channel getV_setPoint: core_real
-	channel getV_res: core_boolean
-	channel getV_errorFlag: core_boolean
-	channel getV_lim: core_boolean
-	channel getV_supplyLim: core_boolean
-	channel getV_ActualHV: core_real
-	channel getV_errorAck: core_boolean
-	channel getV_overLimit: core_real
-	channel getV_underLimit: core_real
-	
-	-- individual memory processes
-	Memory_setPoint(setPoint) = (
-		get_setPoint!setPoint -> Memory_setPoint(setPoint)
-		[]
-		getV_setPoint!setPoint -> Memory_setPoint(setPoint)
-		[]
-		set_setPoint?x__ -> Memory_setPoint(x__)
-		[]
-		set_EXT_setPoint?x__ -> Memory_setPoint(x__)
-	)
-	Memory_res(res) = (
-		get_res!res -> Memory_res(res)
-		[]
-		getV_res!res -> Memory_res(res)
-		[]
-		set_res?x__ -> Memory_res(x__)
-		[]
-		set_EXT_res?x__ -> Memory_res(x__)
-	)
-	Memory_errorFlag(errorFlag) = (
-		get_errorFlag!errorFlag -> Memory_errorFlag(errorFlag)
-		[]
-		getV_errorFlag!errorFlag -> Memory_errorFlag(errorFlag)
-		[]
-		set_errorFlag?x__ -> Memory_errorFlag(x__)
-		[]
-		set_EXT_errorFlag?x__ -> Memory_errorFlag(x__)
-	)
-	Memory_lim(lim) = (
-		get_lim!lim -> Memory_lim(lim)
-		[]
-		getV_lim!lim -> Memory_lim(lim)
-		[]
-		set_lim?x__ -> Memory_lim(x__)
-		[]
-		set_EXT_lim?x__ -> Memory_lim(x__)
-	)
-	Memory_supplyLim(supplyLim) = (
-		get_supplyLim!supplyLim -> Memory_supplyLim(supplyLim)
-		[]
-		getV_supplyLim!supplyLim -> Memory_supplyLim(supplyLim)
-		[]
-		set_supplyLim?x__ -> Memory_supplyLim(x__)
-		[]
-		set_EXT_supplyLim?x__ -> Memory_supplyLim(x__)
-	)
-	Memory_ActualHV(ActualHV) = (
-		get_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
-		[]
-		getV_ActualHV!ActualHV -> Memory_ActualHV(ActualHV)
-		[]
-		set_ActualHV?x__ -> Memory_ActualHV(x__)
-		[]
-		set_EXT_ActualHV?x__ -> Memory_ActualHV(x__)
-	)
-	Memory_errorAck(errorAck) = (
-		get_errorAck!errorAck -> Memory_errorAck(errorAck)
-		[]
-		getV_errorAck!errorAck -> Memory_errorAck(errorAck)
-		[]
-		set_errorAck?x__ -> Memory_errorAck(x__)
-		[]
-		set_EXT_errorAck?x__ -> Memory_errorAck(x__)
-	)
-	Memory_overLimit(overLimit) = (
-		get_overLimit!overLimit -> Memory_overLimit(overLimit)
-		[]
-		getV_overLimit!overLimit -> Memory_overLimit(overLimit)
-		[]
-		set_overLimit?x__ -> Memory_overLimit(x__)
-		[]
-		set_EXT_overLimit?x__ -> Memory_overLimit(x__)
-	)
-	Memory_underLimit(underLimit) = (
-		get_underLimit!underLimit -> Memory_underLimit(underLimit)
-		[]
-		getV_underLimit!underLimit -> Memory_underLimit(underLimit)
-		[]
-		set_underLimit?x__ -> Memory_underLimit(x__)
-		[]
-		set_EXT_underLimit?x__ -> Memory_underLimit(x__)
-	)
-	
-	-- processes that read variables and offer transitions
-	MemoryTransitions(id__, setPoint, res, errorFlag, lim, supplyLim, ActualHV, errorAck, overLimit, underLimit) = 		
-	(internal__!TID_checkLimits_t0 -> SKIP
-	[]
-	(((ActualHV<=overLimit) and (ActualHV>=underLimit)))&(internal__!TID_checkLimits_t1 -> SKIP)
-	[]
-	(((ActualHV<underLimit) or (ActualHV>overLimit)))&(internal__!TID_checkLimits_t2 -> SKIP)[]
-	set_setPoint?x__ -> SKIP[]
-	set_EXT_setPoint?x__ -> SKIP[]
-	set_res?x__ -> SKIP[]
-	set_EXT_res?x__ -> SKIP[]
-	set_errorFlag?x__ -> SKIP[]
-	set_EXT_errorFlag?x__ -> SKIP[]
-	set_lim?x__ -> SKIP[]
-	set_EXT_lim?x__ -> SKIP[]
-	set_supplyLim?x__ -> SKIP[]
-	set_EXT_supplyLim?x__ -> SKIP[]
-	set_ActualHV?x__ -> SKIP[]
-	set_EXT_ActualHV?x__ -> SKIP[]
-	set_errorAck?x__ -> SKIP[]
-	set_EXT_errorAck?x__ -> SKIP[]
-	set_overLimit?x__ -> SKIP[]
-	set_EXT_overLimit?x__ -> SKIP[]
-	set_underLimit?x__ -> SKIP[]
-	set_EXT_underLimit?x__ -> SKIP)
-	
-	MemoryTransitions_checkLimits(id__) = (getV_setPoint?setPoint ->
-	getV_res?res ->
-	getV_errorFlag?errorFlag ->
-	getV_lim?lim ->
-	getV_supplyLim?supplyLim ->
-	getV_ActualHV?ActualHV ->
-	getV_errorAck?errorAck ->
-	getV_overLimit?overLimit ->
-	getV_underLimit?underLimit ->
-	MemoryTransitions(id__, setPoint, res, errorFlag, lim, supplyLim, ActualHV, errorAck, overLimit, underLimit)			
-	); MemoryTransitions_checkLimits(id__)
-			
-	
-	-- synchronisation, hiding and process sets 
-	MemoryVariablesProcesses_checkLimits = Union(
-		{
-			{
-				(Memory_setPoint(0),{|set_EXT_setPoint,set_setPoint,getV_setPoint,get_setPoint|}),
-				(Memory_res(false),{|set_res,getV_res,set_EXT_res,get_res|}),
-				(Memory_errorFlag(true),{|set_errorFlag,get_errorFlag,set_EXT_errorFlag,getV_errorFlag|}),
-				(Memory_lim(false),{|set_lim,getV_lim,set_EXT_lim,get_lim|}),
-				(Memory_supplyLim(false),{|get_supplyLim,getV_supplyLim,set_supplyLim,set_EXT_supplyLim|}),
-				(Memory_ActualHV(0),{|get_ActualHV,set_ActualHV,set_EXT_ActualHV,getV_ActualHV|}),
-				(Memory_errorAck(false),{|set_errorAck,set_EXT_errorAck,getV_errorAck,get_errorAck|}),
-				(Memory_overLimit(0),{|set_overLimit,get_overLimit,set_EXT_overLimit,getV_overLimit|}),
-				(Memory_underLimit(0),{|set_EXT_underLimit,get_underLimit,set_underLimit,getV_underLimit|})
-			}
-		}
-	)
-	
-	MemoryVariablesSyncSet = Union({
-		{|
-			set_ActualHV,
-			set_errorFlag,
-			set_EXT_underLimit,
-			set_EXT_res,
-			getV_supplyLim,
-			getV_errorFlag,
-			set_EXT_ActualHV,
-			set_res,
-			getV_lim,
-			set_EXT_errorFlag,
-			set_EXT_overLimit,
-			set_underLimit,
-			getV_ActualHV,
-			set_overLimit,
-			set_lim,
-			getV_setPoint,
-			getV_res,
-			set_EXT_supplyLim,
-			set_EXT_setPoint,
-			set_errorAck,
-			set_setPoint,
-			set_EXT_errorAck,
-			getV_errorAck,
-			set_EXT_lim,
-			set_supplyLim,
-			getV_underLimit,
-			getV_overLimit
-		|}	
-	})
-	
-	MemoryVariablesHideSet = Union({
-		{|
-			getV_errorAck,
-			getV_setPoint,
-			getV_res,
-			getV_lim,
-			getV_supplyLim,
-			getV_errorFlag,
-			getV_underLimit,
-			getV_ActualHV,
-			getV_overLimit
+	-- channel set with all visible events
+	sem__events = {|
+		terminate
+	,	set_EXT_setPoint, set_setPoint,
+		set_EXT_res, set_res,
+		set_EXT_errorFlag, set_errorFlag,
+		set_EXT_lim, set_lim,
+		set_EXT_supplyLim, set_supplyLim,
+		set_EXT_ActualHV, set_ActualHV,
+		set_EXT_errorAck, set_errorAck,
+		set_EXT_overLimit, set_overLimit,
+		set_EXT_underLimit, set_underLimit
+	,	ext_setPoint,
+		ext_pow24VStatus
+		, share__
 		|}
-	})
 	
-	-- combined individual memory processes
-	MemoryVariables = ||| (P, alpha) : MemoryVariablesProcesses_checkLimits @ P
+	-- Nodes --
+	-- declaring all nodes
 	
-	-- complete memory process	
-	MemoryN(id__) = sbisim(diamond((sbisim(diamond(MemoryVariables)) [| MemoryVariablesSyncSet |] sbisim(diamond(MemoryTransitions_checkLimits(id__)))) \ MemoryVariablesHideSet))
+	----------------------------------------------------------------------
+	-- Initial: i0
+	module i0
+	exports
 	
-	-- optimised memory
-	-- Sets of named elements identified according to transition conditions:
-	-- {}
-	-- {OP_checkLimits::overLimit,OP_checkLimits::underLimit,OP_checkLimits::ActualHV}
-	-- Summary of all identified named elements:
-	-- {
-	-- OP_checkLimits::res
-	-- OP_checkLimits::errorFlag
-	-- OP_checkLimits::overLimit
-	-- OP_checkLimits::underLimit
-	-- OP_checkLimits::supplyLim
-	-- OP_checkLimits::errorAck
-	-- OP_checkLimits::lim
-	-- OP_checkLimits::ActualHV
-	-- OP_checkLimits::setPoint
-	-- }
-	
-	-- Allocation plan:
-	-- 0:{}
-	--	=> {
-	--		TID_checkLimits_t0}
-	-- 1:{OP_checkLimits::overLimit,OP_checkLimits::underLimit,OP_checkLimits::ActualHV}
-	--	=> {
-	--		TID_checkLimits_t1,
-	--		TID_checkLimits_t2}
-	
-	-- Memory transition processes
-	MemoryTransitions_opt_0(id__) =
-	(
-		let
-			Update = Current(id__)
-			Current(id__)
-			 	   = 
-			 	   internal__!TID_checkLimits_t0 -> Update
-		within
-			Update
-	)
-	MemoryTransitions_opt_1(id__) =
-	(
-		let
-			Update = 
-			get_overLimit?overLimit ->
-			get_underLimit?underLimit ->
-			get_ActualHV?ActualHV ->
-			Current(id__,
-				 overLimit,
-				 underLimit,
-				 ActualHV)
-			Current(id__,
-				 overLimit,
-				 underLimit,
-				 ActualHV)
-			 	   = 
-			 	   (((ActualHV<=overLimit) and (ActualHV>=underLimit)))&(internal__!TID_checkLimits_t1 -> Update)
-			 	   []
-			 	   (((ActualHV<underLimit) or (ActualHV>overLimit)))&(internal__!TID_checkLimits_t2 -> Update)
-			 	   	 
-			 	   	 []
-			 	   	 set_overLimit?x__ -> Update
-			 	   	 []
-			 	   	 set_EXT_overLimit?x__ -> Update
-			 	   	 []
-			 	   	 
-			 	   	 set_underLimit?x__ -> Update
-			 	   	 []
-			 	   	 set_EXT_underLimit?x__ -> Update
-			 	   	 []
-			 	   	 
-			 	   	 set_ActualHV?x__ -> Update
-			 	   	 []
-			 	   	 set_EXT_ActualHV?x__ -> Update
-		within
-			Update
-	)
-	
-	-- Memory cell processes
-	Memory_opt_res(x__) = ( 
-		get_res!x__ -> Memory_opt_res(x__)
-		[]
-		set_res?x__ -> Memory_opt_res(x__)
-		[]
-		set_EXT_res?x__ -> Memory_opt_res(x__)
-	)
-	Memory_opt_errorFlag(x__) = ( 
-		get_errorFlag!x__ -> Memory_opt_errorFlag(x__)
-		[]
-		set_errorFlag?x__ -> Memory_opt_errorFlag(x__)
-		[]
-		set_EXT_errorFlag?x__ -> Memory_opt_errorFlag(x__)
-	)
-	Memory_opt_overLimit(x__) = ( 
-		get_overLimit!x__ -> Memory_opt_overLimit(x__)
-		[]
-		set_overLimit?x__ -> Memory_opt_overLimit(x__)
-		[]
-		set_EXT_overLimit?x__ -> Memory_opt_overLimit(x__)
-	)
-	Memory_opt_underLimit(x__) = ( 
-		get_underLimit!x__ -> Memory_opt_underLimit(x__)
-		[]
-		set_underLimit?x__ -> Memory_opt_underLimit(x__)
-		[]
-		set_EXT_underLimit?x__ -> Memory_opt_underLimit(x__)
-	)
-	Memory_opt_supplyLim(x__) = ( 
-		get_supplyLim!x__ -> Memory_opt_supplyLim(x__)
-		[]
-		set_supplyLim?x__ -> Memory_opt_supplyLim(x__)
-		[]
-		set_EXT_supplyLim?x__ -> Memory_opt_supplyLim(x__)
-	)
-	Memory_opt_errorAck(x__) = ( 
-		get_errorAck!x__ -> Memory_opt_errorAck(x__)
-		[]
-		set_errorAck?x__ -> Memory_opt_errorAck(x__)
-		[]
-		set_EXT_errorAck?x__ -> Memory_opt_errorAck(x__)
-	)
-	Memory_opt_lim(x__) = ( 
-		get_lim!x__ -> Memory_opt_lim(x__)
-		[]
-		set_lim?x__ -> Memory_opt_lim(x__)
-		[]
-		set_EXT_lim?x__ -> Memory_opt_lim(x__)
-	)
-	Memory_opt_ActualHV(x__) = ( 
-		get_ActualHV!x__ -> Memory_opt_ActualHV(x__)
-		[]
-		set_ActualHV?x__ -> Memory_opt_ActualHV(x__)
-		[]
-		set_EXT_ActualHV?x__ -> Memory_opt_ActualHV(x__)
-	)
-	Memory_opt_setPoint(x__) = ( 
-		get_setPoint!x__ -> Memory_opt_setPoint(x__)
-		[]
-		set_setPoint?x__ -> Memory_opt_setPoint(x__)
-		[]
-		set_EXT_setPoint?x__ -> Memory_opt_setPoint(x__)
-	)
-	
-	-- Composition of memory, StateMachine and Memory transition processes
-	
-	MemorySTM_opt(id__) =
-		dbisim(
-		  sbisim(Memory_opt_overLimit(0)
-		      	[| {|set_overLimit,get_overLimit,set_EXT_overLimit|} |] 
-		      	dbisim(
-		      	  sbisim(Memory_opt_underLimit(0)
-		      	      	[| {|set_EXT_underLimit,get_underLimit,set_underLimit|} |] 
-		      	      	dbisim(
-		      	      	  sbisim(Memory_opt_ActualHV(0)
-		      	      	      	[| {|set_ActualHV,get_ActualHV,set_EXT_ActualHV|} |] 
-		      	      	      	sbisim(	
-		      	      	      	  dbisim(
-		      	      	      	    sbisim(sbisim(	
-		      	      	      	      dbisim(
-		      	      	      	        sbisim(dbisim(sbisim(Memory_opt_res(false)
-		      	      	      	              	[| {|set_res,get_res|} |] 
-		      	      	      	              	dbisim(sbisim(Memory_opt_errorFlag(true)
-		      	      	      	              	      	[| {|set_errorFlag,get_errorFlag|} |] 
-		      	      	      	              	      	dbisim(sbisim(Memory_opt_supplyLim(false)
-		      	      	      	              	      	      	[| {|get_supplyLim,set_supplyLim|} |] 
-		      	      	      	              	      	      	dbisim(sbisim(Memory_opt_errorAck(false)
-		      	      	      	              	      	      	      	[| {|set_errorAck,get_errorAck|} |] 
-		      	      	      	              	      	      	      	dbisim(sbisim(Memory_opt_lim(false)
-		      	      	      	              	      	      	      	      	[| {|set_lim,get_lim|} |] 
-		      	      	      	              	      	      	      	      	dbisim(sbisim(Memory_opt_setPoint(0)
-		      	      	      	              	      	      	      	      	      	[| {|set_setPoint,get_setPoint|} |] 
-		      	      	      	              	      	      	      	      	      	STM_core(id__)
-		      	      	      	              	      	      	      	      	      	)\ {|get_setPoint|}
-		      	      	      	              	      	      	      	      	      )
-		      	      	      	              	      	      	      	      	)\ {|get_lim|}
-		      	      	      	              	      	      	      	      )
-		      	      	      	              	      	      	      	)\ {|get_errorAck|}
-		      	      	      	              	      	      	      )
-		      	      	      	              	      	      	)\ {|get_supplyLim|}
-		      	      	      	              	      	      )
-		      	      	      	              	      	)\ {|get_errorFlag|}
-		      	      	      	              	      )
-		      	      	      	              	)\ {|get_res|}
-		      	      	      	              )
-		      	      	      	          	  [| {|internal__.TID_checkLimits_t0|} |]
-		      	      	      	          	  MemoryTransitions_opt_0(id__)
-		      	      	      	          	  )\{|internal__.TID_checkLimits_t0|})
-		      	      	      	          )
-		      	      	      	      	  [| {|internal__.TID_checkLimits_t1,set_overLimit,set_ActualHV,internal__.TID_checkLimits_t2,set_underLimit|} |]
-		      	      	      	      	  MemoryTransitions_opt_1(id__)
-		      	      	      	      	  )\{|internal__.TID_checkLimits_t1,internal__.TID_checkLimits_t2|})
-		      	      	      	      )
-		      	      	      	) \ {|get_ActualHV|}
-		      	      	      )
-		      	      	) \ {|get_underLimit|}
-		      	      )
-		      	) \ {|get_overLimit|}
-		      )
-	
-	-- main process
-	
-	MachineMemorySyncSet = Union({
-		union(
-			union(
-				{||},
-				{||}
-			)
-				
-			,
-			{|internal__.TID_checkLimits_t0,
-			internal__.TID_checkLimits_t1,
-			internal__.TID_checkLimits_t2|}
-		)
-	})
-	
-	MachineMemoryHidingSet = Union({
-		union(
-			{||},
-			{||}
-		)
-	})
-	
-	MachineInternalEvents = {|
-		internal__
-	|}
-	AUX(id__) = (
-		(
-			STM(id__)
-				[|MachineMemorySyncSet|]
-			sbisim(diamond(MemoryN(id__)))
-		)[[
-			ext_setPoint__.x____ <- ext_setPoint,
-			ext_pow24VStatus__.x____ <- ext_pow24VStatus
-			| x____ <- TIDS
-		]]
-		\MachineMemoryHidingSet
-	)
-	[|{|terminate|}|>SKIP\MachineInternalEvents	
-	
-	STM_core(id__) = 
-		(STM(id__)
-		)
+		channel enter, interrupt
 		
-	AUX_opt(id__) = 
-		(MemorySTM_opt(id__)
-		)[[
-			ext_setPoint__.x____ <- ext_setPoint,
-			ext_pow24VStatus__.x____ <- ext_pow24VStatus
-			| x____ <- TIDS
-		]]
-		[|{|terminate|}|>SKIP\MachineInternalEvents	
+		D__(id__) = 
+			dbisim(let
+				Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+				
+				Termination = terminate -> SKIP
+				
+				Active 		= share__choice(interrupt -> SKIP) ; Inactive
+			within
+				Inactive [| {terminate} |> SKIP)
+		
+		VS_O__(id__) = D__(id__)
 	
-exports
-	-- flow channels
-	channel internal__ : TIDS
-	channel enteredV, enterV, exitV, exitedV : SIDS
-	channel enter, entered: SIDS.SIDS
-	channel exit,exited: SIDS.SIDS
-	channel terminate
+	endmodule
+	----------------------------------------------------------------------
 	
-	-- variable channels
-	channel get_setPoint, set_setPoint: core_real
-	channel get_res, set_res: core_boolean
-	channel get_errorFlag, set_errorFlag: core_boolean
-	channel get_lim, set_lim: core_boolean
-	channel get_supplyLim, set_supplyLim: core_boolean
-	channel get_ActualHV, set_ActualHV: core_real
-	channel get_errorAck, set_errorAck: core_boolean
-	channel get_overLimit, set_overLimit: core_real
-	channel get_underLimit, set_underLimit: core_real
+	
+	----------------------------------------------------------------------
+	-- State: s0
+	module s0
+	
+	enterSS = {}
+	
+	enteredSS = {}
+	
+	exports
+	
+		--  Declarations
+		
+		channel enter, entered, interrupt
+		channel enteredL, enteredR
+		
+						
+		
+		--	Nodes
+		-- declaring all nodes
+		
+		
+		--	Rule: behaviours(Node)
+		--  Note that FDR has problems with efficiently compiling the process below
+		-- 	if using a different recursion pattern.
+		D__(id__) = 
+		dbisim(let
+			-- IMPLEMENTATION NOTE: 
+			-- The following should be defined as: Inactive = share__choice(Activation [] Termination),
+			-- however FDR struggles with that form in certain cases. So we use the exception operator
+			-- instead to 'terminate'.
 			
-	-- shared variable channels
-	channel set_EXT_setPoint: core_real
-	channel set_EXT_res: core_boolean
-	channel set_EXT_errorFlag: core_boolean
-	channel set_EXT_lim: core_boolean
-	channel set_EXT_supplyLim: core_boolean
-	channel set_EXT_ActualHV: core_real
-	channel set_EXT_errorAck: core_boolean
-	channel set_EXT_overLimit: core_real
-	channel set_EXT_underLimit: core_real
+			Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+			
+			Termination = terminate -> SKIP
+			
+			Active 		= SKIP ; 
+					 	  Behaviour ; 
+					 	  share__choice(exit -> SKIP) ; SKIP ; 
+					 	  share__choice(exited -> SKIP) ; Inactive
+		
+			Behaviour 	= entered -> During
+			During 		= ((SKIP ; SStop) /\ interrupt -> SKIP)
+		within
+			Inactive [| {terminate} |> SKIP)
+			
+		VS_O__(id__) = 
+		dbisim(let
+			Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Active
+			
+			Termination = terminate -> SKIP
+			
+			Active 		= SKIP ; 
+					 	  Behaviour ; 
+					 	  share__choice(exit -> SKIP) ; SKIP ; 
+					 	  share__choice(exited -> SKIP) ; Inactive
+		
+			Behaviour 	= entered -> During
+			During 		= ((SKIP ; SStop) /\ interrupt -> SKIP)
+		within
+			Inactive [| {terminate} |> SKIP)
+		
 	
-	-- local variable channels for defined operations that are required by the state machine
+	endmodule
+	----------------------------------------------------------------------
 	
-	-- declaring state machine events
-	channel ext_setPoint__: TIDS.InOut.core_real
-	channel ext_setPoint: InOut.core_real
-	channel ext_pow24VStatus__: TIDS.InOut.Power
-	channel ext_pow24VStatus: InOut.Power
 	
-	-- declaring call and ret events for undefined operations
+	----------------------------------------------------------------------
+	-- Final state: f0
+	module f0
 	
-	transparent diamond
-	transparent sbisim
-	transparent dbisim
-	transparent chase
-
-	-- definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
-	FVS__(id__) = AUX_opt(id__) \ {|terminate|}
+	exports
 	
-	-- original process using the unoptimised memory model
-	Dunopt__(id__) = (AUX(id__) \ internal_events) \ {|terminate|}
+		channel enter, entered, interrupt
+		channel enteredL, enteredR
+		
+		--	Rule: behaviours(Node)
+		D__(id__) = 
+			dbisim(let
+				Inactive 	= share__choice(enter -> SKIP [] terminate -> SKIP) ; Entering
+				
+				Entering 	= entered -> SKIP ; Active
+				Active		= share__choice(terminate -> SKIP [] interrupt -> SKIP) ; Interrupted
+				Interrupted	= share__choice(exit -> exited -> Inactive)
+			within
+				Inactive [| {terminate} |> SKIP)
+			
+		VS_O__(id__) = D__(id__)
 	
-	D__(id__) = (AUX_opt(id__) \ internal_events) \ {|terminate|}
+	endmodule
+	----------------------------------------------------------------------
 	
+	-- END of Nodes --
+	
+	-- Operation calls --
+	-- Only the undefined operations are declared here.
+	-- If the state machine is in isolation, all required operations will be undefined.
+	-- If it is in the context of a controller, the required operations not provided by the
+	-- controller will be declared here, and the defined operations will be defined in the
+	-- context of the Controller module, and therefore within scope of the state machine module.
+	
+	-- END of Operation calls --
+	
+	-- STM processes
+	STM(id__) = -- RULE: [[stm:OperationDef]]_STM^nops : CSPProcess
+	Stateful(id__) \ {terminate}
+	
+	STM_VS_O(id__) = -- RULE: [[stm:OperationDef]]_STM^nops : CSPProcess
+	Stateful(id__) \ {terminate}
+	
+	-- Transitions
+	Transitions(id__) = ((let
+		Trans = share__choice(get_ActualHV?ActualHV -> get_underLimit?underLimit -> get_overLimit?overLimit -> (
+			((share__ -> SKIP
+			 [] dbisim((true)&(internal__!NID_i0 -> SKIP ;  ((SKIP ; s0::enter -> SKIP))))
+			 	 [] dbisim((((ActualHV<=overLimit) and (ActualHV>=underLimit)))&(internal__!NID_s0 -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; share__choice(true & (share__choice(set_lim!false -> SKIP))) ; f0::enter -> SKIP)))
+			 	 [] dbisim((((ActualHV<underLimit) or (ActualHV>overLimit)))&(internal__!NID_s0 -> SKIP ;  share__choice(exit -> SKIP) ; (share__choice(exited -> SKIP) ; share__choice(true & (share__choice(set_lim!true -> SKIP))) ; f0::enter -> SKIP)))
+			 ) ; Trans)
+			 []
+			 (interrupt -> share__choice(exit -> SKIP) ; share__choice(exited -> terminate -> SKIP))
+			 []
+			 terminate -> SKIP
+		)
+		)
+	within
+		Trans
+	)
+	)
+	
+	-- Stateful
+	-- RULE: Stateful(stm:StateMachineBody) : CSPProcess
+	
+	-- Named process definitions
+	MachineBody(id__) = 
+		dbisim((
+		let
+			finalNodesEntered = {|f0::entered|}
+		within
+			((let
+				-- IMPLEMENTATION NOTE:
+				-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+				-- modules for defining the semantics of each node.
+				enterSS = {|
+				i0::enter,
+				s0::enter,
+				f0::enter
+				|}
+				hideSet = union(enterSS,{|exit,exited,internal__|})
+			within 
+				((let
+					-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+					-- because CSPM modules are used for the semantics of Node.
+					flowevts = union(enterSS,{|exit,exited,interrupt|})
+					transSync = {|internal__.NID_i0,internal__.NID_s0,internal__.NID_s0|}
+				within
+					((
+					 (((-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+					   i0::D__(id__)
+					   [| { share__, terminate } |] (
+					   s0::D__(id__)
+					   [| { share__, terminate } |] (
+					   f0::D__(id__)
+					   )
+					   )
+					 )
+					 [[s0::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_s0,internal__.NID_s0|}]]
+					 [[f0::interrupt <- x__ | x__ <- {|interrupt|}]]
+					 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+					 )
+					  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+					  [[set_ActualHV <- setL_ActualHV,set_underLimit <- setL_underLimit,set_overLimit <- setL_overLimit]]
+					 )
+					 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+					 			,setL_ActualHV
+					 			,setL_underLimit
+					 			,setL_overLimit
+					|}) |]
+					 ((i0::enter -> Transitions(id__))
+					  [[ share__ <- x__ | x__ <- {| share__,setL_ActualHV,setL_underLimit,setL_overLimit |} ]]
+					 )
+					)[[setL_ActualHV <- set_ActualHV,setL_underLimit <- set_underLimit,setL_overLimit <- set_overLimit]]
+					)
+				)
+				 \ hideSet)
+				[[
+					ext_setPoint__.x____ <- ext_setPoint,
+					ext_pow24VStatus__.x____ <- ext_pow24VStatus
+					| x____ <- NIDS
+				]]
+			)
+			 [| {| interrupt |} |] SKIP)
+		)
+		)
+	
+	Behaviour(id__) = 
+		dbisim((MachineBody(id__)\ enteredSS)
+		)
+	
+	
+	Stateful(id__) = 
+		((
+			(Behaviour(id__) [| union(getsetLocalChannels,{terminate}) |] varMemory(id__))
+		 	\getsetLocalChannels
+		)
+		)
+	
+	
+	-- Visible counterparts
+	MachineBody_VS_O(id__) = 
+		dbisim((
+		let
+			finalNodesEntered = {|f0::entered|}
+		within
+			((let
+				-- IMPLEMENTATION NOTE:
+				-- Here the 'enter' channel set is calculated explicitly because of the use of CSPM 
+				-- modules for defining the semantics of each node.
+				enterSS = {|
+				i0::enter,
+				s0::enter,
+				f0::enter
+				|}
+				hideSet = union(enterSS,{|exit,exited,internal__|})
+			within 
+				((let
+					-- IMPLEMENTATION NOTE: the channel set 'enter' is calculated explicitly
+					-- because CSPM modules are used for the semantics of Node.
+					flowevts = union(enterSS,{|exit,exited,interrupt|})
+					transSync = {|internal__.NID_i0,internal__.NID_s0,internal__.NID_s0|}
+				within
+					((
+					 (((-- RULE composeNodes(nc:NodeContainer)^nops : CSPProcess
+					   i0::VS_O__(id__)
+					   [| { share__, terminate } |] (
+					   s0::VS_O__(id__)
+					   [| { share__, terminate } |] (
+					   f0::VS_O__(id__)
+					   )
+					   )
+					 )
+					 [[s0::interrupt <- x__ | x__ <- {|interrupt,internal__.NID_s0,internal__.NID_s0|}]]
+					 [[f0::interrupt <- x__ | x__ <- {|interrupt|}]]
+					 [[i0::interrupt <- x__ | x__ <- {|internal__.NID_i0|}]]
+					 )
+					  [[ share__ <- x__ | x__ <- {| share__ |} ]] 
+					  [[set_ActualHV <- setL_ActualHV,set_underLimit <- setL_underLimit,set_overLimit <- setL_overLimit]]
+					 )
+					 [| union(union(union(flowevts,transSync),{terminate}),{|share__
+					 			,setL_ActualHV
+					 			,setL_underLimit
+					 			,setL_overLimit
+					|}) |]
+					 ((i0::enter -> Transitions(id__))
+					  [[ share__ <- x__ | x__ <- {| share__,setL_ActualHV,setL_underLimit,setL_overLimit |} ]]
+					 )
+					)[[setL_ActualHV <- set_ActualHV,setL_underLimit <- set_underLimit,setL_overLimit <- set_overLimit]]
+					)
+				)
+				 \ hideSet)
+				[[
+					ext_setPoint__.x____ <- ext_setPoint,
+					ext_pow24VStatus__.x____ <- ext_pow24VStatus
+					| x____ <- NIDS
+				]]
+			)
+			 [| {| interrupt |} |] SKIP)
+		)
+		)
+	
+	Behaviour_VS_O(id__) = 
+		dbisim((MachineBody_VS_O(id__))
+		)
+	
+	
+	Stateful_VS_O(id__) = 
+		dbisim((
+			(Behaviour_VS_O(id__) [| union(getsetLocalChannels,{terminate}) |] varMemory(id__))
+		 	\getsetLocalChannels
+		)
+		)
+	
+	
+	-- END
+	
+	-- Memory
+	-- Memory variables
+	
+	-- varMemory process
+	varMemory(id__) = terminate -> SKIP
+	
+	getsetLocalChannels = {||}
+	
+	-- Definition of the behaviour of state machines (default, optimised, visible, visible and optimised)
+	FVS__(id__) = STM_VS_O(id__)
+	
+	D__(id__) = STM(id__) \ internal_events
 	O__(id__) = sbisim(diamond(D__(id__)))
-	VS__(id__) = ShowV(FVS__(id__))
-	VS_O__(id__) = sbisim(diamond(VS__(id__)))
-endmodule
+	VS__(id__) = FVS__(id__)
+	VS_O__(id__) = sbisim(diamond(FVS__(id__)))
+	HEXT__(id__) = O__(id__) [|shared_variable_events|] SKIP
+	HUP__(id__) = O__(id__) [|{share__}|] SKIP
+			endmodule

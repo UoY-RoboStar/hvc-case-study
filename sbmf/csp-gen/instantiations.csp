@@ -11,8 +11,13 @@
 -- BASIC TYPES
 
 -- generate nat
-nametype core_nat = {calc_type_min(Union(
-			{{0..2},{0..2}}))..calc_type_max(Union({{0..2},{0..2}}))} --{0..2}
+nametype core_nat = union({0..2},{calc_type_min(Union(
+			{{0..2},{0..2}}))..calc_type_max(Union({{0..2},{0..2}}))})
+
+-- generate core_clock_type
+nametype core_clock_type = {0..10}
+
+-- BASIC FUNCTIONS
 
 -- generate string
 nametype core_string = LSeq(Char,2)
@@ -21,14 +26,17 @@ nametype core_string = LSeq(Char,2)
 ms(t) = 0
 
 -- generate real
-nametype core_real = {calc_type_min(Union(
-			{{ActualHV|ActualHV <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{underLimit|underLimit <- { -2..2}},{overLimit|overLimit <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{setPoint|setPoint <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{0},{overLimitF(Plus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{underLimitF(Minus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{setPoint|setPoint <- { -2..2}},{0},{0},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{0..2},{0..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{Plus(setPoint, 2, { -2..2})|setPoint <- { -2..2}},{Minus(setPoint, 2, { -2..2})|setPoint <- { -2..2}}}))..calc_type_max(Union({{ActualHV|ActualHV <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{underLimit|underLimit <- { -2..2}},{overLimit|overLimit <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{setPoint|setPoint <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{0},{overLimitF(Plus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{underLimitF(Minus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{setPoint|setPoint <- { -2..2}},{0},{0},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{0..2},{0..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{Plus(setPoint, 2, { -2..2})|setPoint <- { -2..2}},{Minus(setPoint, 2, { -2..2})|setPoint <- { -2..2}}}))} -- { -2..2}
+nametype core_real = union({ -2..2},{calc_type_min(Union(
+			{{underLimit|underLimit <- { -2..2}},{overLimit|overLimit <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{setPoint|setPoint <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{overLimitF(Plus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{underLimitF(Minus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{setPoint|setPoint <- { -2..2}},{0},{0},{0},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{0..2},{0..2},{ -2..2},{ -2..2},{ -2..2},{Minus(setPoint, 2, { -2..2})|setPoint <- { -2..2}},{Plus(setPoint, 2, { -2..2})|setPoint <- { -2..2}}}))..calc_type_max(Union({{underLimit|underLimit <- { -2..2}},{overLimit|overLimit <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{setPoint|setPoint <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{ActualHV|ActualHV <- { -2..2}},{overLimitF(Plus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{underLimitF(Minus(setPoint, 2, { -2..2}))|setPoint <- { -2..2}},{setPoint|setPoint <- { -2..2}},{0},{0},{0},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{ -2..2},{0..2},{0..2},{ -2..2},{ -2..2},{ -2..2},{Minus(setPoint, 2, { -2..2})|setPoint <- { -2..2}},{Plus(setPoint, 2, { -2..2})|setPoint <- { -2..2}}}))}) 
 
--- BASIC FUNCTIONS
+-- VECTOR TYPES AND OPERATIONS
+
+
+-- CLOCKS
 
 -- generate int
-nametype core_int = {calc_type_min(Union(
-			{{0..2},{0..2}}))..calc_type_max(Union({{0..2},{0..2}}))} --{ -2..2}
+nametype core_int = union({ -2..2},{calc_type_min(Union(
+			{{0..2},{0..2}}))..calc_type_max(Union({{0..2},{0..2}}))})
 
 -- generate -- OPERATION BOUNDS
 
@@ -53,9 +61,6 @@ nametype core_boolean = Bool
 
 -- generate s
 s(t) = 0
-
--- generate msx
-msx(t) = 0
 
 -- generate Mult
 Mult(e1,e2,T) = if member(e1*e2,T) then e1*e2 else e1

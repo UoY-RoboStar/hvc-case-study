@@ -1,11 +1,23 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:40
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
 include "file_Interrupt.csp"
 
 -- generate Watchdog
 P_Watchdog = let
-	id = 0
+	id__ = 0
+	
+	
+	
 within
 	Watchdog::O__(
-		id
+		id__
 	)
 assert P_Watchdog :[deadlock-free]	
 assert P_Watchdog;RUN({r__}) :[deadlock-free]

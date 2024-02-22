@@ -1,6 +1,16 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:40
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
+include "core_timed_defs.csp"
 include "core_defs.csp"
 include "ctrl1.csp"
-include "timed_definitions.csp"
+include "state_timed_defs.csp"
 include "file_Transition_system_defs.csp"
 include "robochart_defs.csp"
 include "../instantiations.csp"
@@ -10,6 +20,10 @@ channel r__
 -- generate ctrl1
 P_ctrl1 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	ctrl1::O__(id__)
 
@@ -20,12 +34,25 @@ assert P_ctrl1 :[divergence-free]
 
 -- generate ctrl1_stm_ref0
 P_ctrl1_stm_ref0 = let
-	id = 0
+	id__ = 0
+	
+	
+	
 within
 	ctrl1::stm_ref0::O__(
-		id
+		id__
 	)
 assert P_ctrl1_stm_ref0 :[deadlock-free]	
 assert P_ctrl1_stm_ref0;RUN({r__}) :[deadlock-free]
 assert P_ctrl1_stm_ref0 :[deterministic]
 assert P_ctrl1_stm_ref0 :[divergence-free]
+-- timed deadlock free
+assert prioritise(P_ctrl1_stm_ref0[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- timelock free
+assert RUN({tock}) ||| CHAOS(diff(Events,{|tock|})) [F= P_ctrl1_stm_ref0
+-- timed deadlock free
+assert prioritise(P_ctrl1[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- timelock free
+assert RUN({tock}) ||| CHAOS(diff(Events,{|tock|})) [F= P_ctrl1

@@ -1,14 +1,28 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:40
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
 include "supplyVoltCheck.csp"
 include "core_defs.csp"
+include "state_defs.csp"
 include "file_Declarations_defs.csp"
 include "robochart_defs.csp"
 include "../instantiations.csp"
 channel r__
 -- generate OP_supplyVoltCheck
 P_OP_supplyVoltCheck = let
-	id = 0 
+	id__ = 0
+	
+	
+	
+	
 within
-	OP_supplyVoltCheck::O__(id)
+	OP_supplyVoltCheck::O__(id__)
 assert P_OP_supplyVoltCheck :[deadlock-free]	
 assert P_OP_supplyVoltCheck;RUN({r__}) :[deadlock-free]
 assert P_OP_supplyVoltCheck :[deterministic]

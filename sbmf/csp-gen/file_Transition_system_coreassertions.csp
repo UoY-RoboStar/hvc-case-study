@@ -1,3 +1,12 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:39
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
 include "file_Transition_system.csp"
 
 
@@ -5,6 +14,10 @@ include "file_Transition_system.csp"
 -- generate ctrl0
 P_ctrl0 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	ctrl0::O__(id__)
 
@@ -15,10 +28,13 @@ assert P_ctrl0 :[divergence-free]
 
 -- generate ctrl0_stm_ref0
 P_ctrl0_stm_ref0 = let
-	id = 0
+	id__ = 0
+	
+	
+	
 within
 	ctrl0::stm_ref0::O__(
-		id
+		id__
 	)
 assert P_ctrl0_stm_ref0 :[deadlock-free]	
 assert P_ctrl0_stm_ref0;RUN({r__}) :[deadlock-free]
@@ -27,6 +43,10 @@ assert P_ctrl0_stm_ref0 :[divergence-free]
 -- generate ctrl1
 P_ctrl1 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	ctrl1::O__(id__)
 
@@ -37,10 +57,13 @@ assert P_ctrl1 :[divergence-free]
 
 -- generate ctrl1_stm_ref0
 P_ctrl1_stm_ref0 = let
-	id = 0
+	id__ = 0
+	
+	
+	
 within
 	ctrl1::stm_ref0::O__(
-		id
+		id__
 	)
 assert P_ctrl1_stm_ref0 :[deadlock-free]	
 assert P_ctrl1_stm_ref0;RUN({r__}) :[deadlock-free]
@@ -49,6 +72,10 @@ assert P_ctrl1_stm_ref0 :[divergence-free]
 -- generate ctrl2
 P_ctrl2 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	ctrl2::O__(id__)
 
@@ -59,10 +86,13 @@ assert P_ctrl2 :[divergence-free]
 
 -- generate ctrl2_stm0
 P_ctrl2_stm0 = let
-	id = 0
+	id__ = 0
+	
+	
+	
 within
 	ctrl2::stm0::O__(
-		id
+		id__
 	)
 assert P_ctrl2_stm0 :[deadlock-free]	
 assert P_ctrl2_stm0;RUN({r__}) :[deadlock-free]
@@ -71,6 +101,10 @@ assert P_ctrl2_stm0 :[divergence-free]
 -- generate ctrl3
 P_ctrl3 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	ctrl3::O__(id__)
 
@@ -81,10 +115,13 @@ assert P_ctrl3 :[divergence-free]
 
 -- generate ctrl3_stm0
 P_ctrl3_stm0 = let
-	id = 0
+	id__ = 0
+	
+	
+	
 within
 	ctrl3::stm0::O__(
-		id
+		id__
 	)
 assert P_ctrl3_stm0 :[deadlock-free]	
 assert P_ctrl3_stm0;RUN({r__}) :[deadlock-free]
@@ -94,9 +131,10 @@ assert P_ctrl3_stm0 :[divergence-free]
 -- generate mod_sys
 P_mod_sys = let
 	id__ = 0
-
-
 	
+	
+	
+		
 	
 within
 	mod_sys::O__(id__)
@@ -108,6 +146,10 @@ assert P_mod_sys :[divergence-free]
 -- generate mod_sys_ctrl_ref0
 P_mod_sys_ctrl_ref0 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	mod_sys::ctrl_ref0::O__(id__)
 
@@ -119,6 +161,10 @@ assert P_mod_sys_ctrl_ref0 :[divergence-free]
 -- generate mod_sys_ctrl_ref1
 P_mod_sys_ctrl_ref1 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	mod_sys::ctrl_ref1::O__(id__)
 
@@ -130,6 +176,10 @@ assert P_mod_sys_ctrl_ref1 :[divergence-free]
 -- generate mod_sys_ctrl_ref2
 P_mod_sys_ctrl_ref2 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	mod_sys::ctrl_ref2::O__(id__)
 
@@ -141,6 +191,10 @@ assert P_mod_sys_ctrl_ref2 :[divergence-free]
 -- generate mod_sys_ctrl_ref3
 P_mod_sys_ctrl_ref3 = let
 	id__ = 0
+	
+	
+	
+		
 within
 	mod_sys::ctrl_ref3::O__(id__)
 

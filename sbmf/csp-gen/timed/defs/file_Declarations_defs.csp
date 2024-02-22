@@ -1,4 +1,13 @@
--- data definitions used by platform:/resource/hvc-case-study/Declarations.rct
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 22-02-2024 16:13:40
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
+-- data definitions used by platform:/resource/hvc-case-study-SBMF/Declarations.rct
 datatype State = State_Ramp | State_Init | State_Wait24Vpower | State_ClosedLoop | State_ErrorMode
 State_is(State_Ramp,State_Ramp) = true
 State_is(_,State_Ramp) = false
@@ -18,8 +27,8 @@ Power_is(Power_Off,Power_Off) = true
 Power_is(_,Power_Off) = false
 
 
-pre_underLimitF(x) = true
-pre_overLimitF(x) = true
-pre_ms(t) = true
-pre_s(t) = true
+pre_underLimitF(param_x) = true
+pre_overLimitF(param_x) = true
+pre_ms(param_t) = true
+pre_s(param_t) = true
 	
